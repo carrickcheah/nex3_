@@ -1,0 +1,9 @@
+<!-- components/header.ejs -->
+<div class="w3-container">
+  <div class="w3-panel w3-teal">
+    <h2><%= title %></h2>
+    <% if (locals.status) { %>
+      <span class="w3-tag w3-round <%= status.css || 'w3-blue' %>"><%= status.name %></span>
+    <% } %>
+  </div>
+</div>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daily Output | NexERP</title>
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <style>
+    .tag-outstanding {
+      background-color: #ffeb3b;
+      color: #000;
+    }
+    .tag-completed {
+      background-color: #4caf50;
+      color: white;
+    }
+    .w3-theme-l4 {
+      background-color: #f5f7f8 !important;
+    }
+    .w3-theme {
+      background-color: #2196F3 !important;
+    }
+    .select2-container {
+      width: 100% !important;
+    }
+    .form-control-static {
+      padding-top: 7px;
+      margin-bottom: 0;
+      min-height: 34px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="w3-bar" style="background-color: rgb(0,0,255); color: white;">
+  <a href="/page/dashboard" class="w3-bar-item w3-button w3-mobile"><i class="fa fa-home"></i> Home</a>
+  <a href="/page/manufacture/daily_inquiry" class="w3-bar-item w3-button w3-mobile">Daily Output</a>
+  <div class="w3-right">
+    <span class="w3-bar-item w3-mobile">Welcome, <%= typeof user !== 'undefined' ? user.name : 'SYSTEM ADMIN' %></span>
+  </div>
+</div>
+
+<div id="main-content" class="w3-main" style="background-color:#f5f7f8; min-height: calc(100vh - 120px);">
+  <form id="dailyOutputForm" method="POST" action="/page/dailyc">
+    <input type="hidden" name="txn-mode" value="<%= typeof txn_mode !== 'undefined' ? txn_mode : 'daily_new' %>">
+    <input type="hidden" name="txn-id" value="<%= typeof txn_id !== 'undefined' ? txn_id : '0' %>">
+    <input type="hidden" name="session-key" value="<%= typeof session_key !== 'undefined' ? session_key : '' %>">
+    <input type="hidden" name="action-key" value="<%= typeof action_key !== 'undefined' ? action_key : '' %>">
+    
+    <!-- Include the UI components -->
+    <%- include('ui', { 
+      data: data, 
+      options: options, 
+      viewOnly: (data.txn_mode === 'daily_view'),
+      lng: locals.lng || { 
+        JO_NO: 'JO No', 
+        DAILY_NO: 'Daily No', 
+        TXN_DATE: 'Doc Date', 
+        ISSUED_BY: 'Issued By'
+      },
+      machines: locals.machines || [],
+      molds: locals.molds || [],
+      tools: locals.tools || [],
+      operators: locals.operators || [],
+      owners: locals.owners || [{ id: user.id, name: user.name }]
+    }) %>
+  </form>
+</div>
+
+<!-- Footer -->
+<footer class="w3-container w3-theme-l4 w3-padding">
+  <p>&copy; <%= new Date().getFullYear() %> NexERP. All rights reserved.</p>
+</footer>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+<script>
+  $(document).ready(function() {
+    // Initialize Select2 for all multiple select boxes
+    $('select[multiple]').select2({
+      placeholder: "Select items...",
+      allowClear: true,
+      width: '100%'
+    });
+  });
+</script>
+</body>
+</html>

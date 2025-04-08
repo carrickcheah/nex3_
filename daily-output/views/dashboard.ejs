@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <style>
+    .dashboard-item {
+      margin-bottom: 20px;
+      border-radius: 5px;
+      box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+      transition: 0.3s;
+      padding: 15px;
+    }
+    .dashboard-item:hover {
+      box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+    }
+    .dashboard-value {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .dashboard-label {
+      font-size: 14px;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+
+<div class="w3-bar w3-teal">
+  <a href="/page/dashboard" class="w3-bar-item w3-button w3-mobile"><i class="fa fa-home"></i> Home</a>
+  <a href="/page/manufacture/daily_inquiry" class="w3-bar-item w3-button w3-mobile">Daily Output</a>
+  <div class="w3-right">
+    <span class="w3-bar-item w3-mobile">Welcome, <%= user.name %></span>
+  </div>
+</div>
+
+<div class="w3-container">
+  <h2>Dashboard</h2>
+  
+  <div class="w3-row-padding">
+    <div class="w3-quarter">
+      <div class="w3-container w3-teal dashboard-item">
+        <div class="dashboard-value">0</div>
+        <div class="dashboard-label">Today's Daily Output</div>
+      </div>
+    </div>
+    
+    <div class="w3-quarter">
+      <div class="w3-container w3-blue dashboard-item">
+        <div class="dashboard-value">0</div>
+        <div class="dashboard-label">Pending Approvals</div>
+      </div>
+    </div>
+    
+    <div class="w3-quarter">
+      <div class="w3-container w3-green dashboard-item">
+        <div class="dashboard-value">0</div>
+        <div class="dashboard-label">Active Work Orders</div>
+      </div>
+    </div>
+    
+    <div class="w3-quarter">
+      <div class="w3-container w3-orange dashboard-item">
+        <div class="dashboard-value">0</div>
+        <div class="dashboard-label">Completed This Month</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="w3-panel">
+    <div class="w3-row-padding">
+      <div class="w3-half">
+        <div class="w3-card-4">
+          <header class="w3-container w3-teal">
+            <h3>Recent Activity</h3>
+          </header>
+          <div class="w3-container" style="min-height: 200px;">
+            <p>No recent activities to display.</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="w3-half">
+        <div class="w3-card-4">
+          <header class="w3-container w3-teal">
+            <h3>Quick Links</h3>
+          </header>
+          <div class="w3-container" style="min-height: 200px;">
+            <ul class="w3-ul">
+              <li><a href="/page/manufacture/daily_output/new">Create New Daily Output</a></li>
+              <li><a href="/page/manufacture/daily_inquiry">View Daily Output Inquiry</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script>
+  $(document).ready(function() {
+    // Dashboard initialization code would go here
+  });
+</script>
+</body>
+</html>
