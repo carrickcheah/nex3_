@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daily Output Inquiry | NexERP</title>
+  <link rel="stylesheet" href="/css/w3.css">
+  <link rel="stylesheet" href="/css/w3-theme-blue.css">
+  <link rel="stylesheet" href="/css/font-awesome.min.css">
+  <link rel="stylesheet" href="/css/jquery.datepick.css">
+  <link rel="stylesheet" href="/css/mrp.css">
+  <script src="/js/jquery.min.js"></script>
+  <script src="/js/jquery.plugin.min.js"></script>
+  <script src="/js/jquery.datepick.min.js"></script>
+  <script src="/js/mrp.js"></script>
+</head>
+<body>
+
+<div id="myContent" class="w3-main" style="background-color:#f2fbf2;">
+  <!-- Header -->
+  <header class="w3-container" style="padding-top:22px">
+    <h4 class="w3-bold"><i class="fa fa-search"></i>&nbsp;&nbsp;Daily Output Inquiry</h4>
+  </header>
+
+  <!-- Search Form -->
+  <form id="searchForm" action="/page/manufacture/daily_inquiry" method="GET">
+    <div class="w3-row-padding">
+      <div class="w3-quarter">
+        <label>From Date</label>
+        <input type="text" id="from-date" name="from_date" class="w3-input w3-border form2 datepicker" 
+               value="<%= fromDate || '' %>">
+      </div>
+      
+      <div class="w3-quarter">
+        <label>To Date</label>
+        <input type="text" id="to-date" name="to_date" class="w3-input w3-border form2 datepicker" 
+               value="<%= toDate || '' %>">
+      </div>
+      
+      <div class="w3-quarter">
+        <label>Reference</label>
+        <input type="text" id="reference" name="reference" class="w3-input w3-border form2" 
+               value="<%= reference || '' %>">
+      </div>
+      
+      <div class="w3-quarter">
+        <label>Job Order</label>
+        <input type="text" id="jo" name="jo" class="w3-input w3-border form2" 
+               value="<%= jo || '' %>">
+      </div>
+    </div>
+    
+    <div class="w3-row-padding w3-margin-top">
+      <div class="w3-quarter">
+        <button type="submit" class="w3-button w3-theme w3-round">Search</button>
+        <a href="/page/manufacture/daily_inquiry" class="w3-button w3-white w3-border w3-round">Clear</a>
+      </div>
+    </div>
+  </form>
+
+  <!-- Results Table -->
+  <div class="w3-container w3-margin-top">
+    <div class="w3-responsive">
+      <table class="w3-table-all w3-hoverable">
+        <thead>
+          <tr class="w3-theme">
+            <th>Daily No.</th>
+            <th>Date</th>
+            <th>JO No.</th>
+            <th>Process</th>
+            <th>Supervisor</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (locals.results && results.length > 0) { %>
+            <% results.forEach(function(item) { %>
+              <tr>
+                <td><%= item.doc_ref %></td>
+                <td><%= item.txn_date %></td>
+                <td><%= item.jo_reference %></td>
+                <td><%= item.jo_process %></td>
+                <td><%= item.owner_abbrev %></td>
+                <td><span class="w3-tag w3-round <%= item.status_css %>"><%= item.status_name %></span></td>
+                <td>
+                  <a href="/page/manufacture/daily_output/view/<%= item.txn_id %>" class="w3-button w3-small w3-theme-l4 w3-round">View</a>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="7" class="w3-center">No records found</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <% if (locals.pagination) { %>
+    <div class="w3-container w3-center w3-margin-top">
+      <div class="w3-bar">
+        <% if (pagination.currentPage > 1) { %>
+          <a href="?page=1<%= pagination.queryParams %>" class="w3-button w3-theme-l4">&laquo; First</a>
+          <a href="?page=<%= pagination.currentPage - 1 %><%= pagination.queryParams %>" class="w3-button w3-theme-l4">&laquo;</a>
+        <% } %>
+        
+        <% for (let i = pagination.startPage; i <= pagination.endPage; i++) { %>
+          <% if (i === pagination.currentPage) { %>
+            <a href="#" class="w3-button w3-theme"><%= i %></a>
+          <% } else { %>
+            <a href="?page=<%= i %><%= pagination.queryParams %>" class="w3-button w3-theme-l4"><%= i %></a>
+          <% } %>
+        <% } %>
+        
+        <% if (pagination.currentPage < pagination.totalPages) { %>
+          <a href="?page=<%= pagination.currentPage + 1 %><%= pagination.queryParams %>" class="w3-button w3-theme-l4">&raquo;</a>
+          <a href="?page=<%= pagination.totalPages %><%= pagination.queryParams %>" class="w3-button w3-theme-l4">Last &raquo;</a>
+        <% } %>
+      </div>
+      <p>Showing <%= pagination.from %> to <%= pagination.to %> of <%= pagination.total %> entries</p>
+    </div>
+  <% } %>
+
+  <!-- Footer -->
+  <footer class="w3-margin-top w3-theme-l4 w3-padding-16">
+    <div class="w3-container">
+      <a href="/page/manufacture/daily_output" class="w3-button w3-white w3-round w3-margin-bottom">New Daily Output</a>
+      <a href="/page/dashboard" class="w3-button w3-white w3-round w3-margin-bottom">Dashboard</a>
+    </div>
+  </footer>
+</div>
+
+<script>
+  $(document).ready(function() {
+    // Initialize datepicker
+    $('.datepicker').datepick({
+      dateFormat: 'dd-mm-yyyy',
+      showOnFocus: true,
+      showTrigger: '<button type="button" class="trigger"><i class="fa fa-calendar"></i></button>'
+    });
+  });
+</script>
+
+</body>
+</html>
