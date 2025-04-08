@@ -6,66 +6,211 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Daily Output Inquiry | NexERP</title>
-  <link rel="stylesheet" href="/css/w3.css">
-  <link rel="stylesheet" href="/css/w3-theme-blue.css">
-  <link rel="stylesheet" href="/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/jquery.datepick.css">
   <link rel="stylesheet" href="/css/mrp.css">
   <script src="/js/jquery.min.js"></script>
   <script src="/js/jquery.plugin.min.js"></script>
   <script src="/js/jquery.datepick.min.js"></script>
   <script src="/js/mrp.js"></script>
+  <style>
+    body, h1, h2, h3, h4, h5, h6, p, label, input, select, button {
+      font-family: 'Poppins', sans-serif;
+    }
+    
+    body {
+      background-color: #f8f9fa;
+    }
+    
+    .page-header {
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .form-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      margin-bottom: 24px;
+      padding: 24px;
+      transition: all 0.3s ease;
+    }
+    
+    .form-card:hover {
+      box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    }
+    
+    .dashboard-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      margin-bottom: 24px;
+      transition: all 0.3s ease;
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    .dashboard-card:hover {
+      box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+      transform: translateY(-3px);
+    }
+    
+    .nav-bar {
+      background-color: rgb(0,0,255);
+      color: white;
+      box-shadow: 0 2px 10px rgba(0,0,255,0.3);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .nav-bar a {
+      padding: 16px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      transition: background-color 0.3s;
+    }
+    
+    .nav-bar a:hover {
+      background-color: rgba(255,255,255,0.1);
+    }
+    
+    .btn {
+      border-radius: 4px;
+      font-weight: 500;
+      padding: 8px 16px;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+    
+    .btn-primary {
+      background-color: rgb(0,0,255);
+      color: white;
+      border: none;
+    }
+    
+    .btn-primary:hover {
+      background-color: rgba(0,0,255,0.9);
+      box-shadow: 0 4px 8px rgba(0,0,255,0.2);
+    }
+    
+    .btn-secondary {
+      background-color: #f5f5f5;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #eee;
+    }
+    
+    .page-title {
+      font-weight: 600;
+      color: #333;
+      margin: 24px 0;
+      padding-bottom: 8px;
+      border-bottom: 2px solid rgb(0,0,255);
+      display: inline-block;
+    }
+    
+    .form-control {
+      border-radius: 4px;
+      border: 1px solid #e0e0e0;
+      padding: 8px 12px;
+      transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+      border-color: rgb(0,0,255);
+      box-shadow: 0 0 0 3px rgba(0,0,255,0.1);
+    }
+    
+    .table-container {
+      overflow-x: auto;
+      border-radius: 6px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    /* Animation for cards */
+    .animate-fade-in {
+      animation: fadeIn 0.6s ease-in-out forwards;
+      opacity: 0;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+  </style>
 </head>
 <body>
 
-<div id="myContent" class="w3-main" style="background-color:#f2fbf2;">
+<div class="w3-bar nav-bar">
+  <a href="/page/dashboard" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+  <a href="/page/manufacture/daily_inquiry" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-chart-line"></i> Sales</a>
+  <a href="/page/purchasing" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-shopping-cart"></i> Purchasing</a>
+  <a href="/page/warehouse" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-warehouse"></i> Warehouse</a>
+  <a href="/page/manufacturing" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-industry"></i> Manufacturing</a>
+  <a href="/page/engineering" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-cogs"></i> Engineering</a>
+  <a href="/page/administration" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-users-cog"></i> Administration</a>
+  <a href="/page/settings" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-cog"></i> Settings</a>
+</div>
+
+<div id="myContent" class="w3-main" style="min-height: calc(100vh - 120px); padding: 24px;">
   <!-- Header -->
-  <header class="w3-container" style="padding-top:22px">
-    <h4 class="w3-bold"><i class="fa fa-search"></i>&nbsp;&nbsp;Daily Output Inquiry</h4>
-  </header>
+  <h2 class="page-title"><i class="fa fa-search"></i> Daily Output Inquiry</h2>
 
   <!-- Search Form -->
-  <form id="searchForm" action="/page/manufacture/daily_inquiry" method="GET">
-    <div class="w3-row-padding">
-      <div class="w3-quarter">
-        <label>From Date</label>
-        <input type="text" id="from-date" name="from_date" class="w3-input w3-border form2 datepicker" 
-               value="<%= fromDate || '' %>">
+  <div class="form-card animate-fade-in">
+    <form id="searchForm" action="/page/manufacture/daily_inquiry" method="GET">
+      <div class="w3-row-padding">
+        <div class="w3-quarter">
+          <label class="form-label">From Date</label>
+          <input type="text" id="from-date" name="from_date" class="w3-input w3-border form-control datepicker" 
+                 value="<%= fromDate || '' %>">
+        </div>
+        
+        <div class="w3-quarter">
+          <label class="form-label">To Date</label>
+          <input type="text" id="to-date" name="to_date" class="w3-input w3-border form-control datepicker" 
+                 value="<%= toDate || '' %>">
+        </div>
+        
+        <div class="w3-quarter">
+          <label class="form-label">Reference</label>
+          <input type="text" id="reference" name="reference" class="w3-input w3-border form-control" 
+                 value="<%= reference || '' %>">
+        </div>
+        
+        <div class="w3-quarter">
+          <label class="form-label">Job Order</label>
+          <input type="text" id="jo" name="jo" class="w3-input w3-border form-control" 
+                 value="<%= jo || '' %>">
+        </div>
       </div>
       
-      <div class="w3-quarter">
-        <label>To Date</label>
-        <input type="text" id="to-date" name="to_date" class="w3-input w3-border form2 datepicker" 
-               value="<%= toDate || '' %>">
+      <div class="w3-row-padding w3-margin-top">
+        <div class="w3-quarter">
+          <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
+          <a href="/page/manufacture/daily_inquiry" class="btn btn-secondary">Clear</a>
+        </div>
       </div>
-      
-      <div class="w3-quarter">
-        <label>Reference</label>
-        <input type="text" id="reference" name="reference" class="w3-input w3-border form2" 
-               value="<%= reference || '' %>">
-      </div>
-      
-      <div class="w3-quarter">
-        <label>Job Order</label>
-        <input type="text" id="jo" name="jo" class="w3-input w3-border form2" 
-               value="<%= jo || '' %>">
-      </div>
-    </div>
-    
-    <div class="w3-row-padding w3-margin-top">
-      <div class="w3-quarter">
-        <button type="submit" class="w3-button w3-theme w3-round">Search</button>
-        <a href="/page/manufacture/daily_inquiry" class="w3-button w3-white w3-border w3-round">Clear</a>
-      </div>
-    </div>
-  </form>
+    </form>
+  </div>
 
   <!-- Results Table -->
-  <div class="w3-container w3-margin-top">
-    <div class="w3-responsive">
+  <div class="dashboard-card animate-fade-in delay-1">
+    <div class="table-container">
       <table class="w3-table-all w3-hoverable">
         <thead>
-          <tr class="w3-theme">
+          <tr style="background-color: rgb(0,0,255); color: white;">
             <th>Daily No.</th>
             <th>Date</th>
             <th>JO No.</th>
@@ -84,9 +229,21 @@
                 <td><%= item.jo_reference %></td>
                 <td><%= item.jo_process %></td>
                 <td><%= item.owner_abbrev %></td>
-                <td><span class="w3-tag w3-round <%= item.status_css %>"><%= item.status_name %></span></td>
                 <td>
-                  <a href="/page/manufacture/daily_output/view/<%= item.txn_id %>" class="w3-button w3-small w3-theme-l4 w3-round">View</a>
+                  <% if (item.status_name === 'Outstanding') { %>
+                    <span class="w3-tag w3-round" style="background-color: #ffc107; color: #212529; padding: 4px 8px; font-size: 0.85rem; font-weight: 500;">
+                      <%= item.status_name %>
+                    </span>
+                  <% } else if (item.status_name === 'Completed') { %>
+                    <span class="w3-tag w3-round" style="background-color: #28a745; color: white; padding: 4px 8px; font-size: 0.85rem; font-weight: 500;">
+                      <%= item.status_name %>
+                    </span>
+                  <% } else { %>
+                    <span class="w3-tag w3-round <%= item.status_css %>"><%= item.status_name %></span>
+                  <% } %>
+                </td>
+                <td>
+                  <a href="/page/manufacture/daily_output/view/<%= item.txn_id %>" class="btn btn-primary" style="padding: 4px 8px; font-size: 0.85rem;">View</a>
                 </td>
               </tr>
             <% }); %>
@@ -102,35 +259,36 @@
 
   <!-- Pagination -->
   <% if (locals.pagination) { %>
-    <div class="w3-container w3-center w3-margin-top">
+    <div class="w3-container w3-center w3-margin-top animate-fade-in delay-2">
       <div class="w3-bar">
         <% if (pagination.currentPage > 1) { %>
-          <a href="?page=1<%= pagination.queryParams %>" class="w3-button w3-theme-l4">&laquo; First</a>
-          <a href="?page=<%= pagination.currentPage - 1 %><%= pagination.queryParams %>" class="w3-button w3-theme-l4">&laquo;</a>
+          <a href="?page=1<%= pagination.queryParams %>" class="btn btn-secondary" style="margin-right: 5px;">&laquo; First</a>
+          <a href="?page=<%= pagination.currentPage - 1 %><%= pagination.queryParams %>" class="btn btn-secondary" style="margin-right: 5px;">&laquo;</a>
         <% } %>
         
         <% for (let i = pagination.startPage; i <= pagination.endPage; i++) { %>
           <% if (i === pagination.currentPage) { %>
-            <a href="#" class="w3-button w3-theme"><%= i %></a>
+            <a href="#" class="btn btn-primary" style="margin-right: 5px;"><%= i %></a>
           <% } else { %>
-            <a href="?page=<%= i %><%= pagination.queryParams %>" class="w3-button w3-theme-l4"><%= i %></a>
+            <a href="?page=<%= i %><%= pagination.queryParams %>" class="btn btn-secondary" style="margin-right: 5px;"><%= i %></a>
           <% } %>
         <% } %>
         
         <% if (pagination.currentPage < pagination.totalPages) { %>
-          <a href="?page=<%= pagination.currentPage + 1 %><%= pagination.queryParams %>" class="w3-button w3-theme-l4">&raquo;</a>
-          <a href="?page=<%= pagination.totalPages %><%= pagination.queryParams %>" class="w3-button w3-theme-l4">Last &raquo;</a>
+          <a href="?page=<%= pagination.currentPage + 1 %><%= pagination.queryParams %>" class="btn btn-secondary" style="margin-right: 5px;">&raquo;</a>
+          <a href="?page=<%= pagination.totalPages %><%= pagination.queryParams %>" class="btn btn-secondary">Last &raquo;</a>
         <% } %>
       </div>
-      <p>Showing <%= pagination.from %> to <%= pagination.to %> of <%= pagination.total %> entries</p>
+      <p style="margin-top: 10px; color: #6c757d;">Showing <%= pagination.from %> to <%= pagination.to %> of <%= pagination.total %> entries</p>
     </div>
   <% } %>
 
   <!-- Footer -->
-  <footer class="w3-margin-top w3-theme-l4 w3-padding-16">
-    <div class="w3-container">
-      <a href="/page/manufacture/daily_output" class="w3-button w3-white w3-round w3-margin-bottom">New Daily Output</a>
-      <a href="/page/dashboard" class="w3-button w3-white w3-round w3-margin-bottom">Dashboard</a>
+  <footer class="w3-margin-top w3-padding-16" style="border-top: 1px solid #e0e0e0; color: #6c757d; text-align: center; font-size: 0.9rem;">
+    <div class="w3-container animate-fade-in delay-3">
+      <a href="/page/manufacture/daily_output/new" class="btn btn-primary" style="margin-right: 10px;"><i class="fas fa-plus-circle"></i> New Daily Output</a>
+      <a href="/page/dashboard" class="btn btn-secondary"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+      <p style="margin-top: 10px;">&copy; <%= new Date().getFullYear() %> NexERP. All rights reserved.</p>
     </div>
   </footer>
 </div>

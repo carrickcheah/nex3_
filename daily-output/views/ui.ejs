@@ -70,6 +70,31 @@
       </div>
     </div>
 
+    <!-- Process Row (Added) -->
+    <div class="w3-row-padding">
+      <div class="w3-full">
+        <div class="w3-margin-bottom">
+          <label class="form-label">Process</label>
+          <% if (viewOnly) { %>
+            <p class="form-control-static"><%= data.jo_process || '&mdash;' %></p>
+          <% } else { %>
+            <select id="jo-process" name="jo_process" class="w3-select form-control" <% if (viewOnly) { %>disabled<% } %>>
+              <% if (options && options.jo_process) { %>
+                <% Object.keys(options.jo_process).forEach(function(key) { %>
+                  <option value="<%= key %>" <% if (data.jo_process === key) { %>selected<% } %>><%= options.jo_process[key] %></option>
+                <% }); %>
+              <% } else { %>
+                <option value="">Select Process</option>
+                <option value="INJECTION">INJECTION</option>
+                <option value="ASSEMBLY">ASSEMBLY</option>
+                <option value="PACKAGING">PACKAGING</option>
+              <% } %>
+            </select>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
     <!-- Second Row -->
     <div class="w3-row-padding">
       <div class="w3-half">
@@ -347,7 +372,7 @@
         <button type="button" class="btn btn-danger void-button" data-id="<%= data.txn_id %>">Void</button>
       <% } %>
     <% } %>
-    <a href="/page/manufacture/daily_inquiry" class="btn btn-secondary">Back</a>
+    <a href="/page/manufacture/daily_inquiry" class="btn btn-secondary">Exit</a>
   </div>
 </div>
 

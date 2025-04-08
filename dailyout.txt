@@ -1,0 +1,33 @@
+Yes boss!
+
+This code is part of your @nexerp system, which was originally built in PHP. 
+
+The main implementation file is at: /Users/carrickcheah/nex3/nexerp/core/site_inc/nexterp.my/daily_output.inc.php
+
+This file contains all the PHP functions that handle the daily output functionality shown in your screenshot:
+
+ebos_daily_output_new() - Creates a new daily output record
+ebos_daily_output_edit() - Edits an existing daily output record
+ebos_daily_output_view() - Displays an existing daily output record
+ebos_daily_output_read() - Reads data from the database
+ebos_daily_output_render() - Generates the HTML UI that you see in your screenshot
+The PHP code builds the interface dynamically, handling various form fields like:
+
+ID/reference selection
+Date fields
+Start/end times
+Break time
+Machine selection
+Mold selection
+Operator selection
+Output items (PRD - PRODUCTION DEPT)
+Input items (PRD - PRODUCTION DEPT)
+This is the exact code that generates the UI you showed in your screenshot. It connects to database tables like:
+
+tbl_daily_txn
+tbl_jo_txn
+tbl_jo_process
+And several others
+This is excellent news because it means you have the complete source code for 
+the functionality you're trying to recreate in Node.js. 
+The implementation we created in your daily-output directory is modeled after this PHP code, but using Node.js, Express, and EJS templates instead.
