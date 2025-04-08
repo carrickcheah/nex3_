@@ -36,7 +36,8 @@ exports.dailyOutputNew = async (req, res) => {
     // Set default data
     const sqlDate = moment().format('YYYY-MM-DD');
     
-    dbData.heading = 'New Daily Output';
+    dbData.title = 'New Daily Output';
+    dbData.heading = 'VALIANT PRECISION SDN BHD';
     dbData.input_table_rows = '';
     dbData.output_table_rows = '';
     dbData.tool_table_rows = '';
@@ -57,18 +58,65 @@ exports.dailyOutputNew = async (req, res) => {
     dbData.doc_ref = await DailyOutputModel.generateDocReference(dbData);
     req.session[txn_mode].sql_date = sqlDate;
     
+    // Get required data for dropdowns
+    let products = [], machines = [], molds = [], tools = [], operators = [];
+    
+    try {
+      // Get empty data for new records
+      machines = await DailyOutputModel.getMachinesById(0);
+      molds = await DailyOutputModel.getMoldsById(0);
+      tools = await DailyOutputModel.getToolsById(0);
+      operators = await DailyOutputModel.getOperatorsById(0);
+      products = await DailyOutputModel.getAvailableProducts();
+      
+      // Fix property naming to match UI expectations
+      products = products.map(p => ({ id: p.id, name: p.name }));
+      machines = machines.map(m => ({ id: m.id, name: m.name }));
+      molds = molds.map(m => ({ id: m.id, name: m.name }));
+      tools = tools.map(t => ({ id: t.id, name: t.name }));
+      operators = operators.map(o => ({ id: o.id, name: o.name }));
+      
+      console.log('Loaded dropdown data:', {
+        products: products?.length || 0,
+        machines: machines?.length || 0,
+        molds: molds?.length || 0,
+        tools: tools?.length || 0,
+        operators: operators?.length || 0
+      });
+    } catch (err) {
+      console.error('Error loading dropdown data:', err);
+      // Continue rendering even if dropdown data fails to load
+      // to prevent complete page failure
+    }
+    
+    // Current user as owner
+    const currentUser = req.session.user || { id: 1, name: 'SYSTEM ADMIN' };
+    const owners = [currentUser];
+    
     // Render the daily output form
     return res.render('daily_output', {
       title: 'New Daily Output',
-      user: req.session.user || { name: 'SYSTEM ADMIN' },
+      user: currentUser,
       data: dbData,
       options: {
-        daily_purpose: OPTION_DAILY_PURPOSE
-      }
+        daily_purpose: OPTION_DAILY_PURPOSE,
+        products: products || []
+      },
+      tools: tools || [],
+      machines: machines || [],
+      molds: molds || [],
+      operators: operators || [],
+      owners: owners,
+      viewOnly: false,
+      txn_mode: txn_mode,
+      txn_id: 0,
+      lng: {}, // Language placeholders
+      session_key: req.session[txn_mode].session_key,
+      action_key: helpers.keyHelper(0, txn_mode)
     });
-  } catch (error) {
-    console.error('Error in dailyOutputNew:', error);
-    res.status(500).send('An error occurred while creating a new daily output');
+  } catch (err) {
+    console.error('Error in dailyOutputNew:', err);
+    return res.status(500).send('An error occurred while loading the daily output form');
   }
 };
 

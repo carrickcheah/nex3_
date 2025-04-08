@@ -5,44 +5,238 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Daily Output | NexERP</title>
   <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
   <style>
-    .tag-outstanding {
-      background-color: #ffeb3b;
-      color: #000;
+    body, h1, h2, h3, h4, h5, h6, p, label, input, select, button {
+      font-family: 'Poppins', sans-serif;
     }
-    .tag-completed {
-      background-color: #4caf50;
+    
+    body {
+      background-color: #f8f9fa;
+    }
+    
+    .page-header {
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .form-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      margin-bottom: 24px;
+      padding: 24px;
+      transition: all 0.3s ease;
+    }
+    
+    .form-card:hover {
+      box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    }
+
+    .form-control {
+      border-radius: 4px;
+      border: 1px solid #e0e0e0;
+      padding: 8px 12px;
+      transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+      border-color: rgb(0,0,255);
+      box-shadow: 0 0 0 3px rgba(0,0,255,0.1);
+    }
+
+    .nav-bar {
+      background-color: rgb(0,0,255);
       color: white;
+      box-shadow: 0 2px 10px rgba(0,0,255,0.3);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
+    
+    .nav-bar a {
+      padding: 16px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      transition: background-color 0.3s;
+    }
+    
+    .nav-bar a:hover {
+      background-color: rgba(255,255,255,0.1);
+    }
+    
+    .section-header {
+      background-color: rgb(0,0,255);
+      color: white;
+      border-radius: 6px 6px 0 0;
+      padding: 12px 16px;
+      margin-bottom: 0;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+    
+    .section-content {
+      background: white;
+      border-radius: 0 0 6px 6px;
+      border: 1px solid #e0e0e0;
+      border-top: none;
+      padding: 16px;
+    }
+    
+    .btn {
+      border-radius: 4px;
+      font-weight: 500;
+      padding: 8px 16px;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+    
+    .btn-primary {
+      background-color: rgb(0,0,255);
+      color: white;
+      border: none;
+    }
+    
+    .btn-primary:hover {
+      background-color: rgba(0,0,255,0.9);
+      box-shadow: 0 4px 8px rgba(0,0,255,0.2);
+    }
+    
+    .btn-secondary {
+      background-color: #f5f5f5;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #eee;
+    }
+    
+    .btn-danger {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+    }
+    
+    .btn-danger:hover {
+      background-color: #c82333;
+      box-shadow: 0 4px 8px rgba(220,53,69,0.2);
+    }
+    
+    .form-label {
+      font-weight: 500;
+      color: #555;
+      margin-bottom: 6px;
+      display: block;
+    }
+    
+    .table-container {
+      overflow-x: auto;
+      border-radius: 6px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .data-table th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .data-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .data-table tr:hover {
+      background-color: #f8f9fa;
+    }
+    
+    .tag-outstanding {
+      background-color: #ffc107;
+      color: #212529;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    
+    .tag-completed {
+      background-color: #28a745;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    
+    .select2-container--default .select2-selection--multiple {
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+    }
+    
+    .select2-container--default.select2-container--focus .select2-selection--multiple {
+      border-color: rgb(0,0,255);
+      box-shadow: 0 0 0 3px rgba(0,0,255,0.1);
+    }
+    
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+      background-color: #f0f0f0;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+    }
+    
+    footer {
+      border-top: 1px solid #e0e0e0;
+      padding: 16px;
+      color: #6c757d;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    
     .w3-theme-l4 {
       background-color: #f5f7f8 !important;
     }
+    
     .w3-theme {
       background-color: #2196F3 !important;
     }
-    .select2-container {
-      width: 100% !important;
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    .form-control-static {
-      padding-top: 7px;
-      margin-bottom: 0;
-      min-height: 34px;
+    
+    .animate-fade-in {
+      animation: fadeIn 0.4s ease-out;
     }
   </style>
 </head>
 <body>
 
-<div class="w3-bar" style="background-color: rgb(0,0,255); color: white;">
-  <a href="/page/dashboard" class="w3-bar-item w3-button w3-mobile"><i class="fa fa-home"></i> Home</a>
+<div class="w3-bar nav-bar">
+  <a href="/page/dashboard" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-home"></i> Home</a>
   <a href="/page/manufacture/daily_inquiry" class="w3-bar-item w3-button w3-mobile">Daily Output</a>
   <div class="w3-right">
     <span class="w3-bar-item w3-mobile">Welcome, <%= typeof user !== 'undefined' ? user.name : 'SYSTEM ADMIN' %></span>
   </div>
 </div>
 
-<div id="main-content" class="w3-main" style="background-color:#f5f7f8; min-height: calc(100vh - 120px);">
+<div id="main-content" class="w3-main" style="min-height: calc(100vh - 120px); padding: 24px;">
   <form id="dailyOutputForm" method="POST" action="/page/dailyc">
     <input type="hidden" name="txn-mode" value="<%= typeof txn_mode !== 'undefined' ? txn_mode : 'daily_new' %>">
     <input type="hidden" name="txn-id" value="<%= typeof txn_id !== 'undefined' ? txn_id : '0' %>">
@@ -70,14 +264,14 @@
 </div>
 
 <!-- Footer -->
-<footer class="w3-container w3-theme-l4 w3-padding">
+<footer class="w3-container">
   <p>&copy; <%= new Date().getFullYear() %> NexERP. All rights reserved.</p>
 </footer>
 
 <!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
   $(document).ready(function() {
     // Initialize Select2 for all multiple select boxes

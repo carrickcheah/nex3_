@@ -417,56 +417,194 @@ class DailyOutputModel {
 
   /**
    * Get machines
-   * @param {Object} connection - Database connection
-   * @param {number} txn_id - Transaction ID
+   * @param {Object|null} connection - Database connection (optional)
+   * @param {number} txn_id - Transaction ID (optional)
    * @returns {Promise<Array>} - Array of machines
    */
-  static async getMachines(connection, txn_id) {
-    return await connection.query(`
-      SELECT m.MachineId_i as machine_id, 
-             m.MachineName_v as machine_name,
+  static async getMachines(connection, txn_id = 0) {
+    if (!connection) {
+      return this.getMachinesById(txn_id);
+    }
+    
+    const [rows] = await connection.query(`
+      SELECT m.MachineId_i as id, 
+             m.MachineName_v as name,
              dm.Selected_c as selected
       FROM tbl_comp_machine m
       LEFT JOIN tbl_daily_machine dm ON dm.MachineId_i = m.MachineId_i AND dm.TxnId_i = ?
       WHERE m.Status_c = 'A'
       ORDER BY m.MachineName_v
-    `, [txn_id]);
+    `, [txn_id || 0]);
+    
+    return rows;
   }
 
   /**
    * Get molds
-   * @param {Object} connection - Database connection
-   * @param {number} txn_id - Transaction ID
+   * @param {Object|null} connection - Database connection (optional)
+   * @param {number} txn_id - Transaction ID (optional)
    * @returns {Promise<Array>} - Array of molds
    */
-  static async getMolds(connection, txn_id) {
-    return await connection.query(`
-      SELECT m.MoldId_i as mold_id, 
-             m.MoldName_v as mold_name,
+  static async getMolds(connection, txn_id = 0) {
+    if (!connection) {
+      return this.getMoldsById(txn_id);
+    }
+    
+    const [rows] = await connection.query(`
+      SELECT m.MoldId_i as id, 
+             m.MoldName_v as name,
              dm.Selected_c as selected
       FROM tbl_comp_mold m
       LEFT JOIN tbl_daily_mold dm ON dm.MoldId_i = m.MoldId_i AND dm.TxnId_i = ?
       WHERE m.Status_c = 'A'
       ORDER BY m.MoldName_v
-    `, [txn_id]);
+    `, [txn_id || 0]);
+    
+    return rows;
   }
 
   /**
    * Get operators
-   * @param {Object} connection - Database connection
-   * @param {number} txn_id - Transaction ID
+   * @param {Object|null} connection - Database connection (optional)
+   * @param {number} txn_id - Transaction ID (optional)
    * @returns {Promise<Array>} - Array of operators
    */
-  static async getOperators(connection, txn_id) {
-    return await connection.query(`
-      SELECT u.UserId_i as operator_id, 
-             u.UserName_v as operator_name,
+  static async getOperators(connection, txn_id = 0) {
+    if (!connection) {
+      return this.getOperatorsById(txn_id);
+    }
+    
+    const [rows] = await connection.query(`
+      SELECT u.UserId_i as id, 
+             u.UserName_v as name,
              du.Selected_c as selected
       FROM tbl_user u
       LEFT JOIN tbl_daily_operator du ON du.UserId_i = u.UserId_i AND du.TxnId_i = ?
       WHERE u.Status_c = 'A' AND u.UserGroup_c = 'O'
       ORDER BY u.UserName_v
-    `, [txn_id]);
+    `, [txn_id || 0]);
+    
+    return rows;
+  }
+
+  /**
+   * Get tools
+   * @param {Object|null} connection - Database connection (optional)
+   * @param {number} txn_id - Transaction ID (optional)
+   * @returns {Promise<Array>} - Array of tools
+   */
+  static async getTools(connection, txn_id = 0) {
+    if (!connection) {
+      return this.getToolsById(txn_id);
+    }
+    
+    const [rows] = await connection.query(`
+      SELECT t.ToolId_i as id, 
+             t.ToolName_v as name,
+             dt.Selected_c as selected
+      FROM tbl_comp_tool t
+      LEFT JOIN tbl_daily_tool dt ON dt.ToolId_i = t.ToolId_i AND dt.TxnId_i = ?
+      WHERE t.Status_c = 'A'
+      ORDER BY t.ToolName_v
+    `, [txn_id || 0]);
+    
+    return rows;
+  }
+
+  /**
+   * Get machines for a transaction by ID
+   * @param {number} txn_id - Transaction ID (optional)
+   * @returns {Promise<Array>} - Array of machines
+   */
+  static async getMachinesById(txn_id = 0) {
+    const connection = await pool.getConnection();
+    try {
+      const [rows] = await connection.query(`
+        SELECT m.MachineId_i as id, 
+               m.MachineName_v as name,
+               dm.Selected_c as selected
+        FROM tbl_comp_machine m
+        LEFT JOIN tbl_daily_machine dm ON dm.MachineId_i = m.MachineId_i AND dm.TxnId_i = ?
+        WHERE m.Status_c = 'A'
+        ORDER BY m.MachineName_v
+      `, [txn_id || 0]);
+      
+      return rows;
+    } finally {
+      connection.release();
+    }
+  }
+  
+  /**
+   * Get molds for a transaction by ID
+   * @param {number} txn_id - Transaction ID (optional)
+   * @returns {Promise<Array>} - Array of molds
+   */
+  static async getMoldsById(txn_id = 0) {
+    const connection = await pool.getConnection();
+    try {
+      const [rows] = await connection.query(`
+        SELECT m.MoldId_i as id, 
+               m.MoldName_v as name,
+               dm.Selected_c as selected
+        FROM tbl_comp_mold m
+        LEFT JOIN tbl_daily_mold dm ON dm.MoldId_i = m.MoldId_i AND dm.TxnId_i = ?
+        WHERE m.Status_c = 'A'
+        ORDER BY m.MoldName_v
+      `, [txn_id || 0]);
+      
+      return rows;
+    } finally {
+      connection.release();
+    }
+  }
+  
+  /**
+   * Get operators for a transaction by ID
+   * @param {number} txn_id - Transaction ID (optional)
+   * @returns {Promise<Array>} - Array of operators
+   */
+  static async getOperatorsById(txn_id = 0) {
+    const connection = await pool.getConnection();
+    try {
+      const [rows] = await connection.query(`
+        SELECT u.UserId_i as id, 
+               u.UserName_v as name,
+               du.Selected_c as selected
+        FROM tbl_user u
+        LEFT JOIN tbl_daily_operator du ON du.UserId_i = u.UserId_i AND du.TxnId_i = ?
+        WHERE u.Status_c = 'A' AND u.UserGroup_c = 'O'
+        ORDER BY u.UserName_v
+      `, [txn_id || 0]);
+      
+      return rows;
+    } finally {
+      connection.release();
+    }
+  }
+
+  /**
+   * Get tools for a transaction by ID
+   * @param {number} txn_id - Transaction ID (optional)
+   * @returns {Promise<Array>} - Array of tools
+   */
+  static async getToolsById(txn_id = 0) {
+    const connection = await pool.getConnection();
+    try {
+      const [rows] = await connection.query(`
+        SELECT t.ToolId_i as id, 
+               t.ToolName_v as name,
+               dt.Selected_c as selected
+        FROM tbl_comp_tool t
+        LEFT JOIN tbl_daily_tool dt ON dt.ToolId_i = t.ToolId_i AND dt.TxnId_i = ?
+        WHERE t.Status_c = 'A'
+        ORDER BY t.ToolName_v
+      `, [txn_id || 0]);
+      
+      return rows;
+    } finally {
+      connection.release();
+    }
   }
 
   /**
@@ -543,17 +681,44 @@ class DailyOutputModel {
 
   /**
    * Get available products
+   * @returns {Promise<Array>} - Array of products
+   */
+  static async getAvailableProducts() {
+    const connection = await pool.getConnection();
+    try {
+      const [rows] = await connection.query(`
+        SELECT p.ProductId_i as id, 
+               CONCAT('(',p.ProductCode_v,') ',p.ProductName_v) as name
+        FROM tbl_product p
+        WHERE p.Status_c = 'A'
+        ORDER BY p.ProductName_v
+      `);
+      
+      return rows;
+    } finally {
+      connection.release();
+    }
+  }
+
+  /**
+   * Get available products with connection
    * @param {Object} connection - Database connection
    * @returns {Promise<Array>} - Array of products
    */
   static async getAvailableProducts(connection) {
-    return await connection.query(`
-      SELECT p.ProductId_i as product_id, 
-             CONCAT('(',p.ProductCode_v,') ',p.ProductName_v) as product_name
+    if (!connection) {
+      return this.getAvailableProducts();
+    }
+    
+    const [rows] = await connection.query(`
+      SELECT p.ProductId_i as id, 
+             CONCAT('(',p.ProductCode_v,') ',p.ProductName_v) as name
       FROM tbl_product p
-      WHERE p.Status_c = 'A' AND p.ProductType_c = 'F'
+      WHERE p.Status_c = 'A'
       ORDER BY p.ProductName_v
     `);
+    
+    return rows;
   }
 
   /**
@@ -613,7 +778,7 @@ class DailyOutputModel {
    * @param {number} txn_id - Transaction ID
    * @returns {Promise<Array>} - Array of machines
    */
-  static async getMachines(txn_id) {
+  static async getMachines(txn_id = 0) {
     const connection = await pool.getConnection();
     try {
       const [rows] = await connection.query(`
@@ -624,7 +789,7 @@ class DailyOutputModel {
         LEFT JOIN tbl_daily_machine dm ON dm.MachineId_i = m.MachineId_i AND dm.TxnId_i = ?
         WHERE m.Status_c = 'A'
         ORDER BY m.MachineName_v
-      `, [txn_id]);
+      `, [txn_id || 0]);
       
       return rows;
     } finally {
@@ -637,7 +802,7 @@ class DailyOutputModel {
    * @param {number} txn_id - Transaction ID
    * @returns {Promise<Array>} - Array of molds
    */
-  static async getMolds(txn_id) {
+  static async getMolds(txn_id = 0) {
     const connection = await pool.getConnection();
     try {
       const [rows] = await connection.query(`
@@ -648,7 +813,7 @@ class DailyOutputModel {
         LEFT JOIN tbl_daily_mold dm ON dm.MoldId_i = m.MoldId_i AND dm.TxnId_i = ?
         WHERE m.Status_c = 'A'
         ORDER BY m.MoldName_v
-      `, [txn_id]);
+      `, [txn_id || 0]);
       
       return rows;
     } finally {
@@ -661,7 +826,7 @@ class DailyOutputModel {
    * @param {number} txn_id - Transaction ID
    * @returns {Promise<Array>} - Array of operators
    */
-  static async getOperators(txn_id) {
+  static async getOperators(txn_id = 0) {
     const connection = await pool.getConnection();
     try {
       const [rows] = await connection.query(`
@@ -672,7 +837,7 @@ class DailyOutputModel {
         LEFT JOIN tbl_daily_operator du ON du.UserId_i = u.UserId_i AND du.TxnId_i = ?
         WHERE u.Status_c = 'A' AND u.UserGroup_c = 'O'
         ORDER BY u.UserName_v
-      `, [txn_id]);
+      `, [txn_id || 0]);
       
       return rows;
     } finally {
@@ -953,6 +1118,54 @@ class DailyOutputModel {
     } finally {
       connection.release();
     }
+  }
+
+  /**
+   * Get tools for a transaction
+   * @param {number} txn_id - Transaction ID (optional)
+   * @returns {Promise<Array>} - Array of tools
+   */
+  static async getTools(txn_id = 0) {
+    const connection = await pool.getConnection();
+    try {
+      const [rows] = await connection.query(`
+        SELECT t.ToolId_i as id, 
+               t.ToolName_v as name,
+               dt.Selected_c as selected
+        FROM tbl_comp_tool t
+        LEFT JOIN tbl_daily_tool dt ON dt.ToolId_i = t.ToolId_i AND dt.TxnId_i = ?
+        WHERE t.Status_c = 'A'
+        ORDER BY t.ToolName_v
+      `, [txn_id || 0]);
+      
+      return rows;
+    } finally {
+      connection.release();
+    }
+  }
+
+  /**
+   * Get tools with provided connection
+   * @param {Object} connection - Database connection
+   * @param {number} txn_id - Transaction ID (optional)
+   * @returns {Promise<Array>} - Array of tools
+   */
+  static async getTools(connection, txn_id = 0) {
+    if (!connection) {
+      return this.getTools(txn_id);
+    }
+    
+    const [rows] = await connection.query(`
+      SELECT t.ToolId_i as id, 
+             t.ToolName_v as name,
+             dt.Selected_c as selected
+      FROM tbl_comp_tool t
+      LEFT JOIN tbl_daily_tool dt ON dt.ToolId_i = t.ToolId_i AND dt.TxnId_i = ?
+      WHERE t.Status_c = 'A'
+      ORDER BY t.ToolName_v
+    `, [txn_id || 0]);
+    
+    return rows;
   }
 }
 

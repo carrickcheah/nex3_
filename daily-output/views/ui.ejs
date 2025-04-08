@@ -3,137 +3,225 @@
 <!-- Main Form Header Section -->
 <%- include('components/header', { title: data.heading || 'Daily Output' }) %>
 
-<div class="w3-container w3-padding-16">
-  <div class="w3-row-padding">
-    <!-- Purpose Selection -->
-    <div class="w3-quarter">
-      <label>Purpose</label>
-      <select id="purpose-option" name="purpose" class="w3-select w3-border form2" <% if (viewOnly) { %>disabled<% } %>>
-        <% Object.keys(options.daily_purpose).forEach(function(key) { %>
-          <option value="<%= key %>" <% if (data.purpose === key) { %>selected<% } %>><%= options.daily_purpose[key] %></option>
-        <% }); %>
-      </select>
+<div class="w3-container">
+  <!-- Form Header -->
+  <%- include('components/header', { title: data.title, status: data.status }) %>
+
+  <!-- Main Form Content -->
+  <div class="form-card animate-fade-in">
+    <!-- First Row -->
+    <div class="w3-row-padding">
+      <div class="w3-quarter">
+        <div class="w3-margin-bottom">
+          <label class="form-label">Purpose</label>
+          <% if (viewOnly) { %>
+            <p class="form-control-static"><%= data.purpose || '&mdash;' %></p>
+          <% } else { %>
+            <select id="purpose-option" name="purpose" class="w3-select form-control" <% if (viewOnly) { %>disabled<% } %>>
+              <% if (options && options.daily_purpose) { %>
+                <% Object.keys(options.daily_purpose).forEach(function(key) { %>
+                  <option value="<%= key %>" <% if (data.purpose === key) { %>selected<% } %>><%= options.daily_purpose[key] %></option>
+                <% }); %>
+              <% } %>
+            </select>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="w3-quarter">
+        <div class="w3-margin-bottom">
+          <label class="form-label"><%= lng.JO_NO || 'JO No' %></label>
+          <% if (viewOnly) { %>
+            <p class="form-control-static"><%= data.jo_reference || '&mdash;' %></p>
+          <% } else { %>
+            <input type="text" id="jo-reference" name="jo_reference" class="w3-input form-control" 
+                   value="<%= data.jo_reference || '' %>" <% if (viewOnly || data.txn_mode === 'daily_edit') { %>readonly<% } %>>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="w3-quarter">
+        <div class="w3-margin-bottom">
+          <label class="form-label"><%= lng.DAILY_NO || 'Daily No' %></label>
+          <% if (viewOnly) { %>
+            <p class="form-control-static"><%= data.doc_ref || '&mdash;' %></p>
+          <% } else { %>
+            <input type="text" id="doc-ref" name="doc_ref" class="w3-input form-control" 
+                   value="<%= data.doc_ref || '' %>" readonly>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="w3-quarter">
+        <div class="w3-margin-bottom">
+          <label class="form-label"><%= lng.ISSUED_BY || 'Issued By' %></label>
+          <% if (viewOnly) { %>
+            <p class="form-control-static"><%= data.owner_name || '&mdash;' %></p>
+          <% } else { %>
+            <select id="owner-id" name="owner_id" class="w3-select form-control" <% if (viewOnly || data.txn_mode !== 'daily_new') { %>disabled<% } %>>
+              <% if (owners) { %>
+                <% owners.forEach(function(owner) { %>
+                  <option value="<%= owner.id %>" <% if (data.owner_id == owner.id) { %>selected<% } %>><%= owner.name %></option>
+                <% }); %>
+              <% } %>
+            </select>
+          <% } %>
+        </div>
+      </div>
     </div>
 
-    <!-- JO Reference -->
-    <div class="w3-quarter">
-      <label><%= lng.JO_NO || 'JO No' %></label>
-      <input type="text" id="jo-reference" name="jo_reference" class="w3-input w3-border form2" 
-             value="<%= data.jo_reference || '' %>" <% if (viewOnly || data.txn_mode === 'daily_edit') { %>readonly<% } %>>
+    <!-- Second Row -->
+    <div class="w3-row-padding">
+      <div class="w3-half">
+        <div class="w3-margin-bottom">
+          <label class="form-label"><%= lng.TXN_DATE || 'Doc Date' %></label>
+          <% if (viewOnly) { %>
+            <p class="form-control-static"><%= data.txn_date || '&mdash;' %></p>
+          <% } else { %>
+            <input type="text" id="txn-date" name="txn_date" class="w3-input form-control datepicker" 
+                   value="<%= data.txn_date || '' %>" <% if (viewOnly) { %>readonly<% } %>>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="w3-half">
+        <div class="w3-margin-bottom">
+          <label class="form-label">Start Time</label>
+          <% if (viewOnly) { %>
+            <p class="form-control-static"><%= data.start_time || '&mdash;' %></p>
+          <% } else { %>
+            <input type="time" id="start-time" name="start_time" class="w3-input form-control" 
+                   value="<%= data.start_time || '' %>" <% if (viewOnly) { %>readonly<% } %>>
+          <% } %>
+        </div>
+      </div>
     </div>
 
-    <!-- Document Reference -->
-    <div class="w3-quarter">
-      <label><%= lng.DAILY_NO || 'Daily No' %></label>
-      <input type="text" id="doc-ref" name="doc_ref" class="w3-input w3-border form2" 
-             value="<%= data.doc_ref || '' %>" readonly>
-    </div>
+    <!-- Third Row -->
+    <div class="w3-row-padding">
+      <div class="w3-half">
+        <div class="w3-margin-bottom">
+          <label class="form-label">End Time</label>
+          <% if (viewOnly) { %>
+            <p class="form-control-static"><%= data.end_time || '&mdash;' %></p>
+          <% } else { %>
+            <input type="time" id="end-time" name="end_time" class="w3-input form-control" 
+                   value="<%= data.end_time || '' %>" <% if (viewOnly) { %>readonly<% } %>>
+          <% } %>
+        </div>
+      </div>
 
-    <!-- Issued By -->
-    <div class="w3-quarter">
-      <label><%= lng.ISSUED_BY || 'Issued By' %></label>
-      <select id="owner-id" name="owner_id" class="w3-select w3-border form2" <% if (viewOnly || data.txn_mode !== 'daily_new') { %>disabled<% } %>>
-        <% owners.forEach(function(owner) { %>
-          <option value="<%= owner.id %>" <% if (data.owner_id == owner.id) { %>selected<% } %>><%= owner.name %></option>
-        <% }); %>
-      </select>
-    </div>
-  </div>
-
-  <div class="w3-row-padding w3-margin-top">
-    <!-- Date -->
-    <div class="w3-quarter">
-      <label><%= lng.TXN_DATE || 'Doc Date' %></label>
-      <input type="text" id="txn-date" name="txn_date" class="w3-input w3-border form2 datepicker" 
-             value="<%= data.txn_date || '' %>" <% if (viewOnly) { %>readonly<% } %>>
-    </div>
-
-    <!-- Start Time -->
-    <div class="w3-quarter">
-      <label>Start Time</label>
-      <input type="time" id="start-time" name="start_time" class="w3-input w3-border form2" 
-             value="<%= data.start_time || '' %>" <% if (viewOnly) { %>readonly<% } %>>
-    </div>
-
-    <!-- End Time -->
-    <div class="w3-quarter">
-      <label>End Time</label>
-      <input type="time" id="end-time" name="end_time" class="w3-input w3-border form2" 
-             value="<%= data.end_time || '' %>" <% if (viewOnly) { %>readonly<% } %>>
-    </div>
-
-    <!-- Break Time -->
-    <div class="w3-quarter">
-      <label>Break Time (Minutes)</label>
-      <input type="number" id="break-time" name="break_time" class="w3-input w3-border form2" 
-             value="<%= data.break_time || '0' %>" min="0" <% if (viewOnly) { %>readonly<% } %>>
+      <div class="w3-half">
+        <div class="w3-margin-bottom">
+          <label class="form-label">Break Time (Minutes)</label>
+          <% if (viewOnly) { %>
+            <p class="form-control-static"><%= data.break_time || '&mdash;' %></p>
+          <% } else { %>
+            <input type="number" id="break-time" name="break_time" class="w3-input form-control" 
+                   value="<%= data.break_time || '0' %>" min="0" <% if (viewOnly) { %>readonly<% } %>>
+          <% } %>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- Machines, Molds, Tools, and Operators Section -->
-  <div class="w3-row-padding w3-margin-top">
-    <!-- Machines -->
-    <div class="w3-quarter">
-      <label>Machines</label>
-      <select id="machine-descr" name="machine_descr[]" class="w3-select w3-border form2" multiple <% if (viewOnly || !data.jo_reference) { %>disabled<% } %>>
-        <% machines.forEach(function(machine) { %>
-          <option value="<%= machine.id %>" 
-            <% if (data.machine_descr && data.machine_descr.includes(machine.id)) { %>selected<% } %>>
-            <%= machine.name %>
-          </option>
-        <% }); %>
-      </select>
+  <div class="w3-margin-top form-card animate-fade-in" style="animation-delay: 0.1s;">
+    <div class="section-header">
+      <h4 style="margin: 0;">Machines, Molds, Tools, and Operators</h4>
     </div>
+    <div class="w3-row-padding">
+      <div class="w3-quarter">
+        <div class="w3-margin-bottom">
+          <label class="form-label">Machines</label>
+          <% if (viewOnly) { %>
+            <p class="form-control-static"><%= data.machine_name || '&mdash;' %></p>
+          <% } else { %>
+            <select id="machine-descr" name="machine_descr[]" class="w3-select form-control" multiple <% if (viewOnly || !data.jo_reference) { %>disabled<% } %>>
+              <% if (machines) { %>
+                <% machines.forEach(function(machine) { %>
+                  <option value="<%= machine.id %>" 
+                    <% if (data.machine_descr && data.machine_descr.includes(machine.id)) { %>selected<% } %>>
+                    <%= machine.name %>
+                  </option>
+                <% }); %>
+              <% } %>
+            </select>
+          <% } %>
+        </div>
+      </div>
 
-    <!-- Molds -->
-    <div class="w3-quarter">
-      <label>Molds</label>
-      <select id="mold-descr" name="mold_descr[]" class="w3-select w3-border form2" multiple <% if (viewOnly || !data.jo_reference) { %>disabled<% } %>>
-        <% molds.forEach(function(mold) { %>
-          <option value="<%= mold.id %>" 
-            <% if (data.mold_descr && data.mold_descr.includes(mold.id)) { %>selected<% } %>>
-            <%= mold.name %>
-          </option>
-        <% }); %>
-      </select>
-    </div>
+      <div class="w3-quarter">
+        <div class="w3-margin-bottom">
+          <label class="form-label">Molds</label>
+          <% if (viewOnly) { %>
+            <p class="form-control-static"><%= data.mold_name || '&mdash;' %></p>
+          <% } else { %>
+            <select id="mold-descr" name="mold_descr[]" class="w3-select form-control" multiple <% if (viewOnly || !data.jo_reference) { %>disabled<% } %>>
+              <% if (molds) { %>
+                <% molds.forEach(function(mold) { %>
+                  <option value="<%= mold.id %>" 
+                    <% if (data.mold_descr && data.mold_descr.includes(mold.id)) { %>selected<% } %>>
+                    <%= mold.name %>
+                  </option>
+                <% }); %>
+              <% } %>
+            </select>
+          <% } %>
+        </div>
+      </div>
 
-    <!-- Tools -->
-    <div class="w3-quarter">
-      <label>Tools</label>
-      <select id="tool-descr" name="tool_descr[]" class="w3-select w3-border form2" multiple <% if (viewOnly || !data.jo_reference) { %>disabled<% } %>>
-        <% tools.forEach(function(tool) { %>
-          <option value="<%= tool.id %>" 
-            <% if (data.tool_descr && data.tool_descr.includes(tool.id)) { %>selected<% } %>>
-            <%= tool.name %>
-          </option>
-        <% }); %>
-      </select>
-    </div>
+      <div class="w3-quarter">
+        <div class="w3-margin-bottom">
+          <label class="form-label">Tools</label>
+          <% if (viewOnly) { %>
+            <p class="form-control-static"><%= data.tool_name || '&mdash;' %></p>
+          <% } else { %>
+            <select id="tool-descr" name="tool_descr[]" class="w3-select form-control" multiple <% if (viewOnly || !data.jo_reference) { %>disabled<% } %>>
+              <% if (tools) { %>
+                <% tools.forEach(function(tool) { %>
+                  <option value="<%= tool.id %>" 
+                    <% if (data.tool_descr && data.tool_descr.includes(tool.id)) { %>selected<% } %>>
+                    <%= tool.name %>
+                  </option>
+                <% }); %>
+              <% } %>
+            </select>
+          <% } %>
+        </div>
+      </div>
 
-    <!-- Operators -->
-    <div class="w3-quarter">
-      <label>Operators</label>
-      <select id="operator-descr" name="operator_descr[]" class="w3-select w3-border form2" multiple <% if (viewOnly || !data.jo_reference) { %>disabled<% } %>>
-        <% operators.forEach(function(operator) { %>
-          <option value="<%= operator.id %>" 
-            <% if (data.operator_descr && data.operator_descr.includes(operator.id)) { %>selected<% } %>>
-            <%= operator.name %>
-          </option>
-        <% }); %>
-      </select>
+      <div class="w3-quarter">
+        <div class="w3-margin-bottom">
+          <label class="form-label">Operators</label>
+          <% if (viewOnly) { %>
+            <p class="form-control-static"><%= data.operator_name || '&mdash;' %></p>
+          <% } else { %>
+            <select id="operator-descr" name="operator_descr[]" class="w3-select form-control" multiple <% if (viewOnly || !data.jo_reference) { %>disabled<% } %>>
+              <% if (operators) { %>
+                <% operators.forEach(function(operator) { %>
+                  <option value="<%= operator.id %>" 
+                    <% if (data.operator_descr && data.operator_descr.includes(operator.id)) { %>selected<% } %>>
+                    <%= operator.name %>
+                  </option>
+                <% }); %>
+              <% } %>
+            </select>
+          <% } %>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- Output Items Section -->
-  <div class="w3-margin-top">
-    <div class="w3-container" style="background-color: rgb(0,0,255); color: white;">
-      <h4>Output Items (PRD : PRODUCTION DEPT)</h4>
+  <div class="w3-margin-top form-card animate-fade-in" style="animation-delay: 0.2s;">
+    <div class="section-header">
+      <h4 style="margin: 0;">Output Items (PRD : PRODUCTION DEPT)</h4>
     </div>
-    <div class="w3-responsive">
-      <table class="w3-table-all">
+    <div class="table-container">
+      <table class="w3-table-all data-table">
         <thead>
-          <tr class="w3-light-grey">
+          <tr>
             <th>#</th>
             <th>Product Description</th>
             <th>Output Qty (PCS,Sheet)</th>
@@ -152,8 +240,8 @@
         <tfoot>
           <tr>
             <td colspan="9">
-              <button type="button" id="add-output-item" class="w3-button w3-small" style="background-color: rgb(0,0,255); color: white;">
-                <i class="fa fa-plus"></i> Add Item
+              <button type="button" id="add-output-item" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Item
               </button>
             </td>
           </tr>
@@ -164,14 +252,14 @@
   </div>
 
   <!-- Input Items Section -->
-  <div class="w3-margin-top">
-    <div class="w3-container" style="background-color: rgb(0,0,255); color: white;">
-      <h4>Input Items (PRD : PRODUCTION DEPT)</h4>
+  <div class="w3-margin-top form-card animate-fade-in" style="animation-delay: 0.3s;">
+    <div class="section-header">
+      <h4 style="margin: 0;">Input Items (PRD : PRODUCTION DEPT)</h4>
     </div>
-    <div class="w3-responsive">
-      <table class="w3-table-all">
+    <div class="table-container">
+      <table class="w3-table-all data-table">
         <thead>
-          <tr class="w3-light-grey">
+          <tr>
             <th>#</th>
             <th>Product Description</th>
             <th>PRD Batch</th>
@@ -188,8 +276,8 @@
         <tfoot>
           <tr>
             <td colspan="7">
-              <button type="button" id="add-input-item" class="w3-button w3-small" style="background-color: rgb(0,0,255); color: white;">
-                <i class="fa fa-plus"></i> Add Item
+              <button type="button" id="add-input-item" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Item
               </button>
             </td>
           </tr>
@@ -201,14 +289,14 @@
 
   <!-- Tools Section (if needed) -->
   <% if (data.tool_table_rows) { %>
-  <div class="w3-margin-top">
-    <div class="w3-container" style="background-color: rgb(0,0,255); color: white;">
-      <h4>Tools</h4>
+  <div class="w3-margin-top form-card animate-fade-in" style="animation-delay: 0.4s;">
+    <div class="section-header">
+      <h4 style="margin: 0;">Tools</h4>
     </div>
-    <div class="w3-responsive">
-      <table class="w3-table-all">
+    <div class="table-container">
+      <table class="w3-table-all data-table">
         <thead>
-          <tr class="w3-light-grey">
+          <tr>
             <th>#</th>
             <th>Tool Description</th>
             <th>Tool Type</th>
@@ -219,31 +307,155 @@
         <tbody id="tool-items-table">
           <%- data.tool_table_rows %>
         </tbody>
+        <% if (!viewOnly) { %>
+        <tfoot>
+          <tr>
+            <td colspan="5">
+              <button type="button" id="add-tool-item" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Tool
+              </button>
+            </td>
+          </tr>
+        </tfoot>
+        <% } %>
       </table>
     </div>
   </div>
   <% } %>
 
   <!-- Remarks Section -->
-  <div class="w3-margin-top">
-    <label>Remark</label>
-    <textarea id="doc-remark" name="doc_remark" class="w3-input w3-border" style="resize: vertical;" 
-      <% if (viewOnly) { %>readonly<% } %>><%= data.doc_remark || '' %></textarea>
+  <div class="w3-margin-top form-card animate-fade-in" style="animation-delay: 0.5s;">
+    <div class="w3-row-padding">
+      <div class="w3-col">
+        <label class="form-label">Remark</label>
+        <% if (viewOnly) { %>
+          <p class="form-control-static"><%= data.doc_remark || '&mdash;' %></p>
+        <% } else { %>
+          <textarea id="doc-remark" name="doc_remark" class="w3-input form-control" rows="3"><%= data.doc_remark || '' %></textarea>
+        <% } %>
+      </div>
+    </div>
   </div>
 
   <!-- Action Buttons -->
-  <div class="w3-margin-top w3-right-align">
+  <div class="w3-margin-top w3-right-align form-card animate-fade-in" style="animation-delay: 0.6s;">
     <% if (!viewOnly && data.txn_mode === 'daily_new') { %>
-      <button type="submit" class="w3-button" style="background-color: rgb(0,0,255); color: white;" name="action" value="save">Save</button>
+      <button type="submit" class="btn btn-primary" name="action" value="save">Save</button>
     <% } else if (!viewOnly && data.txn_mode === 'daily_edit') { %>
-      <button type="submit" class="w3-button" style="background-color: rgb(0,0,255); color: white;" name="action" value="update">Update</button>
+      <button type="submit" class="btn btn-primary" name="action" value="update">Update</button>
       <% if (data.allow_void && !data.void) { %>
-        <button type="button" class="w3-button w3-red void-button" data-id="<%= data.txn_id %>">Void</button>
+        <button type="button" class="btn btn-danger void-button" data-id="<%= data.txn_id %>">Void</button>
       <% } %>
     <% } %>
-    <a href="/page/manufacture/daily_inquiry" class="w3-button w3-grey">Back</a>
+    <a href="/page/manufacture/daily_inquiry" class="btn btn-secondary">Back</a>
   </div>
 </div>
+
+<!-- Templates for dynamic rows -->
+<% if (!viewOnly) { %>
+<!-- Output Item Template -->
+<script type="text/template" id="output-item-template">
+  <tr class="output-item-row">
+    <td><span class="output-item-index">{index}</span></td>
+    <td>
+      <select class="w3-select form-control output-product-select" name="output-product-id[]" required>
+        <option value="">Select Product</option>
+        <% if (options && options.products) { %>
+          <% options.products.forEach(function(product) { %>
+            <option value="<%= product.id %>"><%= product.name %></option>
+          <% }); %>
+        <% } %>
+      </select>
+    </td>
+    <td><input type="number" class="w3-input form-control output-qty" name="output-qty[]" value="0" min="0" step="0.01"></td>
+    <td><input type="number" class="w3-input form-control reject-qty" name="reject-qty[]" value="0" min="0" step="0.01"></td>
+    <td><input type="number" class="w3-input form-control extra-qty" name="extra-qty[]" value="0" min="0" step="0.01"></td>
+    <td><span class="total-output">0</span></td>
+    <td><span class="outstanding">0</span></td>
+    <td><span class="output-value">0.00</span></td>
+    <td>
+      <button type="button" class="w3-button w3-small w3-red remove-output-item">
+        <i class="fas fa-trash"></i>
+      </button>
+    </td>
+  </tr>
+</script>
+
+<!-- Input Item Template -->
+<script type="text/template" id="input-item-template">
+  <tr class="input-item-row">
+    <td><span class="input-item-index">{index}</span></td>
+    <td>
+      <select class="w3-select form-control input-product-select" name="input-product-id[]" required>
+        <option value="">Select Product</option>
+        <% if (options && options.products) { %>
+          <% options.products.forEach(function(product) { %>
+            <option value="<%= product.id %>"><%= product.name %></option>
+          <% }); %>
+        <% } %>
+      </select>
+    </td>
+    <td><input type="text" class="w3-input form-control" name="input-batch[]" value=""></td>
+    <td><input type="number" class="w3-input form-control demand-qty" name="demand-qty[]" value="0" min="0" step="0.01"></td>
+    <td><input type="text" class="w3-input form-control" name="input-lot[]" value=""></td>
+    <td><span class="input-value">0.00</span></td>
+    <td>
+      <button type="button" class="w3-button w3-small w3-red remove-input-item">
+        <i class="fas fa-trash"></i>
+      </button>
+    </td>
+  </tr>
+</script>
+
+<!-- Tool Item Template -->
+<script type="text/template" id="tool-item-template">
+  <tr class="tool-item-row">
+    <td><span class="tool-item-index">{index}</span></td>
+    <td>
+      <select class="w3-select form-control tool-select" name="tool-id[]" required>
+        <option value="">Select Tool</option>
+        <% if (options && options.tools) { %>
+          <% options.tools.forEach(function(tool) { %>
+            <option value="<%= tool.id %>"><%= tool.name %></option>
+          <% }); %>
+        <% } %>
+      </select>
+    </td>
+    <td><input type="number" class="w3-input form-control" name="tool-qty[]" value="1" min="1" step="1"></td>
+    <td><input type="text" class="w3-input form-control" name="tool-remarks[]" value=""></td>
+    <td>
+      <button type="button" class="w3-button w3-small w3-red remove-tool-item">
+        <i class="fas fa-trash"></i>
+      </button>
+    </td>
+  </tr>
+</script>
+
+<!-- Breaktime Template -->
+<script type="text/template" id="breaktime-template">
+  <tr class="breaktime-row">
+    <td><span class="breaktime-index">{index}</span></td>
+    <td><input type="time" class="w3-input form-control breaktime-start" name="breaktime-start[]" required></td>
+    <td><input type="time" class="w3-input form-control breaktime-end" name="breaktime-end[]" required></td>
+    <td><span class="breaktime-duration">0</span></td>
+    <td>
+      <select class="w3-select form-control breaktime-reason" name="breaktime-reason[]" required>
+        <option value="">Select Reason</option>
+        <option value="MAINTENANCE">Maintenance</option>
+        <option value="REPAIR">Repair</option>
+        <option value="SETUP">Setup</option>
+        <option value="REST">Rest</option>
+        <option value="OTHER">Other</option>
+      </select>
+    </td>
+    <td>
+      <button type="button" class="w3-button w3-small w3-red remove-breaktime">
+        <i class="fas fa-trash"></i>
+      </button>
+    </td>
+  </tr>
+</script>
+<% } %>
 
 <!-- JavaScript for Dynamic Form Behavior -->
 <script>

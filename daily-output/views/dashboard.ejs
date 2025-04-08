@@ -3,35 +3,148 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><%= title %></title>
+  <title><%= title %> | NexERP</title>
   <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    body, h1, h2, h3, h4, h5, h6, p, label, input, select, button {
+      font-family: 'Poppins', sans-serif;
+    }
+    
+    body {
+      background-color: #f8f9fa;
+    }
+    
+    .page-header {
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .dashboard-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      margin-bottom: 24px;
+      transition: all 0.3s ease;
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    .dashboard-card:hover {
+      box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+      transform: translateY(-3px);
+    }
+    
     .dashboard-item {
-      margin-bottom: 20px;
-      border-radius: 5px;
-      box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
-      transition: 0.3s;
-      padding: 15px;
+      padding: 24px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.3s ease;
     }
-    .dashboard-item:hover {
-      box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
-    }
+    
     .dashboard-value {
-      font-size: 24px;
-      font-weight: bold;
+      font-size: 32px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: white;
     }
+    
     .dashboard-label {
       font-size: 14px;
-      color: #777;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 500;
     }
+    
+    .card-header {
+      background-color: rgb(0,0,255);
+      color: white;
+      border-radius: 8px 8px 0 0;
+      padding: 16px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+    
+    .card-content {
+      padding: 20px;
+      min-height: 200px;
+    }
+    
+    .nav-bar {
+      background-color: rgb(0,0,255);
+      color: white;
+      box-shadow: 0 2px 10px rgba(0,0,255,0.3);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .nav-bar a {
+      padding: 16px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      transition: background-color 0.3s;
+    }
+    
+    .nav-bar a:hover {
+      background-color: rgba(255,255,255,0.1);
+    }
+    
+    .w3-ul li {
+      padding: 12px 16px;
+      transition: all 0.2s ease;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .w3-ul li:hover {
+      background-color: #f8f9fa;
+    }
+    
+    .w3-ul li a {
+      text-decoration: none;
+      color: rgb(0,0,255);
+      font-weight: 500;
+      display: block;
+    }
+    
+    .w3-ul li a:hover {
+      color: rgb(0,0,200);
+    }
+    
+    .page-title {
+      font-weight: 600;
+      color: #333;
+      margin: 24px 0;
+      padding-bottom: 8px;
+      border-bottom: 2px solid rgb(0,0,255);
+      display: inline-block;
+    }
+    
+    /* Animation for cards */
+    .animate-fade-in {
+      animation: fadeIn 0.6s ease-in-out forwards;
+      opacity: 0;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
   </style>
 </head>
 <body>
 
-<div class="w3-bar w3-teal">
-  <a href="/page/dashboard" class="w3-bar-item w3-button w3-mobile"><i class="fa fa-home"></i> Home</a>
+<div class="w3-bar nav-bar">
+  <a href="/page/dashboard" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-home"></i> Home</a>
   <a href="/page/manufacture/daily_inquiry" class="w3-bar-item w3-button w3-mobile">Daily Output</a>
   <div class="w3-right">
     <span class="w3-bar-item w3-mobile">Welcome, <%= user.name %></span>
@@ -39,62 +152,70 @@
 </div>
 
 <div class="w3-container">
-  <h2>Dashboard</h2>
+  <h2 class="page-title">Dashboard</h2>
   
   <div class="w3-row-padding">
-    <div class="w3-quarter">
-      <div class="w3-container w3-teal dashboard-item">
-        <div class="dashboard-value">0</div>
-        <div class="dashboard-label">Today's Daily Output</div>
+    <div class="w3-quarter animate-fade-in">
+      <div class="dashboard-card">
+        <div class="dashboard-item" style="background-color: rgb(0,0,255);">
+          <div class="dashboard-value">0</div>
+          <div class="dashboard-label">Today's Daily Output</div>
+        </div>
       </div>
     </div>
     
-    <div class="w3-quarter">
-      <div class="w3-container w3-blue dashboard-item">
-        <div class="dashboard-value">0</div>
-        <div class="dashboard-label">Pending Approvals</div>
+    <div class="w3-quarter animate-fade-in delay-1">
+      <div class="dashboard-card">
+        <div class="dashboard-item" style="background-color: rgb(0,80,255);">
+          <div class="dashboard-value">0</div>
+          <div class="dashboard-label">Pending Approvals</div>
+        </div>
       </div>
     </div>
     
-    <div class="w3-quarter">
-      <div class="w3-container w3-green dashboard-item">
-        <div class="dashboard-value">0</div>
-        <div class="dashboard-label">Active Work Orders</div>
+    <div class="w3-quarter animate-fade-in delay-2">
+      <div class="dashboard-card">
+        <div class="dashboard-item" style="background-color: rgb(0,120,255);">
+          <div class="dashboard-value">0</div>
+          <div class="dashboard-label">Active Work Orders</div>
+        </div>
       </div>
     </div>
     
-    <div class="w3-quarter">
-      <div class="w3-container w3-orange dashboard-item">
-        <div class="dashboard-value">0</div>
-        <div class="dashboard-label">Completed This Month</div>
+    <div class="w3-quarter animate-fade-in delay-3">
+      <div class="dashboard-card">
+        <div class="dashboard-item" style="background-color: rgb(0,160,255);">
+          <div class="dashboard-value">0</div>
+          <div class="dashboard-label">Completed This Month</div>
+        </div>
       </div>
     </div>
   </div>
   
-  <div class="w3-panel">
-    <div class="w3-row-padding">
-      <div class="w3-half">
-        <div class="w3-card-4">
-          <header class="w3-container w3-teal">
-            <h3>Recent Activity</h3>
-          </header>
-          <div class="w3-container" style="min-height: 200px;">
-            <p>No recent activities to display.</p>
-          </div>
+  <div class="w3-row-padding w3-margin-top">
+    <div class="w3-half animate-fade-in delay-3">
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h3 style="margin: 0;"><i class="fas fa-history"></i> Recent Activity</h3>
+        </div>
+        <div class="card-content">
+          <p class="w3-center w3-text-grey" style="margin-top: 40px;">No recent activities to display.</p>
         </div>
       </div>
-      
-      <div class="w3-half">
-        <div class="w3-card-4">
-          <header class="w3-container w3-teal">
-            <h3>Quick Links</h3>
-          </header>
-          <div class="w3-container" style="min-height: 200px;">
-            <ul class="w3-ul">
-              <li><a href="/page/manufacture/daily_output/new">Create New Daily Output</a></li>
-              <li><a href="/page/manufacture/daily_inquiry">View Daily Output Inquiry</a></li>
-            </ul>
-          </div>
+    </div>
+    
+    <div class="w3-half animate-fade-in delay-4">
+      <div class="dashboard-card">
+        <div class="card-header">
+          <h3 style="margin: 0;"><i class="fas fa-link"></i> Quick Links</h3>
+        </div>
+        <div class="card-content">
+          <ul class="w3-ul">
+            <li><a href="/page/manufacture/daily_output/new"><i class="fas fa-plus-circle"></i> Create New Daily Output</a></li>
+            <li><a href="/page/manufacture/daily_inquiry"><i class="fas fa-search"></i> View Daily Output Inquiry</a></li>
+            <li><a href="#"><i class="fas fa-cog"></i> Manage Settings</a></li>
+            <li><a href="#"><i class="fas fa-file-alt"></i> Generate Reports</a></li>
+          </ul>
         </div>
       </div>
     </div>
