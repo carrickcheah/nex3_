@@ -1,0 +1,64 @@
+########################
+     update github
+########################
+
+git add .
+git commit -m "update  "
+git push origin main
+
+
+
+##################
+    NPM
+##################
+
+npm start       | python main.py
+npm run dev
+node app.js     | uv run python main.py
+npm install     | pip install -r requirements.txt
+
+
+
+##################
+    Structure
+##################
+daily-output-refactor/
+├── app.js         # Main server file (like main.py)
+├── views/         # UI templates (like templates/ in Python)
+│   ├── daily_output.ejs
+│   └── daily_inquiry.ejs
+├── public/        # Static files (CSS, JS, images)
+└── node_modules/  # Dependencies
+
+
+##################
+      For LLM
+##################
+
+ I am new to Node.js . I have experience with Python. 
+ Explain the similarities and differences between the two.
+
+
+########################
+##        TODO        ##
+########################
+::  machine breaktime
+
+
+
+
+
+########################
+##      Update        ##
+########################
+
+
+
+
+
+
+
+
+
+
+
