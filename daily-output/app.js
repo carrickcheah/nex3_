@@ -21,6 +21,7 @@ const PORT = process.env.PORT || 3000;
 
 // Import route modules for modular approach
 const dailyOutputRoutes = require('./routes/dailyOutputRoutes');
+const apiRoutes = require('./routes/apiRoutes');
 
 // Middleware
 app.use(express.static(path.join(__dirname, 'public')));
@@ -86,13 +87,12 @@ const helpers = {
 
 // Global constants
 const OPTION_DAILY_PURPOSE = {
-  'S': 'Normal Output',
-  'X': 'Manual Goods',
-  'M': 'Manually Close'
+  'S': 'STANDARD OUTPUT'
 };
 
 // Register modular routes for daily output functionality
 app.use('/', dailyOutputRoutes);
+app.use('/', apiRoutes);
 
 // Root route - redirect to daily inquiry page
 app.get('/', (req, res) => {

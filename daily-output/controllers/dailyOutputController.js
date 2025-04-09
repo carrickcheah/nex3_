@@ -5,9 +5,7 @@ const DailyOutputModel = require('../models/dailyOutputModel');
 
 // Constants
 const OPTION_DAILY_PURPOSE = {
-  'S': 'Normal Output',
-  'X': 'Manual Goods',
-  'M': 'Manually Close'
+  'S': 'STANDARD OUTPUT',
 };
 
 /**

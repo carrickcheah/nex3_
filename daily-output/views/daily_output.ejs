@@ -224,6 +224,62 @@
     .animate-fade-in {
       animation: fadeIn 0.4s ease-out;
     }
+
+    /* Select2 custom styling to match other form elements */
+    .select2-container--default .select2-selection--single {
+      height: auto !important;
+      padding: 8px 12px;
+      border-radius: 4px;
+      border: 1px solid #e0e0e0;
+      background-color: white;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+      line-height: normal;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+      color: #333;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+      height: 100%;
+      top: 0;
+    }
+    
+    /* Additional style for dropdown items */
+    .select2-dropdown {
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    
+    .select2-results__option {
+      padding: 8px 12px;
+      font-family: 'Poppins', sans-serif;
+    }
+    
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+      background-color: rgb(0,0,255);
+    }
+
+    /* Special styles for JO No Select2 */
+    .jo-dropdown-select2 {
+      width: 100% !important;
+    }
+    
+    /* Force heights to be equal for all inputs and selects */
+    input.form-control, 
+    select.form-control,
+    .select2-container--default .select2-selection--single,
+    .select2-container--default .select2-selection--multiple {
+      height: 38px !important;
+      box-sizing: border-box;
+    }
+    
+    .select2-container {
+      display: block;
+      width: 100% !important;
+    }
   </style>
 </head>
 <body>
@@ -282,6 +338,403 @@
       placeholder: "Select items...",
       allowClear: true,
       width: '100%'
+    });
+
+    // Initialize datepicker for date inputs
+    $('#txn-date').datepicker({
+      dateFormat: 'dd-mm-yy',
+      changeMonth: true,
+      changeYear: true
+    });
+    
+    // JO No dropdown functionality
+    var joReferenceTimer;
+    
+    // Initialize select2 for JO No
+    $('#jo-reference').select2({
+      placeholder: 'Select JO No',
+      allowClear: true,
+      width: '100%',
+      dropdownParent: $('#jo-reference').parent(),
+      dropdownCssClass: 'jo-dropdown-select2',
+      ajax: {
+        url: '/api/manufacture/job-orders',
+        dataType: 'json',
+        delay: 300,
+        data: function(params) {
+          return {
+            search: params.term || ''
+          };
+        },
+        processResults: function(data) {
+          return {
+            results: data.job_orders.map(function(jo) {
+              return {
+                id: jo.reference,
+                text: jo.display,
+                jo_id: jo.id
+              };
+            })
+          };
+        },
+        cache: true
+      },
+      minimumInputLength: 0
+    });
+    
+    // Handle JO selection
+    $('#jo-reference').on('select2:select', function(e) {
+      const data = e.params.data;
+      if (data) {
+        // Set jo_id hidden input
+        $('#jo-id').val(data.jo_id);
+        
+        // Enable form fields
+        $('#jo-process').prop('disabled', false);
+        
+        // Make an AJAX request to fetch JO details
+        $.ajax({
+          url: '/api/manufacture/jo-details',
+          type: 'GET',
+          data: { reference: data.id },
+          success: function(response) {
+            if (response.success) {
+              // Enable machine, mold, tool, and operator selections
+              $('#machine-descr, #mold-descr, #tool-descr, #operator-descr').prop('disabled', false);
+              
+              // If there's a default process, select it
+              if (response.process) {
+                $('#jo-process').val(response.process);
+              }
+              
+              // Update Daily No if needed
+              if (response.dailyNo) {
+                $('#doc-ref').val(response.dailyNo);
+              }
+            }
+          },
+          error: function(err) {
+            console.error('Error fetching JO details:', err);
+            alert('Error fetching job order details. Please try again.');
+          }
+        });
+      }
+    });
+    
+    // Clear other fields when JO is cleared
+    $('#jo-reference').on('select2:clear', function() {
+      $('#jo-id').val('');
+      $('#jo-process').prop('disabled', true);
+      $('#machine-descr, #mold-descr, #tool-descr, #operator-descr').prop('disabled', true);
+    });
+
+    // JO Reference change handler (for backward compatibility)
+    $('#jo-reference').on('change', function() {
+      const joRef = $(this).val();
+      if (joRef) {
+        // Enable form fields
+        $('#jo-process').prop('disabled', false);
+        
+        // Make an AJAX request to fetch JO details
+        $.ajax({
+          url: '/api/manufacture/jo-details',
+          type: 'GET',
+          data: { reference: joRef },
+          success: function(response) {
+            if (response.success) {
+              // Enable machine, mold, tool, and operator selections
+              $('#machine-descr, #mold-descr, #tool-descr, #operator-descr').prop('disabled', false);
+              
+              // If there's a default process, select it
+              if (response.process) {
+                $('#jo-process').val(response.process);
+              }
+              
+              // Update Daily No if needed
+              if (response.dailyNo) {
+                $('#doc-ref').val(response.dailyNo);
+              }
+            }
+          },
+          error: function(err) {
+            console.error('Error fetching JO details:', err);
+            alert('Error fetching job order details. Please try again.');
+          }
+        });
+      } else {
+        // Disable selections when JO reference is empty
+        $('#jo-process, #machine-descr, #mold-descr, #tool-descr, #operator-descr').prop('disabled', true);
+      }
+    });
+    
+    // Output quantity calculations
+    function calculateOutputTotals(row) {
+      const outputQty = parseFloat(row.find('.output-qty').val()) || 0;
+      const rejectQty = parseFloat(row.find('.reject-qty').val()) || 0;
+      const extraQty = parseFloat(row.find('.extra-qty').val()) || 0;
+      const totalOutput = outputQty + rejectQty + extraQty;
+      
+      row.find('.total-output').text(totalOutput.toFixed(2));
+    }
+    
+    // Add event listener for quantity changes
+    $(document).on('change keyup', '.output-qty, .reject-qty, .extra-qty', function() {
+      calculateOutputTotals($(this).closest('tr'));
+    });
+    
+    // Add output item button handler
+    $('#add-output-item').on('click', function() {
+      // Get the template HTML
+      let template = $('#output-item-template').html();
+      
+      // Calculate the next index
+      const index = $('#output-items-table tr').length + 1;
+      
+      // Replace {index} with actual index
+      template = template.replace(/{index}/g, index);
+      
+      // Add the row to the table
+      $('#output-items-table').append(template);
+      
+      // Initialize Select2 for the new row
+      $('#output-items-table tr:last-child .output-product-select').select2({
+        placeholder: "Select product",
+        width: '100%'
+      });
+      
+      // If there's a "No output items" message, remove it
+      if ($('#output-items-table td[colspan]').length) {
+        $('#output-items-table').html(template);
+      }
+    });
+    
+    // Remove output item button handler
+    $(document).on('click', '.remove-output-item', function() {
+      const row = $(this).closest('tr');
+      
+      // Remove the row
+      row.remove();
+      
+      // Reindex the remaining rows
+      $('#output-items-table tr').each(function(index) {
+        $(this).find('.output-item-index').text(index + 1);
+      });
+      
+      // If no rows left, show "No output items" message
+      if ($('#output-items-table tr').length === 0) {
+        $('#output-items-table').html('<tr><td colspan="9" class="w3-center">No output items</td></tr>');
+      }
+    });
+    
+    // Add input item button handler
+    $('#add-input-item').on('click', function() {
+      // Get the template HTML
+      let template = $('#input-item-template').html();
+      
+      // Calculate the next index
+      const index = $('#input-items-table tr').length + 1;
+      
+      // Replace {index} with actual index
+      template = template.replace(/{index}/g, index);
+      
+      // Add the row to the table
+      $('#input-items-table').append(template);
+      
+      // Initialize Select2 for the new row
+      $('#input-items-table tr:last-child .input-product-select').select2({
+        placeholder: "Select product",
+        width: '100%'
+      });
+      
+      // If there's a "No input items" message, remove it
+      if ($('#input-items-table td[colspan]').length) {
+        $('#input-items-table').html(template);
+      }
+    });
+    
+    // Remove input item button handler
+    $(document).on('click', '.remove-input-item', function() {
+      const row = $(this).closest('tr');
+      
+      // Remove the row
+      row.remove();
+      
+      // Reindex the remaining rows
+      $('#input-items-table tr').each(function(index) {
+        $(this).find('.input-item-index').text(index + 1);
+      });
+      
+      // If no rows left, show "No input items" message
+      if ($('#input-items-table tr').length === 0) {
+        $('#input-items-table').html('<tr><td colspan="7" class="w3-center">No input items</td></tr>');
+      }
+    });
+    
+    // Add tool item button handler (if needed)
+    $('#add-tool-item').on('click', function() {
+      // Similar implementation as add-output-item
+      let template = $('#tool-item-template').html();
+      const index = $('#tool-items-table tr').length + 1;
+      template = template.replace(/{index}/g, index);
+      $('#tool-items-table').append(template);
+      
+      // Initialize Select2 for the new row
+      $('#tool-items-table tr:last-child .tool-select').select2({
+        placeholder: "Select tool",
+        width: '100%'
+      });
+      
+      if ($('#tool-items-table td[colspan]').length) {
+        $('#tool-items-table').html(template);
+      }
+    });
+    
+    // Remove tool item button handler
+    $(document).on('click', '.remove-tool-item', function() {
+      const row = $(this).closest('tr');
+      row.remove();
+      
+      $('#tool-items-table tr').each(function(index) {
+        $(this).find('.tool-item-index').text(index + 1);
+      });
+      
+      if ($('#tool-items-table tr').length === 0) {
+        $('#tool-items-table').html('<tr><td colspan="5" class="w3-center">No tools</td></tr>');
+      }
+    });
+    
+    // Product selection change handler
+    $(document).on('change', '.output-product-select', function() {
+      const productId = $(this).val();
+      const row = $(this).closest('tr');
+      
+      if (productId) {
+        // Make an AJAX request to fetch product details
+        $.ajax({
+          url: '/api/manufacture/product-details',
+          type: 'GET',
+          data: { product_id: productId },
+          success: function(response) {
+            if (response.success) {
+              // Update outstanding value if available
+              if (response.outstanding) {
+                row.find('.outstanding').text(response.outstanding);
+              }
+            }
+          },
+          error: function(err) {
+            console.error('Error fetching product details:', err);
+          }
+        });
+      }
+    });
+    
+    // Form submission handler
+    $('#dailyOutputForm').on('submit', function(e) {
+      // Add validation if needed
+      let isValid = true;
+      const purpose = $('#purpose-option').val();
+      const joRef = $('#jo-reference').val();
+      
+      if (!purpose) {
+        alert('Please select a purpose');
+        isValid = false;
+      }
+      
+      if (!joRef && purpose === 'S') {
+        alert('Please enter a JO reference');
+        isValid = false;
+      }
+      
+      // Check if at least one output item exists for normal output
+      if (purpose === 'S' && $('#output-items-table tr').length <= 1 && $('#output-items-table td[colspan]').length > 0) {
+        alert('Please add at least one output item');
+        isValid = false;
+      }
+      
+      if (!isValid) {
+        e.preventDefault();
+        return false;
+      }
+      
+      // Continue with form submission
+      return true;
+    });
+    
+    // Initialize time fields to allow only valid times
+    $('.time-input').on('change', function() {
+      const timeValue = $(this).val();
+      // Simple validation for time format
+      if (timeValue && !/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(timeValue)) {
+        alert('Please enter a valid time in the format HH:MM');
+        $(this).val('');
+      }
+    });
+    
+    // Void button handler
+    $('.void-button').on('click', function() {
+      const txnId = $(this).data('id');
+      if (confirm('Are you sure you want to void this record?')) {
+        $.ajax({
+          url: '/api/manufacture/daily-output/void/' + txnId,
+          type: 'POST',
+          success: function(response) {
+            if (response.success) {
+              alert('Record voided successfully');
+              location.href = '/page/manufacture/daily_inquiry';
+            } else {
+              alert('Error: ' + response.message);
+            }
+          },
+          error: function() {
+            alert('Server error while attempting to void record');
+          }
+        });
+      }
+    });
+    
+    // Calculate time difference for break time
+    function calculateTimeDifference(startTime, endTime) {
+      if (!startTime || !endTime) return 0;
+      
+      const [startHour, startMinute] = startTime.split(':').map(Number);
+      const [endHour, endMinute] = endTime.split(':').map(Number);
+      
+      let startMinutes = startHour * 60 + startMinute;
+      let endMinutes = endHour * 60 + endMinute;
+      
+      // Handle if end time is on the next day
+      if (endMinutes < startMinutes) {
+        endMinutes += 24 * 60;
+      }
+      
+      return endMinutes - startMinutes;
+    }
+    
+    // Update calculated fields when time changes
+    $('#start-time, #end-time').on('change', function() {
+      const startTime = $('#start-time').val();
+      const endTime = $('#end-time').val();
+      
+      if (startTime && endTime) {
+        const diffInMinutes = calculateTimeDifference(startTime, endTime);
+        // If break time is not manually set, suggest a default
+        if (!$('#break-time').data('manual')) {
+          // Suggest 60 minutes if shift is longer than 5 hours
+          const suggestedBreak = diffInMinutes > 300 ? 60 : 0;
+          $('#break-time').val(suggestedBreak);
+        }
+      }
+    });
+    
+    // Mark break time as manually set when changed
+    $('#break-time').on('change', function() {
+      $(this).data('manual', true);
+    });
+    
+    // Initialize existing quantity fields
+    $('.output-qty, .reject-qty, .extra-qty').each(function() {
+      calculateOutputTotals($(this).closest('tr'));
     });
   });
 </script>

@@ -17,13 +17,8 @@
           <% if (viewOnly) { %>
             <p class="form-control-static"><%= data.purpose || '&mdash;' %></p>
           <% } else { %>
-            <select id="purpose-option" name="purpose" class="w3-select form-control" <% if (viewOnly) { %>disabled<% } %>>
-              <% if (options && options.daily_purpose) { %>
-                <% Object.keys(options.daily_purpose).forEach(function(key) { %>
-                  <option value="<%= key %>" <% if (data.purpose === key) { %>selected<% } %>><%= options.daily_purpose[key] %></option>
-                <% }); %>
-              <% } %>
-            </select>
+            <div class="w3-select form-control" style="background-color: white; pointer-events: none;">STANDARD OUTPUT</div>
+            <input type="hidden" id="purpose-option" name="purpose" value="S">
           <% } %>
         </div>
       </div>
@@ -34,8 +29,19 @@
           <% if (viewOnly) { %>
             <p class="form-control-static"><%= data.jo_reference || '&mdash;' %></p>
           <% } else { %>
-            <input type="text" id="jo-reference" name="jo_reference" class="w3-input form-control" 
-                   value="<%= data.jo_reference || '' %>" <% if (viewOnly || data.txn_mode === 'daily_edit') { %>readonly<% } %>>
+            <div class="dropdown" style="position: relative;">
+              <select id="jo-reference" name="jo_reference" class="w3-select form-control" 
+                     <% if (viewOnly || data.txn_mode === 'daily_edit') { %>readonly<% } %>>
+                <option value="">-</option>
+                <% if (data.jo_reference) { %>
+                  <option value="<%= data.jo_reference %>" selected><%= data.jo_reference %></option>
+                <% } %>
+              </select>
+              <div id="jo-dropdown" class="w3-dropdown-content w3-bar-block w3-card-4" style="width:100%; max-height: 300px; overflow-y: auto; display: none; position: absolute; z-index: 100;">
+                <!-- JO options will be populated here dynamically -->
+              </div>
+            </div>
+            <input type="hidden" id="jo-id" name="jo_id" value="<%= data.jo_id || '' %>">
           <% } %>
         </div>
       </div>

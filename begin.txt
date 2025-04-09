@@ -48,28 +48,37 @@ daily-output-refactor/
 
 
 
-########################
-##      Update        ##
-########################
-
 
 
 I want  refactor the entire daily output functionality, not just the rendering part. 
 Let me create a comprehensive Node.js implementation that covers all the functions from the PHP code.
-
-The main implementation file is at: /Users/carrickcheah/nex3/nexerp/core/site_inc/nexterp.my/daily_output.inc.php
-
-This file contains all the PHP functions that handle the daily output functionality shown in your screenshot:
-
-ebos_daily_output_new() - Creates a new daily output record
-ebos_daily_output_edit() - Edits an existing daily output record
-ebos_daily_output_view() - Displays an existing daily output record
-ebos_daily_output_read() - Reads data from the database
-ebos_daily_output_render() - Generates the HTML UI that you see in your screenshot
 
 
 
 
 
 i share u my code. u study and wait me. if u understand, say 'yes boss !' 
+
+i am refactoring old code to node.js . If there are existing file, use it. else u can create new file.
+
+
+
+
+
+
+########################
+##      Update        ##
+########################
+
+Nex3 beta 0.0.2
+
+Downloaded real database. Dixed previous disparency issue.
+   reference:
+   ::daily_output ( add new)
+        Insert function for .ejs. But SQL table no disparency. Must adjust before depoy.
+
+
+
+
+
 
