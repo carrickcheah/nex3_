@@ -63,21 +63,12 @@ i am refactoring old code to node.js . If there are existing file, use it. else 
 
 
 
-
+row 477. dailyoutModel.js
 
 
 ########################
 ##      Update        ##
 ########################
-
-Nex3 beta 0.0.2
-
-Downloaded real database. Dixed previous disparency issue.
-   reference:
-   ::daily_output ( add new)
-        Insert function for .ejs. But SQL table no disparency. Must adjust before depoy.
-
-
 
 
 
