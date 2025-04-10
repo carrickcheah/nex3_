@@ -99,25 +99,6 @@ app.get('/', (req, res) => {
   res.redirect('/page/manufacture/daily_inquiry');
 });
 
-// Daily inquiry page
-app.get('/page/manufacture/daily_inquiry', (req, res) => {
-  // Get query parameters or set defaults
-  const fromDate = req.query.from_date || moment().format('DD-MM-YYYY');
-  const toDate = req.query.to_date || moment().format('DD-MM-YYYY');
-  
-  res.render('daily_inquiry', {
-    title: 'Daily Output Inquiry',
-    fromDate: fromDate,
-    toDate: toDate,
-    reference: req.query.reference || '',
-    status: req.query.status || '',
-    jo: req.query.jo || '',
-    results: [],
-    pagination: null,
-    user: req.session.user || { name: 'SYSTEM ADMIN' }
-  });
-});
-
 // Dashboard page
 app.get('/page/dashboard', (req, res) => {
   res.render('dashboard', {

@@ -150,32 +150,8 @@
     .delay-3 { animation-delay: 0.3s; }
     
     /* Dashboard cards with different blue shades */
-    .blue-card-1 {
-      background-color: #0000ff; /* Brightest blue */
-      color: white;
-      padding: 20px;
-      text-align: center;
-      border-radius: 8px;
-    }
-    
-    .blue-card-2 {
-      background-color: #3939ff; /* Slightly lighter blue */
-      color: white;
-      padding: 20px;
-      text-align: center;
-      border-radius: 8px;
-    }
-    
-    .blue-card-3 {
-      background-color: #6b6bff; /* Medium blue */
-      color: white;
-      padding: 20px;
-      text-align: center;
-      border-radius: 8px;
-    }
-    
-    .blue-card-4 {
-      background-color: #9b9bff; /* Lightest blue */
+    .blue-card {
+      background-color: #0000FF; /* True Royal Blue to match image 1 */
       color: white;
       padding: 20px;
       text-align: center;
@@ -200,20 +176,87 @@
     }
     
     .data-table th {
-      background-color: #f0f0f0;
+      background-color: #f5f5f5;
       font-weight: 600;
-      text-align: left;
       padding: 10px;
+      text-align: center;
       border: 1px solid #ddd;
     }
     
     .data-table td {
       padding: 8px 10px;
       border: 1px solid #ddd;
+      text-align: center;
     }
     
     .data-table tr:nth-child(even) {
       background-color: #f9f9f9;
+    }
+    
+    .data-table tr:hover {
+      background-color: #f0f0f0;
+    }
+    
+    /* Making the table fixed layout and with horizontal scrolling */
+    .table-responsive {
+      overflow-x: auto;
+      margin-bottom: 20px;
+    }
+    
+    /* Button styles */
+    .btn-icon {
+      padding: 4px 8px;
+      margin: 0 3px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-icon.edit {
+      background-color: #4CAF50;
+      color: white;
+    }
+    
+    .btn-icon.view {
+      background-color: #2196F3;
+      color: white;
+    }
+    
+    .btn-icon.delete {
+      background-color: #f44336;
+      color: white;
+    }
+    
+    .overtime-tag {
+      display: inline-block;
+      padding: 2px 6px;
+      background-color: #FF9800;
+      color: white;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    /* Search form styling */
+    .search-form {
+      background-color: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .search-form .w3-row {
+      margin-bottom: 10px;
+    }
+    
+    .search-form input, .search-form select {
+      height: 38px;
+    }
+    
+    .search-form .btn {
+      height: 38px;
     }
   </style>
 </head>
@@ -221,145 +264,135 @@
 
 <div class="w3-bar nav-bar">
   <a href="/page/dashboard" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-  <a href="/page/manufacture/daily_inquiry" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-chart-line"></i> Sales</a>
-  <a href="/page/purchasing" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-shopping-cart"></i> Purchasing</a>
-  <a href="/page/warehouse" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-warehouse"></i> Warehouse</a>
-  <a href="/page/manufacturing" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-industry"></i> Manufacturing</a>
-  <a href="/page/engineering" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-cogs"></i> Engineering</a>
-  <a href="/page/administration" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-users-cog"></i> Administration</a>
-  <a href="/page/settings" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-cog"></i> Settings</a>
+  <a href="/page/daily-output/new" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-plus-circle"></i> New Daily Output</a>
+  <a href="/page/daily-output/list" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-list"></i> Daily Output List</a>
+  <a href="/page/daily-output/inquiry" class="w3-bar-item w3-button w3-mobile w3-blue"><i class="fas fa-search"></i> Daily Output Inquiry</a>
+  <a href="/page/help" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-question-circle"></i> Help</a>
 </div>
 
 <div id="myContent" class="w3-main" style="min-height: calc(100vh - 120px); padding: 24px;">
   <!-- Header -->
-  <h2 class="page-title"><i class="fa fa-search"></i> Daily Output Inquiry</h2>
+  <h2 class="page-title"><i class="fas fa-search"></i> Daily Output Inquiry</h2>
 
   <!-- Dashboard Cards -->
   <div class="w3-row-padding">
-    <div class="w3-quarter">
-      <div class="blue-card-1 animate-fade-in">
-        <div class="card-number">0</div>
+    <div class="w3-col l3 m6 s12 animate-fade-in delay-1">
+      <div class="blue-card">
+        <div class="card-number"><%= locals.dashboardCounts ? dashboardCounts.todaysOutput : 0 %></div>
         <div class="card-label">Today's Daily Output</div>
       </div>
     </div>
-    <div class="w3-quarter">
-      <div class="blue-card-2 animate-fade-in">
-        <div class="card-number">0</div>
+    <div class="w3-col l3 m6 s12 animate-fade-in delay-1">
+      <div class="blue-card">
+        <div class="card-number"><%= locals.dashboardCounts ? dashboardCounts.pendingApprovals : 0 %></div>
         <div class="card-label">Pending Approvals</div>
       </div>
     </div>
-    <div class="w3-quarter">
-      <div class="blue-card-3 animate-fade-in">
-        <div class="card-number">0</div>
+    <div class="w3-col l3 m6 s12 animate-fade-in delay-2">
+      <div class="blue-card">
+        <div class="card-number"><%= locals.dashboardCounts ? dashboardCounts.activeWorkOrders : 0 %></div>
         <div class="card-label">Active Work Orders</div>
       </div>
     </div>
-    <div class="w3-quarter">
-      <div class="blue-card-4 animate-fade-in">
-        <div class="card-number">0</div>
+    <div class="w3-col l3 m6 s12 animate-fade-in delay-2">
+      <div class="blue-card">
+        <div class="card-number"><%= locals.dashboardCounts ? dashboardCounts.completedThisMonth : 0 %></div>
         <div class="card-label">Completed This Month</div>
       </div>
     </div>
   </div>
 
   <!-- Search Form -->
-  <div class="form-card animate-fade-in" style="margin-top: 24px;">
-    <form id="searchForm" action="/page/manufacture/daily_inquiry" method="GET">
+  <div class="search-form animate-fade-in delay-1">
+    <form action="" method="GET">
       <div class="w3-row-padding">
-        <div class="w3-quarter">
-          <label class="form-label">From Date</label>
-          <input type="text" id="from-date" name="from_date" class="w3-input w3-border form-control datepicker" 
-                 value="<%= fromDate || '' %>">
+        <div class="w3-col l3 m6 s12">
+          <label>From Date</label>
+          <input class="w3-input w3-border form-control datepicker" type="text" name="from_date" value="<%= locals.filters && filters.from_date || '' %>">
         </div>
-        
-        <div class="w3-quarter">
-          <label class="form-label">To Date</label>
-          <input type="text" id="to-date" name="to_date" class="w3-input w3-border form-control datepicker" 
-                 value="<%= toDate || '' %>">
+        <div class="w3-col l3 m6 s12">
+          <label>To Date</label>
+          <input class="w3-input w3-border form-control datepicker" type="text" name="to_date" value="<%= locals.filters && filters.to_date || '' %>">
         </div>
-        
-        <div class="w3-quarter">
-          <label class="form-label">Reference</label>
-          <input type="text" id="reference" name="reference" class="w3-input w3-border form-control" 
-                 value="<%= reference || '' %>">
+        <div class="w3-col l3 m6 s12">
+          <label>Reference</label>
+          <input class="w3-input w3-border form-control" type="text" name="reference" value="<%= locals.filters && filters.reference || '' %>">
         </div>
-        
-        <div class="w3-quarter">
-          <label class="form-label">Job Order</label>
-          <input type="text" id="jo" name="jo" class="w3-input w3-border form-control" 
-                 value="<%= jo || '' %>">
+        <div class="w3-col l3 m6 s12">
+          <label>Job Order</label>
+          <input class="w3-input w3-border form-control" type="text" name="job_order" value="<%= locals.filters && filters.job_order || '' %>">
         </div>
       </div>
-      
       <div class="w3-row-padding w3-margin-top">
-        <div class="w3-quarter">
+        <div class="w3-col s12">
           <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
-          <a href="/page/manufacture/daily_inquiry" class="btn btn-secondary">Clear</a>
+          <button type="button" class="btn btn-secondary" onClick="clearFilters()">Clear</button>
         </div>
       </div>
     </form>
   </div>
 
-  <!-- Results Table -->
-  <div class="dashboard-card animate-fade-in delay-1">
-    <div class="table-container">
-      <table class="w3-table data-table">
-        <thead>
-          <tr style="background-color: #f0f0f0;">
-            <th>#</th>
-            <th>TXN ID</th>
-            <th>DOC DATE</th>
-            <th>START TIME</th>
-            <th>END TIME</th>
-            <th>DAILY NO</th>
-            <th>JO NO</th>
-            <th>PROCESS DESCRIPTION</th>
-            <th>MASTER CODE</th>
-            <th>OUTPUT ITEM</th>
-            <th>OUTPUT QTY</th>
-            <th>REJECT QTY</th>
-            <th>LEAD TIME</th>
-            <th>MAN COUNT</th>
-            <th>MACHINE</th>
-            <th>OPERATOR</th>
-            <th>REMARK</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% if (locals.results && results.length > 0) { %>
-            <% results.forEach(function(item, index) { %>
-              <tr>
-                <td><%= index + 1 %>.</td>
-                <td><%= item.txn_id || '' %></td>
-                <td><%= item.txn_date || '' %></td>
-                <td><%= item.start_time || '' %></td>
-                <td><%= item.end_time || '' %></td>
-                <td><%= item.doc_ref || '' %></td>
-                <td><%= item.jo_reference || '' %></td>
-                <td><%= item.jo_process || '' %></td>
-                <td><%= item.master_code || '' %></td>
-                <td><%= item.output_item || '' %></td>
-                <td><%= item.output_qty || '0' %></td>
-                <td><%= item.reject_qty || '0' %></td>
-                <td><%= item.lead_time || '0' %></td>
-                <td><%= item.man_count || '1' %></td>
-                <td><%= item.machine || '' %></td>
-                <td><%= item.operator || '' %></td>
-                <td><%= item.remark || '' %></td>
-                <td>
-                  <a href="/page/manufacture/daily_output/view/<%= item.txn_id %>" class="btn btn-primary" style="padding: 4px 8px; font-size: 0.85rem;">View</a>
-                </td>
-              </tr>
-            <% }); %>
-          <% } else { %>
+  <!-- Table Display -->
+  <div class="table-responsive animate-fade-in delay-2">
+    <% if (locals.data) { %>
+      <!-- Debug info: <%= data.length %> records found -->
+    <% } %>
+    <table class="data-table w3-table w3-bordered w3-striped">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>TXN ID</th>
+          <th>DOC DATE</th>
+          <th>START TIME</th>
+          <th>END TIME</th>
+          <th>DAILY NO</th>
+          <th>JO NO</th>
+          <th>PROCESS DESCRIPTION</th>
+          <th>MASTER CODE</th>
+          <th>OUTPUT ITEM</th>
+          <th>OUTPUT QTY</th>
+          <th>REJECT QTY</th>
+          <th>LEAD TIME</th>
+          <th>MAN COUNT</th>
+          <th>MACHINE</th>
+          <th>OPERATOR</th>
+          <th>REMARK</th>
+          <th>CREATE DATE</th>
+          <th>ISSUED BY</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (locals.data && data.length > 0) { %>
+          <% data.forEach(function(item, index) { %>
             <tr>
-              <td colspan="18" class="w3-center">No records found</td>
+              <td><%= index + 1 %></td>
+              <td><%= item.txn_id %></td>
+              <td><%= item.doc_date %></td>
+              <td><%= item.start_time %></td>
+              <td><%= item.end_time %></td>
+              <td><%= item.daily_no %></td>
+              <td><%= item.jo_no %></td>
+              <td><%= item.process_description || 'N/A' %></td>
+              <td><%= item.master_code || 'N/A' %></td>
+              <td><%= item.output_item || 'N/A' %></td>
+              <td><%= item.output_qty || '0' %></td>
+              <td><%= item.reject_qty || '0' %></td>
+              <td><%= item.lead_time || 'N/A' %></td>
+              <td><%= item.man_count || '1' %></td>
+              <td><%= item.machine || 'N/A' %></td>
+              <td><%= item.operator || 'N/A' %></td>
+              <td><%= item.remark || '' %></td>
+              <td><%= item.create_date || 'N/A' %></td>
+              <td><%= item.issued_by || 'N/A' %></td>
             </tr>
-          <% } %>
-        </tbody>
-      </table>
-    </div>
+          <% }); %>
+        <% } else { %>
+          <tr>
+            <td colspan="19" class="w3-center">No records found</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
   </div>
 
   <!-- Pagination -->
@@ -368,34 +401,34 @@
       <div class="w3-bar">
         <% if (pagination.currentPage > 1) { %>
           <a href="?page=1<%= pagination.queryParams %>" class="btn btn-secondary" style="margin-right: 5px;">&laquo; First</a>
-          <a href="?page=<%= pagination.currentPage - 1 %><%= pagination.queryParams %>" class="btn btn-secondary" style="margin-right: 5px;">&laquo;</a>
+          <a href="?page=<%= pagination.currentPage - 1 %><%= pagination.queryParams %>" class="btn btn-secondary" style="margin-right: 5px;">&laquo; Previous</a>
         <% } %>
         
-        <% for (let i = pagination.startPage; i <= pagination.endPage; i++) { %>
+        <% for(let i = pagination.startPage; i <= pagination.endPage; i++) { %>
           <% if (i === pagination.currentPage) { %>
-            <a href="#" class="btn btn-primary" style="margin-right: 5px;"><%= i %></a>
+            <a href="?page=<%= i %><%= pagination.queryParams %>" class="btn btn-primary" style="margin-right: 5px;"><%= i %></a>
           <% } else { %>
             <a href="?page=<%= i %><%= pagination.queryParams %>" class="btn btn-secondary" style="margin-right: 5px;"><%= i %></a>
           <% } %>
         <% } %>
         
         <% if (pagination.currentPage < pagination.totalPages) { %>
-          <a href="?page=<%= pagination.currentPage + 1 %><%= pagination.queryParams %>" class="btn btn-secondary" style="margin-right: 5px;">&raquo;</a>
+          <a href="?page=<%= pagination.currentPage + 1 %><%= pagination.queryParams %>" class="btn btn-secondary" style="margin-right: 5px;">Next &raquo;</a>
           <a href="?page=<%= pagination.totalPages %><%= pagination.queryParams %>" class="btn btn-secondary">Last &raquo;</a>
         <% } %>
       </div>
-      <p style="margin-top: 10px; color: #6c757d;">Showing <%= pagination.from %> to <%= pagination.to %> of <%= pagination.total %> entries</p>
+      <div class="w3-margin-top">
+        Showing <%= pagination.startRecord %> to <%= pagination.endRecord %> of <%= pagination.totalRecords %> records
+      </div>
     </div>
   <% } %>
 
-  <!-- Footer -->
-  <footer class="w3-margin-top w3-padding-16" style="border-top: 1px solid #e0e0e0; color: #6c757d; text-align: center; font-size: 0.9rem;">
-    <div class="w3-container animate-fade-in delay-3">
-      <a href="/page/manufacture/daily_output/new" class="btn btn-primary" style="margin-right: 10px;"><i class="fas fa-plus-circle"></i> New Daily Output</a>
-      <a href="/page/dashboard" class="btn btn-secondary"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-      <p style="margin-top: 10px;">&copy; <%= new Date().getFullYear() %> NexERP. All rights reserved.</p>
-    </div>
-  </footer>
+  <!-- Sample data for demo purposes -->
+  <div class="w3-container w3-margin-top">
+    <a href="/page/daily-output/new" class="btn btn-primary"><i class="fas fa-plus"></i> New Daily Output</a>
+    <a href="/page/daily-output/inquiry/sample" class="btn btn-primary"><i class="fas fa-table"></i> Load Sample Data</a>
+    <a href="/page/dashboard" class="btn btn-secondary"><i class="fas fa-home"></i> Dashboard</a>
+  </div>
 </div>
 
 <script>
@@ -404,9 +437,17 @@
     $('.datepicker').datepick({
       dateFormat: 'dd-mm-yyyy',
       showOnFocus: true,
-      showTrigger: '<button type="button" class="trigger"><i class="fa fa-calendar"></i></button>'
+      showTrigger: '<button type="button" class="w3-button w3-blue"><i class="fa fa-calendar"></i></button>'
     });
   });
+  
+  function clearFilters() {
+    $('input[name="from_date"]').val('');
+    $('input[name="to_date"]').val('');
+    $('input[name="reference"]').val('');
+    $('input[name="job_order"]').val('');
+    window.location.href = window.location.pathname;
+  }
 </script>
 
 </body>

@@ -9,6 +9,9 @@ router.get('/page/manufacture/daily_output', (req, res) => {
 router.get('/page/manufacture/daily_output/new', dailyOutputController.dailyOutputNew);
 router.get('/page/manufacture/daily_output/edit/:id', dailyOutputController.dailyOutputEdit);
 router.get('/page/manufacture/daily_output/view/:id', dailyOutputController.dailyOutputView);
+router.get('/page/manufacture/daily_inquiry', dailyOutputController.dailyOutputInquiry);
+router.get('/page/daily-output/inquiry', dailyOutputController.dailyOutputInquiry);
+router.get('/page/daily-output/inquiry/sample', dailyOutputController.generateSampleData);
 
 // POST routes for daily output
 router.post('/page/manufacture/daily_output/create', dailyOutputController.createDailyOutput);

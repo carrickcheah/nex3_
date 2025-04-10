@@ -933,15 +933,24 @@ class DailyOutputModel {
     const connection = await pool.getConnection();
     try {
       let query = `
-        SELECT d.TxnId_i, d.DocRef_v, d.TxnDate_dd, 
-               d.Purpose_c, d.Status_c, d.Void_c,
-               j.DocRef_v AS jo_reference,
-               u.UserAbbrev_v as owner_abbrev,
-               stt.StatusName_v, stt.StatusCss_v
-        FROM tbl_daily_txn d 
-        LEFT JOIN tbl_jo_txn j ON j.TxnId_i = d.JoId_i
-        LEFT JOIN tbl_user u ON u.UserId_i = d.OwnerId_i	
-        LEFT JOIN tbl_status stt ON stt.Status_c = d.Status_c
+        SELECT 
+          TxnId_i as txn_id,
+          DATE_FORMAT(TxnDate_dd, '%d-%m-%Y') as doc_date,
+          TIME_FORMAT(StartTime_tt, '%H:%i:%s') as start_time,
+          TIME_FORMAT(EndTime_tt, '%H:%i:%s') as end_time,
+          DocRef_v as daily_no,
+          JoId_i as jo_no,
+          '' as process_description,
+          '' as master_code,
+          '' as output_item,
+          0 as output_qty,
+          0 as reject_qty,
+          '' as lead_time,
+          1 as man_count,
+          '' as machine,
+          '' as operator,
+          DocRemark_v as remark
+        FROM tbl_daily_txn
         WHERE 1=1 
       `;
       
@@ -949,27 +958,27 @@ class DailyOutputModel {
       
       // Add search filters
       if (criteria.fromDate && criteria.toDate) {
-        query += ` AND d.TxnDate_dd BETWEEN ? AND ?`;
+        query += ` AND TxnDate_dd BETWEEN ? AND ?`;
         params.push(criteria.fromDate, criteria.toDate);
       }
       
       if (criteria.reference) {
-        query += ` AND d.DocRef_v LIKE ?`;
+        query += ` AND DocRef_v LIKE ?`;
         params.push(`%${criteria.reference}%`);
       }
       
       if (criteria.status) {
-        query += ` AND d.Status_c = ?`;
+        query += ` AND Status_c = ?`;
         params.push(criteria.status);
       }
       
       if (criteria.jo) {
-        query += ` AND j.DocRef_v LIKE ?`;
+        query += ` AND JoId_i LIKE ?`;
         params.push(`%${criteria.jo}%`);
       }
       
       // Add order by
-      query += ` ORDER BY d.TxnDate_dd DESC, d.TxnId_i DESC`;
+      query += ` ORDER BY TxnId_i DESC`;
       
       // Add limit and offset for pagination
       if (criteria.limit) {
@@ -987,13 +996,12 @@ class DailyOutputModel {
       // Get total count for pagination
       const [countRows] = await connection.query(`
         SELECT COUNT(*) as total
-        FROM tbl_daily_txn d 
-        LEFT JOIN tbl_jo_txn j ON j.TxnId_i = d.JoId_i
+        FROM tbl_daily_txn
         WHERE 1=1 
-        ${criteria.fromDate && criteria.toDate ? 'AND d.TxnDate_dd BETWEEN ? AND ?' : ''}
-        ${criteria.reference ? 'AND d.DocRef_v LIKE ?' : ''}
-        ${criteria.status ? 'AND d.Status_c = ?' : ''}
-        ${criteria.jo ? 'AND j.DocRef_v LIKE ?' : ''}
+        ${criteria.fromDate && criteria.toDate ? 'AND TxnDate_dd BETWEEN ? AND ?' : ''}
+        ${criteria.reference ? 'AND DocRef_v LIKE ?' : ''}
+        ${criteria.status ? 'AND Status_c = ?' : ''}
+        ${criteria.jo ? 'AND JoId_i LIKE ?' : ''}
       `, params.slice(0, params.length - (criteria.limit ? (criteria.offset ? 2 : 1) : 0)));
       
       return {
@@ -1166,6 +1174,116 @@ class DailyOutputModel {
     `, [txn_id || 0]);
     
     return rows;
+  }
+
+  /**
+   * Get list of daily output records with filtering and pagination
+   * @param {Object} filters - Filter parameters (from_date, to_date, reference, job_order)
+   * @param {Object} pagination - Pagination parameters (page, limit)
+   * @returns {Promise<{data: Array, total: number}>} - Results and total count
+   */
+  static async getDailyOutputList(filters = {}, pagination = { page: 1, limit: 10 }) {
+    const connection = await pool.getConnection();
+    try {
+      console.log('Executing getDailyOutputList with filters:', filters);
+      
+      // Build WHERE clause based on filters
+      const conditions = [];
+      const params = [];
+      
+      if (filters.from_date && filters.from_date.trim() !== '') {
+        const fromDate = moment(filters.from_date, 'DD-MM-YYYY').format('YYYY-MM-DD');
+        conditions.push('TxnDate_dd >= ?');
+        params.push(fromDate);
+      }
+      
+      if (filters.to_date && filters.to_date.trim() !== '') {
+        const toDate = moment(filters.to_date, 'DD-MM-YYYY').format('YYYY-MM-DD');
+        conditions.push('TxnDate_dd <= ?');
+        params.push(toDate);
+      }
+      
+      if (filters.reference && filters.reference.trim() !== '') {
+        conditions.push('DocRef_v LIKE ?');
+        params.push(`%${filters.reference}%`);
+      }
+      
+      if (filters.job_order && filters.job_order.trim() !== '') {
+        conditions.push('DocRef_v LIKE ?');
+        params.push(`%${filters.job_order}%`);
+      }
+      
+      const whereClause = conditions.length > 0 
+        ? `WHERE ${conditions.join(' AND ')}`
+        : '';
+      
+      console.log('Query conditions:', conditions);
+      console.log('Query parameters:', params);
+      
+      // Very simple query to just get the basic data
+      const dataQuery = `
+        SELECT 
+          TxnId_i as txn_id,
+          DATE_FORMAT(TxnDate_dd, '%d-%m-%Y') as doc_date,
+          TIME_FORMAT(StartTime_tt, '%H:%i:%s') as start_time,
+          TIME_FORMAT(EndTime_tt, '%H:%i:%s') as end_time,
+          DocRef_v as daily_no,
+          JoId_i as jo_no,
+          '' as process_description,
+          '' as master_code,
+          '' as output_item,
+          0 as output_qty,
+          0 as reject_qty,
+          '' as lead_time,
+          1 as man_count,
+          '' as machine,
+          '' as operator,
+          DocRemark_v as remark,
+          DATE_FORMAT(CreateDate_dt, '%d-%m-%Y %H:%i:%S') as create_date,
+          CreateId_i as issued_by
+        FROM tbl_daily_txn
+        ${whereClause}
+        ORDER BY TxnId_i DESC
+        LIMIT ? OFFSET ?
+      `;
+      
+      // Calculate pagination
+      const page = parseInt(pagination.page) || 1;
+      const limit = parseInt(pagination.limit) || 10;
+      const offset = (page - 1) * limit;
+      
+      // Count total records for pagination
+      const countQuery = `
+        SELECT COUNT(*) as total
+        FROM tbl_daily_txn
+        ${whereClause}
+      `;
+      
+      const [countResult] = await connection.execute(countQuery, params);
+      const total = countResult[0].total;
+      console.log('Total records found:', total);
+      
+      // Add limit and offset to params
+      const queryParams = [...params, limit, offset];
+      console.log('Executing query:', dataQuery);
+      console.log('With parameters:', queryParams);
+      
+      const [rows] = await connection.execute(dataQuery, queryParams);
+      console.log('Query returned rows:', rows.length);
+      
+      return {
+        data: rows,
+        total: total,
+        page: page,
+        limit: limit,
+        totalPages: Math.ceil(total / limit)
+      };
+    } catch (error) {
+      console.error('Error in getDailyOutputList:', error);
+      throw error;
+    } finally {
+      connection.release();
+    }
   }
 }
 

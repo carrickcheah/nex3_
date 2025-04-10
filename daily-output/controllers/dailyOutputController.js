@@ -526,6 +526,221 @@ exports.updateDailyOutput = async (req, res) => {
   }
 };
 
+/**
+ * Handles the daily output inquiry page with search and pagination
+ */
+exports.dailyOutputInquiry = async (req, res) => {
+  try {
+    // Process filter parameters - don't set defaults for dates to show all records initially
+    const filters = {
+      from_date: req.query.from_date || '',
+      to_date: req.query.to_date || '',
+      reference: req.query.reference || '',
+      job_order: req.query.job_order || ''
+    };
+    
+    // Process pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    
+    // Get dashboard counts
+    const todayDate = moment().format('YYYY-MM-DD');
+    const connection = await pool.getConnection();
+    
+    try {
+      // Count of today's daily outputs
+      const [todayOutputResult] = await connection.execute(
+        'SELECT COUNT(*) as count FROM tbl_daily_txn WHERE TxnDate_dd = ?',
+        [todayDate]
+      );
+      
+      // Count of pending approvals - use Status_c which exists in the schema
+      const [pendingApprovalsResult] = await connection.execute(
+        'SELECT COUNT(*) as count FROM tbl_daily_txn WHERE Status_c = ?',
+        ['P']
+      );
+      
+      // Count of active work orders - count all records instead
+      const [activeWorkOrdersResult] = await connection.execute(
+        'SELECT COUNT(*) as count FROM tbl_jo_txn'
+      );
+      
+      // Count of completed outputs this month
+      const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
+      const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
+      
+      const [completedThisMonthResult] = await connection.execute(
+        'SELECT COUNT(*) as count FROM tbl_daily_txn WHERE TxnDate_dd BETWEEN ? AND ?',
+        [startOfMonth, endOfMonth]
+      );
+      
+      // Get the data with filtering and pagination
+      const result = await DailyOutputModel.getDailyOutputList(filters, { page, limit });
+      
+      // Prepare pagination data
+      const pagination = {
+        currentPage: result.page,
+        totalPages: result.totalPages,
+        totalRecords: result.total,
+        startRecord: ((result.page - 1) * result.limit) + 1,
+        endRecord: Math.min(result.page * result.limit, result.total),
+        startPage: Math.max(1, result.page - 2),
+        endPage: Math.min(result.totalPages, result.page + 2),
+        queryParams: buildQueryString(req.query, ['page'])
+      };
+      
+      // Dashboard counts
+      const dashboardCounts = {
+        todaysOutput: todayOutputResult[0].count || 0,
+        pendingApprovals: pendingApprovalsResult[0].count || 0,
+        activeWorkOrders: activeWorkOrdersResult[0].count || 0,
+        completedThisMonth: completedThisMonthResult[0].count || 0
+      };
+      
+      // Render the page with data
+      res.render('daily_inquiry', {
+        title: 'Daily Output Inquiry',
+        data: result.data,
+        filters: filters,
+        pagination: pagination,
+        dashboardCounts: dashboardCounts,
+        user: req.session.user || { name: 'Guest' }
+      });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Error in dailyOutputInquiry:', error);
+    res.status(500).send('An error occurred while loading daily output data');
+  }
+};
+
+/**
+ * Helper function to build query string for pagination links
+ */
+function buildQueryString(query, excludeParams = []) {
+  const params = [];
+  
+  for (const key in query) {
+    if (!excludeParams.includes(key) && query[key]) {
+      params.push(`${key}=${encodeURIComponent(query[key])}`);
+    }
+  }
+  
+  return params.length > 0 ? `&${params.join('&')}` : '';
+}
+
+/**
+ * Generates sample data for the daily output inquiry page
+ */
+exports.generateSampleData = async (req, res) => {
+  try {
+    // Create a connection to the database
+    const connection = await pool.getConnection();
+    
+    try {
+      // Get raw data from the database with minimal columns
+      const query = `
+        SELECT 
+          TxnId_i,
+          DocRef_v,
+          DATE_FORMAT(TxnDate_dd, '%d-%m-%Y') as TxnDate,
+          TIME_FORMAT(StartTime_tt, '%H:%i:%s') as StartTime,
+          TIME_FORMAT(EndTime_tt, '%H:%i:%s') as EndTime,
+          JoId_i,
+          DocRemark_v,
+          DATE_FORMAT(CreateDate_dt, '%d-%m-%Y %H:%i:%S') as CreateDate,
+          CreateId_i
+        FROM tbl_daily_txn
+        ORDER BY TxnId_i DESC
+        LIMIT 10
+      `;
+      
+      const [rows] = await connection.execute(query);
+      console.log('Sample data rows:', rows.length);
+      
+      // Format the data to match the expected structure
+      const data = rows.map(row => ({
+        txn_id: row.TxnId_i,
+        doc_date: row.TxnDate,
+        start_time: row.StartTime,
+        end_time: row.EndTime,
+        daily_no: row.DocRef_v,
+        jo_no: row.JoId_i,
+        process_description: 'Process ' + row.JoId_i,
+        master_code: 'CTP-000-' + row.JoId_i,
+        output_item: 'CTP-PRD-' + row.JoId_i,
+        output_qty: Math.floor(Math.random() * 20),
+        reject_qty: Math.floor(Math.random() * 5),
+        lead_time: row.StartTime + ' - ' + row.EndTime,
+        man_count: 1,
+        machine: 'Machine ' + (Math.floor(Math.random() * 5) + 1),
+        operator: 'Operator ' + (Math.floor(Math.random() * 5) + 1),
+        remark: row.DocRemark_v || '',
+        create_date: row.CreateDate || moment().format('DD-MM-YYYY HH:mm:SS'),
+        issued_by: row.CreateId_i || 'ADMIN'
+      }));
+      
+      // Get counts for dashboard
+      const [todayCount] = await connection.execute(
+        'SELECT COUNT(*) as count FROM tbl_daily_txn WHERE TxnDate_dd = CURDATE()'
+      );
+      
+      const [pendingCount] = await connection.execute(
+        'SELECT COUNT(*) as count FROM tbl_daily_txn WHERE Status_c = ?',
+        ['P']
+      );
+      
+      const [totalCount] = await connection.execute(
+        'SELECT COUNT(*) as count FROM tbl_daily_txn'
+      );
+      
+      const [joCount] = await connection.execute(
+        'SELECT COUNT(*) as count FROM tbl_jo_txn'
+      );
+      
+      const dashboardCounts = {
+        todaysOutput: todayCount[0].count || 0,
+        pendingApprovals: pendingCount[0].count || 0,
+        activeWorkOrders: joCount[0].count || 0,
+        completedThisMonth: Math.floor(totalCount[0].count / 2) || 0
+      };
+      
+      // Create pagination data
+      const pagination = {
+        currentPage: 1,
+        totalPages: Math.ceil(totalCount[0].count / 10),
+        totalRecords: totalCount[0].count,
+        startRecord: 1,
+        endRecord: Math.min(10, totalCount[0].count),
+        startPage: 1,
+        endPage: Math.min(5, Math.ceil(totalCount[0].count / 10)),
+        queryParams: ''
+      };
+      
+      // Render the page with the sample data
+      res.render('daily_inquiry', {
+        title: 'Daily Output Inquiry',
+        data: data,
+        filters: {
+          from_date: '',
+          to_date: '',
+          reference: '',
+          job_order: ''
+        },
+        pagination: pagination,
+        dashboardCounts: dashboardCounts,
+        user: req.session.user || { name: 'Guest' }
+      });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Error generating sample data:', error);
+    res.status(500).send('An error occurred while generating sample data');
+  }
+};
+
 // Helper functions
 async function getMachines(connection, txn_id) {
   const [rows] = await DailyOutputModel.getMachines(connection, txn_id);
@@ -569,5 +784,7 @@ module.exports = {
   dailyOutputEdit: exports.dailyOutputEdit,
   dailyOutputView: exports.dailyOutputView,
   createDailyOutput: exports.createDailyOutput,
-  updateDailyOutput: exports.updateDailyOutput
+  updateDailyOutput: exports.updateDailyOutput,
+  dailyOutputInquiry: exports.dailyOutputInquiry,
+  generateSampleData: exports.generateSampleData
 };
