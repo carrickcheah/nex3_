@@ -368,7 +368,7 @@ class DailyOutputModel {
     return await connection.execute(`
       INSERT INTO tbl_daily_item (
         TxnId_i, RowId_i, ProductId_i, ItemType_c,
-        Qty_d, QtyReject_d, QtyExtra_d
+        Qty_d, RejectQty_d, QtyExtra_d
       ) VALUES (?, ?, ?, 'O', ?, ?, ?)
     `, [txn_id, 1, item_id, output_qty, reject_qty, extra_qty]);
   }
@@ -640,9 +640,9 @@ class DailyOutputModel {
       product_id: item.ProductId_i,
       product_description: item.product_description,
       output_qty: item.Qty_d,
-      reject_qty: item.QtyReject_d || 0,
+      reject_qty: item.RejectQty_d || 0,
       extra_qty: item.QtyExtra_d || 0,
-      total_qty: parseFloat(item.Qty_d) + parseFloat(item.QtyReject_d || 0) + parseFloat(item.QtyExtra_d || 0),
+      total_qty: parseFloat(item.Qty_d) + parseFloat(item.RejectQty_d || 0) + parseFloat(item.QtyExtra_d || 0),
       outstanding: item.QtyBalance_d || 0,
       value: item.Amount_d || 0
     }));
@@ -996,7 +996,15 @@ class DailyOutputModel {
       // Get total count for pagination
       const [countRows] = await connection.query(`
         SELECT COUNT(*) as total
-        FROM tbl_daily_txn
+        FROM tbl_daily_txn d
+        LEFT JOIN tbl_jo_txn j ON d.JoId_i = j.JoId_i
+        LEFT JOIN tbl_jo_process jp ON d.ProcessId_i = jp.ProcessId_i
+        LEFT JOIN (
+          SELECT TxnId_i, ItemId_i, Qty_d, RejectQty_d
+          FROM tbl_daily_item
+          WHERE ItemType_c = 'O'
+          GROUP BY TxnId_i
+        ) di ON d.TxnId_i = di.TxnId_i
         WHERE 1=1 
         ${criteria.fromDate && criteria.toDate ? 'AND TxnDate_dd BETWEEN ? AND ?' : ''}
         ${criteria.reference ? 'AND DocRef_v LIKE ?' : ''}
@@ -1145,57 +1153,88 @@ class DailyOutputModel {
       
       if (filters.from_date && filters.from_date.trim() !== '') {
         const fromDate = moment(filters.from_date, 'DD-MM-YYYY').format('YYYY-MM-DD');
-        conditions.push('TxnDate_dd >= ?');
+        conditions.push('d.TxnDate_dd >= ?');
         params.push(fromDate);
       }
       
       if (filters.to_date && filters.to_date.trim() !== '') {
         const toDate = moment(filters.to_date, 'DD-MM-YYYY').format('YYYY-MM-DD');
-        conditions.push('TxnDate_dd <= ?');
+        conditions.push('d.TxnDate_dd <= ?');
         params.push(toDate);
       }
       
       if (filters.reference && filters.reference.trim() !== '') {
-        conditions.push('DocRef_v LIKE ?');
+        conditions.push('d.DocRef_v LIKE ?');
         params.push(`%${filters.reference}%`);
       }
       
       if (filters.job_order && filters.job_order.trim() !== '') {
-        conditions.push('DocRef_v LIKE ?');
+        conditions.push('j.DocRef_v LIKE ?');
         params.push(`%${filters.job_order}%`);
       }
       
+      // Add default condition for non-voided records
+      conditions.push('d.Void_c = ?');
+      params.push('0');
+      
       const whereClause = conditions.length > 0 
         ? `WHERE ${conditions.join(' AND ')}`
-        : '';
+        : 'WHERE d.Void_c = "0"';
       
-      console.log('Query conditions:', conditions);
-      console.log('Query parameters:', params);
-      
-      // Very simple query to just get the basic data
+      // Query based on the actual database schema
       const dataQuery = `
         SELECT 
-          TxnId_i as txn_id,
-          DATE_FORMAT(TxnDate_dd, '%d-%m-%Y') as doc_date,
-          TIME_FORMAT(StartTime_tt, '%H:%i:%s') as start_time,
-          TIME_FORMAT(EndTime_tt, '%H:%i:%s') as end_time,
-          DocRef_v as daily_no,
-          JoId_i as jo_no,
-          '' as process_description,
-          '' as master_code,
-          '' as output_item,
-          0 as output_qty,
-          0 as reject_qty,
-          '' as lead_time,
-          1 as man_count,
-          '' as machine,
-          '' as operator,
-          DocRemark_v as remark,
-          DATE_FORMAT(CreateDate_dt, '%d-%m-%Y %H:%i:%S') as create_date,
-          CreateId_i as issued_by
-        FROM tbl_daily_txn
+          d.TxnId_i AS txn_id,
+          DATE_FORMAT(d.TxnDate_dd, '%d-%m-%Y') AS doc_date,
+          TIME_FORMAT(d.StartTime_tt, '%H:%i:%s') AS start_time,
+          TIME_FORMAT(d.EndTime_tt, '%H:%i:%s') AS end_time,
+          d.DocRef_v AS daily_no,
+          j.DocRef_v AS jo_no,
+          p.ProcessDescr_v AS process_description,
+          IFNULL(
+            (SELECT ProdCode_v FROM tbl_product WHERE ItemId_i = j.ItemId_i LIMIT 1), 
+            'N/A'
+          ) AS master_code,
+          IFNULL(
+            (SELECT ProdCode_v FROM tbl_product WHERE ItemId_i = di.ItemId_i LIMIT 1), 
+            'N/A'
+          ) AS output_item,
+          IFNULL(di.Qty_d, 0) AS output_qty,
+          IFNULL(di.Reject_d, 0) AS reject_qty,
+          CONCAT(FLOOR(TIME_TO_SEC(TIMEDIFF(d.EndTime_tt, d.StartTime_tt)) / 3600), 'h ',
+                FLOOR((TIME_TO_SEC(TIMEDIFF(d.EndTime_tt, d.StartTime_tt)) % 3600) / 60), 'm') AS lead_time,
+          (SELECT COUNT(*) FROM tbl_daily_operator WHERE TxnId_i = d.TxnId_i) AS man_count,
+          IFNULL(
+            (SELECT GROUP_CONCAT(m.MachineName_v) 
+             FROM tbl_daily_machine dm 
+             JOIN tbl_machine m ON m.MachineId_i = dm.MachineId_i 
+             WHERE dm.TxnId_i = d.TxnId_i),
+            'N/A'
+          ) AS machine,
+          IFNULL(
+            (SELECT GROUP_CONCAT(u.UserAbbrev_v) 
+             FROM tbl_daily_operator dop 
+             JOIN tbl_user u ON u.UserId_i = dop.OperatorId_i 
+             WHERE dop.TxnId_i = d.TxnId_i),
+            'N/A'
+          ) AS operator,
+          d.DocRemark_v AS remark,
+          DATE_FORMAT(d.CreateDate_dt, '%d-%m-%Y %H:%i:%s') AS create_date,
+          (SELECT UserAbbrev_v FROM tbl_user WHERE UserId_i = d.OwnerId_i) AS issued_by
+        FROM 
+          tbl_daily_txn d
+        LEFT JOIN 
+          tbl_jo_txn j ON j.TxnId_i = d.JoId_i
+        LEFT JOIN 
+          tbl_jo_process p ON p.RowId_i = d.RowId_i AND p.TxnId_i = d.JoId_i
+        LEFT JOIN 
+          (SELECT TxnId_i, MIN(RowId_i) as RowId_i, ItemId_i, StkId_i, Qty_d, Reject_d 
+           FROM tbl_daily_item 
+           WHERE InOut_c = 'O' 
+           GROUP BY TxnId_i) di ON di.TxnId_i = d.TxnId_i
         ${whereClause}
-        ORDER BY TxnId_i DESC
+        ORDER BY 
+          d.TxnId_i DESC
         LIMIT ? OFFSET ?
       `;
       
@@ -1207,10 +1246,11 @@ class DailyOutputModel {
       // Count total records for pagination
       const countQuery = `
         SELECT COUNT(*) as total
-        FROM tbl_daily_txn
+        FROM tbl_daily_txn d
         ${whereClause}
       `;
       
+      // Execute the count query
       const [countResult] = await connection.execute(countQuery, params);
       const total = countResult[0].total;
       console.log('Total records found:', total);
