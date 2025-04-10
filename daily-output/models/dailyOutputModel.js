@@ -1152,15 +1152,31 @@ class DailyOutputModel {
       const params = [];
       
       if (filters.from_date && filters.from_date.trim() !== '') {
-        const fromDate = moment(filters.from_date, 'DD-MM-YYYY').format('YYYY-MM-DD');
-        conditions.push('d.TxnDate_dd >= ?');
-        params.push(fromDate);
+        try {
+          const fromDate = moment(filters.from_date, 'DD-MM-YYYY').format('YYYY-MM-DD');
+          conditions.push('d.TxnDate_dd >= ?');
+          params.push(fromDate);
+          console.log('From date added:', fromDate);
+        } catch (err) {
+          console.error('Error parsing from_date:', err);
+          // Add a default date if parsing fails
+          conditions.push('d.TxnDate_dd >= ?');
+          params.push('1970-01-01');
+        }
       }
       
       if (filters.to_date && filters.to_date.trim() !== '') {
-        const toDate = moment(filters.to_date, 'DD-MM-YYYY').format('YYYY-MM-DD');
-        conditions.push('d.TxnDate_dd <= ?');
-        params.push(toDate);
+        try {
+          const toDate = moment(filters.to_date, 'DD-MM-YYYY').format('YYYY-MM-DD');
+          conditions.push('d.TxnDate_dd <= ?');
+          params.push(toDate);
+          console.log('To date added:', toDate);
+        } catch (err) {
+          console.error('Error parsing to_date:', err);
+          // Add a default date if parsing fails
+          conditions.push('d.TxnDate_dd <= ?');
+          params.push(moment().format('YYYY-MM-DD'));
+        }
       }
       
       if (filters.reference && filters.reference.trim() !== '') {
@@ -1169,7 +1185,7 @@ class DailyOutputModel {
       }
       
       if (filters.job_order && filters.job_order.trim() !== '') {
-        conditions.push('j.DocRef_v LIKE ?');
+        conditions.push('(j.DocRef_v LIKE ? OR j.DocRef_v IS NULL)');
         params.push(`%${filters.job_order}%`);
       }
       
@@ -1181,8 +1197,15 @@ class DailyOutputModel {
         ? `WHERE ${conditions.join(' AND ')}`
         : 'WHERE d.Void_c = "0"';
       
-      // Query based on the actual database schema
-      const dataQuery = `
+      // Calculate pagination
+      const page = parseInt(pagination.page) || 1;
+      const limit = parseInt(pagination.limit) || 10;
+      const offset = (page - 1) * limit;
+      
+      console.log('Pagination:', { page, limit, offset });
+      
+      // Construct the main data query with direct LIMIT and OFFSET values
+      const formattedDataQuery = `
         SELECT 
           d.TxnId_i AS txn_id,
           DATE_FORMAT(d.TxnDate_dd, '%d-%m-%Y') AS doc_date,
@@ -1192,15 +1215,31 @@ class DailyOutputModel {
           j.DocRef_v AS jo_no,
           p.ProcessDescr_v AS process_description,
           IFNULL(
-            (SELECT ProdCode_v FROM tbl_product WHERE ItemId_i = j.ItemId_i LIMIT 1), 
+            (SELECT jp.StkCode_v AS ProductCode_v
+             FROM tbl_jo_txn jt 
+             JOIN tbl_product_code jp ON jp.ItemId_i = jt.ItemId_i 
+             WHERE jt.TxnId_i = d.JoId_i LIMIT 1), 
             'N/A'
           ) AS master_code,
           IFNULL(
-            (SELECT ProdCode_v FROM tbl_product WHERE ItemId_i = di.ItemId_i LIMIT 1), 
+            (SELECT GROUP_CONCAT(p.StkCode_v SEPARATOR ', ') 
+             FROM tbl_daily_item di 
+             JOIN tbl_product_code p ON p.ItemId_i = di.ItemId_i 
+             WHERE di.TxnId_i = d.TxnId_i AND di.InOut_c = 'O'), 
             'N/A'
           ) AS output_item,
-          IFNULL(di.Qty_d, 0) AS output_qty,
-          IFNULL(di.Reject_d, 0) AS reject_qty,
+          IFNULL(
+            (SELECT SUM(di.Qty_d) 
+             FROM tbl_daily_item di 
+             WHERE di.TxnId_i = d.TxnId_i AND di.InOut_c = 'O'), 
+            0
+          ) AS output_qty,
+          IFNULL(
+            (SELECT SUM(di.Reject_d) 
+             FROM tbl_daily_item di 
+             WHERE di.TxnId_i = d.TxnId_i AND di.InOut_c = 'O'), 
+            0
+          ) AS reject_qty,
           CONCAT(FLOOR(TIME_TO_SEC(TIMEDIFF(d.EndTime_tt, d.StartTime_tt)) / 3600), 'h ',
                 FLOOR((TIME_TO_SEC(TIMEDIFF(d.EndTime_tt, d.StartTime_tt)) % 3600) / 60), 'm') AS lead_time,
           (SELECT COUNT(*) FROM tbl_daily_operator WHERE TxnId_i = d.TxnId_i) AS man_count,
@@ -1227,49 +1266,54 @@ class DailyOutputModel {
           tbl_jo_txn j ON j.TxnId_i = d.JoId_i
         LEFT JOIN 
           tbl_jo_process p ON p.RowId_i = d.RowId_i AND p.TxnId_i = d.JoId_i
-        LEFT JOIN 
-          (SELECT TxnId_i, MIN(RowId_i) as RowId_i, ItemId_i, StkId_i, Qty_d, Reject_d 
-           FROM tbl_daily_item 
-           WHERE InOut_c = 'O' 
-           GROUP BY TxnId_i) di ON di.TxnId_i = d.TxnId_i
         ${whereClause}
         ORDER BY 
           d.TxnId_i DESC
-        LIMIT ? OFFSET ?
+        LIMIT ${limit} OFFSET ${offset}
       `;
-      
-      // Calculate pagination
-      const page = parseInt(pagination.page) || 1;
-      const limit = parseInt(pagination.limit) || 10;
-      const offset = (page - 1) * limit;
       
       // Count total records for pagination
       const countQuery = `
         SELECT COUNT(*) as total
         FROM tbl_daily_txn d
+        LEFT JOIN tbl_jo_txn j ON j.TxnId_i = d.JoId_i
         ${whereClause}
       `;
       
       // Execute the count query
+      console.log('Count query params:', params);
       const [countResult] = await connection.execute(countQuery, params);
       const total = countResult[0].total;
       console.log('Total records found:', total);
       
-      // Add limit and offset to params
-      const queryParams = [...params, limit, offset];
-      console.log('Executing query:', dataQuery);
-      console.log('With parameters:', queryParams);
+      // Execute the main data query
+      console.log('Executing query:', formattedDataQuery);
+      console.log('With parameters:', params);
       
-      const [rows] = await connection.execute(dataQuery, queryParams);
-      console.log('Query returned rows:', rows.length);
+      // Debug parameter types
+      console.log('Parameter types:');
+      params.forEach((param, index) => {
+        console.log(`Param ${index}: ${param} (${typeof param})`);
+      });
       
-      return {
-        data: rows,
-        total: total,
-        page: page,
-        limit: limit,
-        totalPages: Math.ceil(total / limit)
-      };
+      try {
+        const [rows] = await connection.execute(formattedDataQuery, params);
+        console.log('Query returned rows:', rows.length);
+        
+        return {
+          data: rows,
+          total: total,
+          page: page,
+          limit: limit,
+          totalPages: Math.ceil(total / limit)
+        };
+      } catch (error) {
+        console.error('Error executing main query:', error.message);
+        console.error('SQL State:', error.sqlState);
+        console.error('Error Code:', error.code);
+        console.error('Full error:', error);
+        throw error;
+      }
     } catch (error) {
       console.error('Error in getDailyOutputList:', error);
       throw error;
