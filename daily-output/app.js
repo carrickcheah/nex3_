@@ -100,11 +100,59 @@ app.get('/', (req, res) => {
 });
 
 // Dashboard page
-app.get('/page/dashboard', (req, res) => {
-  res.render('dashboard', {
-    title: 'Dashboard',
-    user: req.session.user || { name: 'SYSTEM ADMIN' }
-  });
+app.get('/page/dashboard', async (req, res) => {
+  try {
+    // Get dashboard counts - using the same code as in dailyOutputInquiry
+    const todayDate = moment().format('YYYY-MM-DD');
+    const connection = await pool.getConnection();
+    
+    try {
+      // Count of today's daily outputs
+      const [todayOutputResult] = await connection.execute(
+        'SELECT COUNT(*) as count FROM tbl_daily_txn WHERE TxnDate_dd = ?',
+        [todayDate]
+      );
+      
+      // Count of pending approvals
+      const [pendingApprovalsResult] = await connection.execute(
+        'SELECT COUNT(*) as count FROM tbl_daily_txn WHERE Status_c = ?',
+        ['P']
+      );
+      
+      // Count of active work orders
+      const [activeWorkOrdersResult] = await connection.execute(
+        'SELECT COUNT(*) as count FROM tbl_jo_txn'
+      );
+      
+      // Count of completed outputs this month
+      const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
+      const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
+      
+      const [completedThisMonthResult] = await connection.execute(
+        'SELECT COUNT(*) as count FROM tbl_daily_txn WHERE TxnDate_dd BETWEEN ? AND ?',
+        [startOfMonth, endOfMonth]
+      );
+      
+      // Dashboard counts
+      const dashboardCounts = {
+        todaysOutput: todayOutputResult[0].count || 0,
+        pendingApprovals: pendingApprovalsResult[0].count || 0,
+        activeWorkOrders: activeWorkOrdersResult[0].count || 0,
+        completedThisMonth: completedThisMonthResult[0].count || 0
+      };
+      
+      res.render('dashboard', {
+        title: 'Dashboard',
+        dashboardCounts: dashboardCounts,
+        user: req.session.user || { name: 'SYSTEM ADMIN' }
+      });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Error loading dashboard data:', error);
+    res.status(500).send('An error occurred while loading dashboard data');
+  }
 });
 
 // Functions for daily output operations

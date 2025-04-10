@@ -162,7 +162,7 @@
     <div class="w3-quarter animate-fade-in">
       <div class="dashboard-card">
         <div class="dashboard-item" style="background-color: rgb(0,0,255);">
-          <div class="dashboard-value">0</div>
+          <div class="dashboard-value"><%= locals.dashboardCounts ? dashboardCounts.todaysOutput : 0 %></div>
           <div class="dashboard-label">Today's Daily Output</div>
         </div>
       </div>
@@ -171,7 +171,7 @@
     <div class="w3-quarter animate-fade-in delay-1">
       <div class="dashboard-card">
         <div class="dashboard-item" style="background-color: rgb(0,80,255);">
-          <div class="dashboard-value">0</div>
+          <div class="dashboard-value"><%= locals.dashboardCounts ? dashboardCounts.pendingApprovals : 0 %></div>
           <div class="dashboard-label">Pending Approvals</div>
         </div>
       </div>
@@ -180,7 +180,7 @@
     <div class="w3-quarter animate-fade-in delay-2">
       <div class="dashboard-card">
         <div class="dashboard-item" style="background-color: rgb(0,120,255);">
-          <div class="dashboard-value">0</div>
+          <div class="dashboard-value"><%= locals.dashboardCounts ? dashboardCounts.activeWorkOrders : 0 %></div>
           <div class="dashboard-label">Active Work Orders</div>
         </div>
       </div>
@@ -189,7 +189,7 @@
     <div class="w3-quarter animate-fade-in delay-3">
       <div class="dashboard-card">
         <div class="dashboard-item" style="background-color: rgb(0,160,255);">
-          <div class="dashboard-value">0</div>
+          <div class="dashboard-value"><%= locals.dashboardCounts ? dashboardCounts.completedThisMonth : 0 %></div>
           <div class="dashboard-label">Completed This Month</div>
         </div>
       </div>

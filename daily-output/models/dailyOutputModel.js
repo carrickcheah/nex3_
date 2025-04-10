@@ -1142,7 +1142,7 @@ class DailyOutputModel {
    * @param {Object} pagination - Pagination parameters (page, limit)
    * @returns {Promise<{data: Array, total: number}>} - Results and total count
    */
-  static async getDailyOutputList(filters = {}, pagination = { page: 1, limit: 20 }) {
+  static async getDailyOutputList(filters = {}, pagination = { page: 1, limit: 30 }) {
     const connection = await pool.getConnection();
     try {
       console.log('Executing getDailyOutputList with filters:', filters);
