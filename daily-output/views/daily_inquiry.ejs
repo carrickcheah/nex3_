@@ -148,6 +148,73 @@
     .delay-1 { animation-delay: 0.1s; }
     .delay-2 { animation-delay: 0.2s; }
     .delay-3 { animation-delay: 0.3s; }
+    
+    /* Dashboard cards with different blue shades */
+    .blue-card-1 {
+      background-color: #0000ff; /* Brightest blue */
+      color: white;
+      padding: 20px;
+      text-align: center;
+      border-radius: 8px;
+    }
+    
+    .blue-card-2 {
+      background-color: #3939ff; /* Slightly lighter blue */
+      color: white;
+      padding: 20px;
+      text-align: center;
+      border-radius: 8px;
+    }
+    
+    .blue-card-3 {
+      background-color: #6b6bff; /* Medium blue */
+      color: white;
+      padding: 20px;
+      text-align: center;
+      border-radius: 8px;
+    }
+    
+    .blue-card-4 {
+      background-color: #9b9bff; /* Lightest blue */
+      color: white;
+      padding: 20px;
+      text-align: center;
+      border-radius: 8px;
+    }
+    
+    .card-number {
+      font-size: 36px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    
+    .card-label {
+      font-size: 16px;
+      font-weight: 500;
+    }
+    
+    /* Table styling to match the image */
+    .data-table {
+      width: 100%;
+      white-space: nowrap;
+    }
+    
+    .data-table th {
+      background-color: #f0f0f0;
+      font-weight: 600;
+      text-align: left;
+      padding: 10px;
+      border: 1px solid #ddd;
+    }
+    
+    .data-table td {
+      padding: 8px 10px;
+      border: 1px solid #ddd;
+    }
+    
+    .data-table tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
   </style>
 </head>
 <body>
@@ -167,8 +234,36 @@
   <!-- Header -->
   <h2 class="page-title"><i class="fa fa-search"></i> Daily Output Inquiry</h2>
 
+  <!-- Dashboard Cards -->
+  <div class="w3-row-padding">
+    <div class="w3-quarter">
+      <div class="blue-card-1 animate-fade-in">
+        <div class="card-number">0</div>
+        <div class="card-label">Today's Daily Output</div>
+      </div>
+    </div>
+    <div class="w3-quarter">
+      <div class="blue-card-2 animate-fade-in">
+        <div class="card-number">0</div>
+        <div class="card-label">Pending Approvals</div>
+      </div>
+    </div>
+    <div class="w3-quarter">
+      <div class="blue-card-3 animate-fade-in">
+        <div class="card-number">0</div>
+        <div class="card-label">Active Work Orders</div>
+      </div>
+    </div>
+    <div class="w3-quarter">
+      <div class="blue-card-4 animate-fade-in">
+        <div class="card-number">0</div>
+        <div class="card-label">Completed This Month</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Search Form -->
-  <div class="form-card animate-fade-in">
+  <div class="form-card animate-fade-in" style="margin-top: 24px;">
     <form id="searchForm" action="/page/manufacture/daily_inquiry" method="GET">
       <div class="w3-row-padding">
         <div class="w3-quarter">
@@ -208,40 +303,50 @@
   <!-- Results Table -->
   <div class="dashboard-card animate-fade-in delay-1">
     <div class="table-container">
-      <table class="w3-table-all w3-hoverable">
+      <table class="w3-table data-table">
         <thead>
-          <tr style="background-color: rgb(0,0,255); color: white;">
-            <th>Daily No.</th>
-            <th>Date</th>
-            <th>JO No.</th>
-            <th>Process</th>
-            <th>Supervisor</th>
-            <th>Status</th>
+          <tr style="background-color: #f0f0f0;">
+            <th>#</th>
+            <th>TXN ID</th>
+            <th>DOC DATE</th>
+            <th>START TIME</th>
+            <th>END TIME</th>
+            <th>DAILY NO</th>
+            <th>JO NO</th>
+            <th>PROCESS DESCRIPTION</th>
+            <th>MASTER CODE</th>
+            <th>OUTPUT ITEM</th>
+            <th>OUTPUT QTY</th>
+            <th>REJECT QTY</th>
+            <th>LEAD TIME</th>
+            <th>MAN COUNT</th>
+            <th>MACHINE</th>
+            <th>OPERATOR</th>
+            <th>REMARK</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           <% if (locals.results && results.length > 0) { %>
-            <% results.forEach(function(item) { %>
+            <% results.forEach(function(item, index) { %>
               <tr>
-                <td><%= item.doc_ref %></td>
-                <td><%= item.txn_date %></td>
-                <td><%= item.jo_reference %></td>
-                <td><%= item.jo_process %></td>
-                <td><%= item.owner_abbrev %></td>
-                <td>
-                  <% if (item.status_name === 'Outstanding') { %>
-                    <span class="w3-tag w3-round" style="background-color: #ffc107; color: #212529; padding: 4px 8px; font-size: 0.85rem; font-weight: 500;">
-                      <%= item.status_name %>
-                    </span>
-                  <% } else if (item.status_name === 'Completed') { %>
-                    <span class="w3-tag w3-round" style="background-color: #28a745; color: white; padding: 4px 8px; font-size: 0.85rem; font-weight: 500;">
-                      <%= item.status_name %>
-                    </span>
-                  <% } else { %>
-                    <span class="w3-tag w3-round <%= item.status_css %>"><%= item.status_name %></span>
-                  <% } %>
-                </td>
+                <td><%= index + 1 %>.</td>
+                <td><%= item.txn_id || '' %></td>
+                <td><%= item.txn_date || '' %></td>
+                <td><%= item.start_time || '' %></td>
+                <td><%= item.end_time || '' %></td>
+                <td><%= item.doc_ref || '' %></td>
+                <td><%= item.jo_reference || '' %></td>
+                <td><%= item.jo_process || '' %></td>
+                <td><%= item.master_code || '' %></td>
+                <td><%= item.output_item || '' %></td>
+                <td><%= item.output_qty || '0' %></td>
+                <td><%= item.reject_qty || '0' %></td>
+                <td><%= item.lead_time || '0' %></td>
+                <td><%= item.man_count || '1' %></td>
+                <td><%= item.machine || '' %></td>
+                <td><%= item.operator || '' %></td>
+                <td><%= item.remark || '' %></td>
                 <td>
                   <a href="/page/manufacture/daily_output/view/<%= item.txn_id %>" class="btn btn-primary" style="padding: 4px 8px; font-size: 0.85rem;">View</a>
                 </td>
@@ -249,7 +354,7 @@
             <% }); %>
           <% } else { %>
             <tr>
-              <td colspan="7" class="w3-center">No records found</td>
+              <td colspan="18" class="w3-center">No records found</td>
             </tr>
           <% } %>
         </tbody>
