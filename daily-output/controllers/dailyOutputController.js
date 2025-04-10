@@ -541,7 +541,7 @@ exports.dailyOutputInquiry = async (req, res) => {
     
     // Process pagination parameters
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = parseInt(req.query.limit) || 20;
     
     // Get dashboard counts
     const todayDate = moment().format('YYYY-MM-DD');

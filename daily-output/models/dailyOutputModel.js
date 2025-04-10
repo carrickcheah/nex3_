@@ -1129,60 +1129,12 @@ class DailyOutputModel {
   }
 
   /**
-   * Get tools for a transaction
-   * @param {number} txn_id - Transaction ID (optional)
-   * @returns {Promise<Array>} - Array of tools
-   */
-  static async getTools(txn_id = 0) {
-    const connection = await pool.getConnection();
-    try {
-      const [rows] = await connection.query(`
-        SELECT t.ToolId_i as id, 
-               t.ToolName_v as name,
-               dt.Selected_c as selected
-        FROM tbl_comp_tool t
-        LEFT JOIN tbl_daily_tool dt ON dt.ToolId_i = t.ToolId_i AND dt.TxnId_i = ?
-        WHERE t.Status_c = 'A'
-        ORDER BY t.ToolName_v
-      `, [txn_id || 0]);
-      
-      return rows;
-    } finally {
-      connection.release();
-    }
-  }
-
-  /**
-   * Get tools with provided connection
-   * @param {Object} connection - Database connection
-   * @param {number} txn_id - Transaction ID (optional)
-   * @returns {Promise<Array>} - Array of tools
-   */
-  static async getTools(connection, txn_id = 0) {
-    if (!connection) {
-      return this.getTools(txn_id);
-    }
-    
-    const [rows] = await connection.query(`
-      SELECT t.ToolId_i as id, 
-             t.ToolName_v as name,
-             dt.Selected_c as selected
-      FROM tbl_comp_tool t
-      LEFT JOIN tbl_daily_tool dt ON dt.ToolId_i = t.ToolId_i AND dt.TxnId_i = ?
-      WHERE t.Status_c = 'A'
-      ORDER BY t.ToolName_v
-    `, [txn_id || 0]);
-    
-    return rows;
-  }
-
-  /**
    * Get list of daily output records with filtering and pagination
    * @param {Object} filters - Filter parameters (from_date, to_date, reference, job_order)
    * @param {Object} pagination - Pagination parameters (page, limit)
    * @returns {Promise<{data: Array, total: number}>} - Results and total count
    */
-  static async getDailyOutputList(filters = {}, pagination = { page: 1, limit: 10 }) {
+  static async getDailyOutputList(filters = {}, pagination = { page: 1, limit: 20 }) {
     const connection = await pool.getConnection();
     try {
       console.log('Executing getDailyOutputList with filters:', filters);
