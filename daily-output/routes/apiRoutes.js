@@ -16,32 +16,43 @@ router.get('/api/manufacture/jo-details', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Job Order reference is required' });
     }
     
+    console.log('Looking for JO reference:', joReference);
+    
     const connection = await pool.getConnection();
     
     try {
-      // Get JO details
+      // Get basic JO details (only one row needed for this)
       const [rows] = await connection.query(`
-        SELECT j.TxnId_i, j.DocRef_v, j.ItemId_i, p.ProcessDescr_v,
+        SELECT j.TxnId_i, j.DocRef_v, j.ItemId_i,
                i.StkCode_v as product_code, 
                i.ProdName_v as product_name
         FROM tbl_jo_txn j
-        LEFT JOIN tbl_jo_process p ON p.TxnId_i = j.TxnId_i
         LEFT JOIN tbl_product_code i ON i.ItemId_i = j.ItemId_i
-        WHERE j.DocRef_v = ? AND j._Status_c = 'P' AND j.Void_c = '0'
+        WHERE j.DocRef_v = ?
         LIMIT 1
       `, [joReference]);
       
       if (rows.length === 0) {
+        console.error('JO NOT FOUND in database:', joReference);
         return res.status(404).json({ success: false, message: 'Job Order not found or inactive' });
       }
       
-      // Get process options
+      console.log('Found JO details:', rows[0]);
+      
+      // Get all processes for this job order - don't limit to 1 process
       const [processes] = await connection.query(`
         SELECT ProcessId_i, ProcessDescr_v
         FROM tbl_jo_process
         WHERE TxnId_i = ?
         ORDER BY RowId_i
       `, [rows[0].TxnId_i]);
+      
+      console.log('Found processes:', processes.length);
+      if (processes.length > 0) {
+        console.log('First process:', processes[0].ProcessDescr_v);
+      } else {
+        console.warn('No processes found for JO:', joReference);
+      }
       
       // Return JO details
       return res.json({
@@ -50,7 +61,7 @@ router.get('/api/manufacture/jo-details', async (req, res) => {
         reference: rows[0].DocRef_v,
         product_id: rows[0].ItemId_i,
         product_name: rows[0].product_name,
-        process: rows[0].ProcessDescr_v || null,
+        process: processes.length > 0 ? processes[0].ProcessDescr_v : null,
         processes: processes.map(p => ({
           id: p.ProcessDescr_v,
           name: p.ProcessDescr_v
@@ -429,12 +440,12 @@ router.get('/api/manufacture/jo-process-details', async (req, res) => {
           ji.ItemId_i,
           p.StkCode_v as product_code,
           p.ProdName_v as product_name,
-          ji.QtyReqd_d as qty_required,
-          ji.QtyBalance_d as qty_balance
+          ji.Qty_d as qty_required,
+          ji.TotalQty_d as qty_balance
         FROM tbl_jo_item ji
         LEFT JOIN tbl_product_code p ON p.ItemId_i = ji.ItemId_i
         WHERE ji.TxnId_i = ? AND ji.RowId_i = ?
-        ORDER BY ji.ItemSeq_i
+        ORDER BY ji.Id_i
       `, [joId, rowId]);
       
       console.log('Input items query result count:', inputRows.length);
