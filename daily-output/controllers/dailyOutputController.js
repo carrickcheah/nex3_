@@ -541,7 +541,7 @@ exports.dailyOutputInquiry = async (req, res) => {
     
     // Process pagination parameters
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 30;
+    const limit = parseInt(req.query.limit) || 50;
     
     // Get dashboard counts
     const todayDate = moment().format('YYYY-MM-DD');
@@ -758,7 +758,7 @@ exports.exportToCsv = async (req, res) => {
     
     // Use the same pagination as the current page view
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 30;
+    const limit = parseInt(req.query.limit) || 50;
     
     console.log('Filters for CSV export:', filters);
     
