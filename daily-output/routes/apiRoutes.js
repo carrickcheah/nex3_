@@ -106,10 +106,10 @@ router.get('/api/manufacture/product-details', async (req, res) => {
       
       // Get outstanding balances from other transactions
       const [outstandingRows] = await connection.query(`
-        SELECT SUM(QtyBalance_d) as outstanding
+        SELECT SUM(TotalQty_d) as outstanding
         FROM tbl_jo_item
-        WHERE ProductId_i = ? AND QtyBalance_d > 0
-        GROUP BY ProductId_i
+        WHERE ItemId_i = ? AND TotalQty_d > 0
+        GROUP BY ItemId_i
       `, [productId]);
       
       const outstanding = outstandingRows.length > 0 ? outstandingRows[0].outstanding : 0;
@@ -235,16 +235,19 @@ router.get('/api/manufacture/job-orders', async (req, res) => {
       const threeMonthsAgo = new Date();
       threeMonthsAgo.setMonth(currentDate.getMonth() - 3);
       
+      // For older important JOs, go back further (up to 2023)
+      const startOf2023 = new Date('2023-01-01');
+      
       // Format dates for MySQL
       const formattedCurrentDate = currentDate.toISOString().split('T')[0];
       const formattedThreeMonthsAgo = threeMonthsAgo.toISOString().split('T')[0];
+      const formatted2023Start = startOf2023.toISOString().split('T')[0];
       
       console.log('Filtering JOs from:', formattedThreeMonthsAgo, 'to:', formattedCurrentDate);
+      console.log('Will also include important JOs since:', formatted2023Start);
       
-      // Improved query with proper filtering:
-      // 1. Only active and non-voided JOs
-      // 2. Only JOs from the last 3 months
-      let query = `
+      // First query: Get recent JOs (last 3 months)
+      let recentQuery = `
         SELECT 
           j.TxnId_i, 
           j.DocRef_v, 
@@ -262,92 +265,100 @@ router.get('/api/manufacture/job-orders', async (req, res) => {
           AND j.CreateDate_dt >= ?
       `;
       
-      const queryParams = [formattedThreeMonthsAgo];
+      const recentQueryParams = [formattedThreeMonthsAgo];
       
       // Add search condition if provided
       if (searchTerm) {
-        query += ` AND (j.DocRef_v LIKE ? OR i.StkCode_v LIKE ? OR i.ProdName_v LIKE ?)`;
-        queryParams.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
+        recentQuery += ` AND (j.DocRef_v LIKE ? OR i.StkCode_v LIKE ? OR i.ProdName_v LIKE ?)`;
+        recentQueryParams.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
       }
       
-      // First sort by date DESC (newest first), then by reference
-      query += ` ORDER BY 
-                  j.CreateDate_dt DESC, 
-                  j.DocRef_v ASC`;
+      // Sort and limit
+      recentQuery += ` ORDER BY j.CreateDate_dt DESC, j.DocRef_v ASC LIMIT 200`;
       
-      // Limit to most recent 200 orders
-      query += ` LIMIT 200`;
+      console.log('Executing recent job orders query...');
       
-      console.log('Executing job orders query...');
-      console.log('Query Params:', queryParams);
+      // Execute the first query (recent JOs)
+      const [recentRows] = await connection.query(recentQuery, recentQueryParams);
       
-      // Execute the query
-      const [rows] = await connection.query(query, queryParams);
+      console.log('Recent job orders query returned', recentRows.length, 'results');
       
-      // Log detailed information about the results
-      console.log('Job order query returned', rows.length, 'results');
+      // Second query: Get older but important JOs from 2023 and 2024
+      // Look for JOs that start with specific prefixes (JO23, JO24, JOST23, JOST24, JOTR23, JOTR24)
+      let olderQuery = `
+        SELECT 
+          j.TxnId_i, 
+          j.DocRef_v, 
+          j.ItemId_i,
+          j.CreateDate_dt, 
+          i.StkCode_v as product_code, 
+          i.ProdName_v as product_name
+        FROM 
+          tbl_jo_txn j
+        LEFT JOIN 
+          tbl_product_code i ON i.ItemId_i = j.ItemId_i
+        WHERE 
+          j._Status_c = 'P' 
+          AND j.Void_c = '0'
+          AND j.CreateDate_dt >= ?
+          AND j.CreateDate_dt < ?
+          AND (
+            j.DocRef_v LIKE 'JO23%' OR 
+            j.DocRef_v LIKE 'JO24%' OR
+            j.DocRef_v LIKE 'JOST23%' OR 
+            j.DocRef_v LIKE 'JOST24%' OR
+            j.DocRef_v LIKE 'JOTR23%' OR 
+            j.DocRef_v LIKE 'JOTR24%'
+          )
+      `;
       
-      if (rows.length > 0) {
+      const olderQueryParams = [formatted2023Start, formattedThreeMonthsAgo];
+      
+      // Add search condition if provided
+      if (searchTerm) {
+        olderQuery += ` AND (j.DocRef_v LIKE ? OR i.StkCode_v LIKE ? OR i.ProdName_v LIKE ?)`;
+        olderQueryParams.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
+      }
+      
+      // Sort and limit
+      olderQuery += ` ORDER BY j.CreateDate_dt DESC, j.DocRef_v ASC LIMIT 200`;
+      
+      console.log('Executing older important job orders query...');
+      
+      // Execute the second query (older important JOs)
+      const [olderRows] = await connection.query(olderQuery, olderQueryParams);
+      
+      console.log('Older important job orders query returned', olderRows.length, 'results');
+      
+      // Combine the results
+      const allRows = [...recentRows, ...olderRows];
+      
+      // Remove duplicates based on DocRef_v
+      const uniqueJOs = [];
+      const uniqueRefs = new Set();
+      
+      allRows.forEach(row => {
+        if (!uniqueRefs.has(row.DocRef_v)) {
+          uniqueRefs.add(row.DocRef_v);
+          uniqueJOs.push(row);
+        }
+      });
+      
+      console.log('Combined unique job orders:', uniqueJOs.length);
+      
+      if (uniqueJOs.length > 0) {
         // Log sample results
-        console.log('Sample job orders:', rows.slice(0, 3).map(r => r.DocRef_v));
+        console.log('Sample job orders:', uniqueJOs.slice(0, 3).map(r => r.DocRef_v));
       } else {
         console.log('WARNING: No job orders found in database!');
       }
       
-      const jobOrders = rows.map(row => ({
+      const jobOrders = uniqueJOs.map(row => ({
         id: row.TxnId_i,
         reference: row.DocRef_v,
         createDate: row.CreateDate_dt,
         display: `${row.DocRef_v} - [${row.product_code || ''}] ${row.product_name || ''}`
       }));
-      
-      // Add specific job orders we want to always include
-      const specialJobOrders = [
-        'JOTR23050306', 
-        'JO23060150', 
-        'JO23060216', 
-        'JO23060227', 
-        'JO23060245', 
-        'JO23060246'
-      ];
-      
-      // Check for any special JOs not already in the results
-      const existingRefs = jobOrders.map(jo => jo.reference);
-      const missingSpecialJOs = specialJobOrders.filter(ref => !existingRefs.includes(ref));
-      
-      if (missingSpecialJOs.length > 0) {
-        console.log('Fetching missing special JOs:', missingSpecialJOs);
-        
-        // Get the missing special JOs
-        const specialQuery = `
-          SELECT 
-            j.TxnId_i, 
-            j.DocRef_v, 
-            j.ItemId_i,
-            j.CreateDate_dt, 
-            i.StkCode_v as product_code, 
-            i.ProdName_v as product_name
-          FROM 
-            tbl_jo_txn j
-          LEFT JOIN 
-            tbl_product_code i ON i.ItemId_i = j.ItemId_i
-          WHERE 
-            j.DocRef_v IN (?)
-        `;
-        
-        const [specialRows] = await connection.query(specialQuery, [missingSpecialJOs]);
-        
-        // Add the special JOs to the result set
-        const specialJobOrdersData = specialRows.map(row => ({
-          id: row.TxnId_i,
-          reference: row.DocRef_v,
-          createDate: row.CreateDate_dt,
-          display: `${row.DocRef_v} - [${row.product_code || ''}] ${row.product_name || ''}`
-        }));
-        
-        // Combine and sort the results
-        jobOrders.push(...specialJobOrdersData);
-      }
       
       console.log('Returning', jobOrders.length, 'formatted job orders to client');
       
