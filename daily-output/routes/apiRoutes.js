@@ -213,29 +213,125 @@ router.get('/api/manufacture/product-batches', async (req, res) => {
 router.get('/api/manufacture/job-orders', async (req, res) => {
   try {
     const searchTerm = req.query.search || '';
+    let prefixes = req.query.prefixes;
+    const includeAll = req.query.includeAll === 'true' || req.query.includeAll === true;
+    
+    console.log('Request params:', {
+      searchTerm, 
+      prefixes, 
+      includeAll,
+      originalIncludeAll: req.query.includeAll
+    });
+    
+    // Handle prefixes parameter (could be string or array)
+    if (!includeAll && prefixes && !Array.isArray(prefixes)) {
+      try {
+        prefixes = JSON.parse(prefixes);
+      } catch (e) {
+        prefixes = [prefixes];
+      }
+    }
+    
     const connection = await pool.getConnection();
     
     try {
-      // Query to get active job orders with product details
-      const [rows] = await connection.query(`
-        SELECT 
-          j.TxnId_i, 
-          j.DocRef_v, 
-          j.ItemId_i, 
-          i.StkCode_v as product_code, 
-          i.ProdName_v as product_name
-        FROM 
-          tbl_jo_txn j
-        LEFT JOIN 
-          tbl_product_code i ON i.ItemId_i = j.ItemId_i
-        WHERE 
-          j._Status_c = 'P' 
-          AND j.Void_c = '0'
-          AND (j.DocRef_v LIKE ? OR i.StkCode_v LIKE ? OR i.ProdName_v LIKE ?)
-        ORDER BY 
-          j.DocRef_v DESC
-        LIMIT 20
-      `, [`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`]);
+      // Check for patterns in database
+      const [prefixCounts] = await connection.query(`
+        SELECT LEFT(DocRef_v, 4) AS prefix, COUNT(*) as count 
+        FROM tbl_jo_txn 
+        WHERE _Status_c = 'P' AND Void_c = '0' 
+        GROUP BY prefix
+        ORDER BY count DESC
+        LIMIT 10
+      `);
+      
+      console.log('Available prefixes in DB:', prefixCounts);
+      
+      // If we have search term, use normal query
+      if (searchTerm) {
+        let query = `
+          SELECT 
+            j.TxnId_i, 
+            j.DocRef_v, 
+            j.ItemId_i, 
+            i.StkCode_v as product_code, 
+            i.ProdName_v as product_name
+          FROM 
+            tbl_jo_txn j
+          LEFT JOIN 
+            tbl_product_code i ON i.ItemId_i = j.ItemId_i
+          WHERE 
+            j._Status_c = 'P' 
+            AND j.Void_c = '0'
+            AND (j.DocRef_v LIKE ? OR i.StkCode_v LIKE ? OR i.ProdName_v LIKE ?)
+          ORDER BY j.DocRef_v ASC
+          LIMIT 500
+        `;
+        
+        const [rows] = await connection.query(query, 
+          [`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`]
+        );
+        
+        const jobOrders = rows.map(row => ({
+          id: row.TxnId_i,
+          reference: row.DocRef_v,
+          display: `${row.DocRef_v} - [${row.product_code || ''}] ${row.product_name || ''} #${row.TxnId_i}`
+        }));
+        
+        return res.json({
+          success: true,
+          job_orders: jobOrders
+        });
+      }
+      
+      // For initial load (no search term), use UNION to get a mix of different prefixes
+      let unionQuery = '';
+      const queryParams = [];
+      
+      // Get top 5 prefixes from DB
+      const topPrefixes = prefixCounts.slice(0, 5).map(p => p.prefix);
+      
+      topPrefixes.forEach((prefix, index) => {
+        unionQuery += `
+          (SELECT 
+            j.TxnId_i, 
+            j.DocRef_v, 
+            j.ItemId_i, 
+            i.StkCode_v as product_code, 
+            i.ProdName_v as product_name
+          FROM 
+            tbl_jo_txn j
+          LEFT JOIN 
+            tbl_product_code i ON i.ItemId_i = j.ItemId_i
+          WHERE 
+            j._Status_c = 'P' 
+            AND j.Void_c = '0'
+            AND j.DocRef_v LIKE ?
+          ORDER BY j.DocRef_v ASC
+          LIMIT 100)
+        `;
+        
+        queryParams.push(`${prefix}%`);
+        
+        if (index < topPrefixes.length - 1) {
+          unionQuery += ' UNION ALL ';
+        }
+      });
+      
+      // Add final ORDER BY to the entire result set
+      unionQuery += ' ORDER BY DocRef_v ASC';
+      
+      console.log('Using UNION query for diverse results');
+      console.log('Query Params:', queryParams);
+      
+      // Execute the UNION query
+      const [rows] = await connection.query(unionQuery, queryParams);
+      
+      console.log('Result count:', rows.length);
+      if (rows.length > 0) {
+        console.log('First 5 results:', rows.slice(0, 5).map(r => r.DocRef_v));
+        console.log('Last 5 results:', rows.slice(-5).map(r => r.DocRef_v));
+      }
       
       const jobOrders = rows.map(row => ({
         id: row.TxnId_i,

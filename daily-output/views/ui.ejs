@@ -91,9 +91,9 @@
                 <% }); %>
               <% } else { %>
                 <option value="">Select Process</option>
-                <option value="INJECTION">INJECTION</option>
-                <option value="ASSEMBLY">ASSEMBLY</option>
-                <option value="PACKAGING">PACKAGING</option>
+                <% if (data.jo_process) { %>
+                  <option value="<%= data.jo_process %>" selected><%= data.jo_process %></option>
+                <% } %>
               <% } %>
             </select>
           <% } %>

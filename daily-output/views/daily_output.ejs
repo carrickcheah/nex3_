@@ -265,6 +265,17 @@
     /* Special styles for JO No Select2 */
     .jo-dropdown-select2 {
       width: 100% !important;
+      max-height: 500px !important;
+      overflow-y: auto !important;
+    }
+    
+    .select2-results__options {
+      max-height: 400px !important;
+    }
+    
+    .select2-results {
+      max-height: 450px !important;
+      overflow-y: auto !important;
     }
     
     /* Force heights to be equal for all inputs and selects */
@@ -364,7 +375,8 @@
         delay: 300,
         data: function(params) {
           return {
-            search: params.term || ''
+            search: params.term || '',
+            includeAll: true  // Request all job orders without filtering by prefix
           };
         },
         processResults: function(data) {
@@ -378,9 +390,40 @@
             })
           };
         },
-        cache: true
+        cache: false // Disable caching to ensure fresh results each time
       },
-      minimumInputLength: 0
+      minimumInputLength: 0,
+      dropdownAutoWidth: true
+    }).on("select2:opening", function(){
+      // Increase dropdown height when opening
+      setTimeout(function() {
+        $('.select2-results__options').css('max-height', '400px');
+      }, 0);
+    });
+    
+    // Immediately load all job orders after initializing Select2
+    $.ajax({
+      url: '/api/manufacture/job-orders',
+      dataType: 'json',
+      data: { 
+        search: '',
+        includeAll: true
+      },
+      success: function(data) {
+        console.log('Loaded job orders:', data.job_orders.length);
+        
+        // Manually create the options and add them to the select
+        const options = data.job_orders.map(function(jo) {
+          return new Option(jo.display, jo.reference, false, false);
+        });
+        
+        // Clear any existing options and add the new ones
+        $('#jo-reference').empty().append(options);
+        $('#jo-reference').trigger('change');
+      },
+      error: function(err) {
+        console.error('Error loading job orders:', err);
+      }
     });
     
     // Handle JO selection
@@ -403,9 +446,19 @@
               // Enable machine, mold, tool, and operator selections
               $('#machine-descr, #mold-descr, #tool-descr, #operator-descr').prop('disabled', false);
               
-              // If there's a default process, select it
-              if (response.process) {
-                $('#jo-process').val(response.process);
+              // Clear and populate process dropdown with options from the job order
+              $('#jo-process').empty();
+              $('#jo-process').append('<option value="">Select Process</option>');
+              
+              if (response.processes && response.processes.length > 0) {
+                response.processes.forEach(function(process) {
+                  $('#jo-process').append(`<option value="${process.name}">${process.name}</option>`);
+                });
+                
+                // If there's a default process, select it
+                if (response.process) {
+                  $('#jo-process').val(response.process);
+                }
               }
               
               // Update Daily No if needed
@@ -427,6 +480,10 @@
       $('#jo-id').val('');
       $('#jo-process').prop('disabled', true);
       $('#machine-descr, #mold-descr, #tool-descr, #operator-descr').prop('disabled', true);
+      
+      // Reset process dropdown
+      $('#jo-process').empty();
+      $('#jo-process').append('<option value="">Select Process</option>');
     });
 
     // JO Reference change handler (for backward compatibility)
@@ -446,9 +503,19 @@
               // Enable machine, mold, tool, and operator selections
               $('#machine-descr, #mold-descr, #tool-descr, #operator-descr').prop('disabled', false);
               
-              // If there's a default process, select it
-              if (response.process) {
-                $('#jo-process').val(response.process);
+              // Clear and populate process dropdown with options from the job order
+              $('#jo-process').empty();
+              $('#jo-process').append('<option value="">Select Process</option>');
+              
+              if (response.processes && response.processes.length > 0) {
+                response.processes.forEach(function(process) {
+                  $('#jo-process').append(`<option value="${process.name}">${process.name}</option>`);
+                });
+                
+                // If there's a default process, select it
+                if (response.process) {
+                  $('#jo-process').val(response.process);
+                }
               }
               
               // Update Daily No if needed
@@ -465,6 +532,10 @@
       } else {
         // Disable selections when JO reference is empty
         $('#jo-process, #machine-descr, #mold-descr, #tool-descr, #operator-descr').prop('disabled', true);
+        
+        // Reset process dropdown
+        $('#jo-process').empty();
+        $('#jo-process').append('<option value="">Select Process</option>');
       }
     });
     
