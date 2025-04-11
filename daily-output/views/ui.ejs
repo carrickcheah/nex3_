@@ -267,17 +267,6 @@
         <tbody id="output-items-table">
           <%- data.output_table_rows || '<tr><td colspan="9" class="w3-center">No output items</td></tr>' %>
         </tbody>
-        <% if (!viewOnly) { %>
-        <tfoot>
-          <tr>
-            <td colspan="9">
-              <button type="button" id="add-output-item" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Add Item
-              </button>
-            </td>
-          </tr>
-        </tfoot>
-        <% } %>
       </table>
     </div>
   </div>
@@ -303,17 +292,6 @@
         <tbody id="input-items-table">
           <%- data.input_table_rows || '<tr><td colspan="7" class="w3-center">No input items</td></tr>' %>
         </tbody>
-        <% if (!viewOnly) { %>
-        <tfoot>
-          <tr>
-            <td colspan="7">
-              <button type="button" id="add-input-item" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Add Item
-              </button>
-            </td>
-          </tr>
-        </tfoot>
-        <% } %>
       </table>
     </div>
   </div>
@@ -507,33 +485,178 @@ $(document).ready(function() {
         type: 'GET',
         data: { reference: joRef },
         success: function(response) {
+          // Store JO ID in hidden field
+          $('#jo-id').val(response.jo_id);
+          
+          // Clear and enable process dropdown
+          $('#jo-process').empty().prop('disabled', false);
+          $('#jo-process').append('<option value="">Select Process</option>');
+          
+          // Add process options
+          if (response.processes && response.processes.length > 0) {
+            response.processes.forEach(process => {
+              $('#jo-process').append(`<option value="${process.id}">${process.name}</option>`);
+            });
+          }
+          
           // Enable machine, mold, tool, and operator selections
           $('#machine-descr, #mold-descr, #tool-descr, #operator-descr').prop('disabled', false);
           
-          // Populate selections if available
-          if (response.machines) {
-            // Update machine options
-          }
-          // Similar updates for molds, tools, operators
+          // Clear output and input tables
+          $('#output-items-table').html('<tr><td colspan="9" class="w3-center">No output items</td></tr>');
+          $('#input-items-table').html('<tr><td colspan="7" class="w3-center">No input items</td></tr>');
         },
         error: function(err) {
           console.error('Error fetching JO details:', err);
+          alert('Error fetching job order details. Please try again.');
         }
       });
     } else {
-      // Disable selections when JO reference is empty
+      // Reset fields when JO reference is cleared
+      $('#jo-id').val('');
+      $('#jo-process').empty().prop('disabled', true).append('<option value="">Select Process</option>');
       $('#machine-descr, #mold-descr, #tool-descr, #operator-descr').prop('disabled', true);
+      $('#output-items-table').html('<tr><td colspan="9" class="w3-center">No output items</td></tr>');
+      $('#input-items-table').html('<tr><td colspan="7" class="w3-center">No input items</td></tr>');
     }
   });
-
-  // Add output item button handler
-  $('#add-output-item').on('click', function() {
-    // Implementation for adding output items dynamically
+  
+  // Process selection handler - auto populate input and output items
+  $('#jo-process').on('change', function() {
+    const processId = $(this).val();
+    const joId = $('#jo-id').val();
+    
+    console.log('Process selected:', processId);
+    console.log('JO ID:', joId);
+    
+    if (joId && processId) {
+      // Show loading indicators
+      $('#output-items-table').html('<tr><td colspan="9" class="w3-center"><i class="fas fa-spinner fa-spin"></i> Loading output items...</td></tr>');
+      $('#input-items-table').html('<tr><td colspan="7" class="w3-center"><i class="fas fa-spinner fa-spin"></i> Loading input items...</td></tr>');
+      
+      $.ajax({
+        url: '/api/manufacture/jo-process-details',
+        type: 'GET',
+        data: { 
+          jo_id: joId,
+          process_id: processId
+        },
+        success: function(response) {
+          console.log('JO Process details response:', response);
+          
+          if (response.success) {
+            // Store row ID if needed
+            if (response.row_id) {
+              $('<input>').attr({
+                type: 'hidden',
+                id: 'row-id',
+                name: 'row_id',
+                value: response.row_id
+              }).appendTo('form');
+            }
+            
+            // Auto-populate output item
+            if (response.output_item) {
+              console.log('Output item to display:', response.output_item);
+              const outputHtml = createOutputItemHtml(response.output_item);
+              $('#output-items-table').html(outputHtml);
+              
+              // Initialize any event handlers for the output items
+              calculateOutputTotals($('#output-items-table tr:first'));
+            } else {
+              console.warn('No output item in response');
+              $('#output-items-table').html('<tr><td colspan="9" class="w3-center">No output items found for this process</td></tr>');
+            }
+            
+            // Auto-populate input items
+            if (response.input_items && response.input_items.length > 0) {
+              console.log('Input items to display:', response.input_items);
+              const inputHtml = response.input_items.map((item, index) => 
+                createInputItemHtml(item, index + 1)
+              ).join('');
+              $('#input-items-table').html(inputHtml);
+            } else {
+              console.warn('No input items found in response or empty array');
+              $('#input-items-table').html('<tr><td colspan="7" class="w3-center">No input items found for this process</td></tr>');
+            }
+          } else {
+            console.error('API response indicates failure:', response.message);
+            alert('Failed to load process details: ' + response.message);
+            $('#output-items-table').html('<tr><td colspan="9" class="w3-center">Error loading output items</td></tr>');
+            $('#input-items-table').html('<tr><td colspan="7" class="w3-center">Error loading input items</td></tr>');
+          }
+        },
+        error: function(err) {
+          console.error('Error fetching process details:', err);
+          alert('Error loading process details. Please try again.');
+          $('#output-items-table').html('<tr><td colspan="9" class="w3-center">Error loading output items</td></tr>');
+          $('#input-items-table').html('<tr><td colspan="7" class="w3-center">Error loading input items</td></tr>');
+        }
+      });
+    } else {
+      // Clear tables if process is cleared
+      $('#output-items-table').html('<tr><td colspan="9" class="w3-center">No output items</td></tr>');
+      $('#input-items-table').html('<tr><td colspan="7" class="w3-center">No input items</td></tr>');
+    }
   });
-
-  // Add input item button handler
-  $('#add-input-item').on('click', function() {
-    // Implementation for adding input items dynamically
+  
+  // Helper function to create output item HTML
+  function createOutputItemHtml(item) {
+    return `
+      <tr class="output-item-row">
+        <td>1</td>
+        <td>
+          <input type="hidden" name="output-product-id[]" value="${item.item_id}">
+          [${item.product_code || ''}] ${item.product_name || ''}
+        </td>
+        <td>
+          <input type="number" class="w3-input form-control output-qty" name="output-qty[]" value="${item.quantity || 1}" min="0" step="0.01">
+        </td>
+        <td>
+          <input type="number" class="w3-input form-control reject-qty" name="reject-qty[]" value="0" min="0" step="0.01">
+        </td>
+        <td>
+          <input type="number" class="w3-input form-control extra-qty" name="extra-qty[]" value="0" min="0" step="0.01">
+        </td>
+        <td><span class="total-output">${item.quantity || 1}</span></td>
+        <td><span class="outstanding">0</span></td>
+        <td><span class="output-value">0.00</span></td>
+        <td></td>
+      </tr>
+    `;
+  }
+  
+  // Helper function to create input item HTML
+  function createInputItemHtml(item, index) {
+    return `
+      <tr class="input-item-row">
+        <td>${index}</td>
+        <td>
+          <input type="hidden" name="input-product-id[]" value="${item.item_id}">
+          [${item.product_code || ''}] ${item.product_name || ''}
+        </td>
+        <td>${item.available_qty || 0} ${item.available_qty > 0 ? `(Est Out ${item.available_qty})` : ''}</td>
+        <td>
+          <input type="number" class="w3-input form-control demand-qty" name="demand-qty[]" value="${item.quantity_required || 0}" min="0" step="0.01">
+        </td>
+        <td>
+          <input type="text" class="w3-input form-control" name="input-lot[]" value="">
+        </td>
+        <td><span class="input-value">0.00</span></td>
+        <td></td>
+      </tr>
+    `;
+  }
+  
+  // Output quantity calculations
+  $(document).on('change keyup', '.output-qty, .reject-qty, .extra-qty', function() {
+    const row = $(this).closest('tr');
+    const outputQty = parseFloat(row.find('.output-qty').val()) || 0;
+    const rejectQty = parseFloat(row.find('.reject-qty').val()) || 0;
+    const extraQty = parseFloat(row.find('.extra-qty').val()) || 0;
+    const totalOutput = outputQty + rejectQty + extraQty;
+    
+    row.find('.total-output').text(totalOutput.toFixed(2));
   });
 
   // Void button handler

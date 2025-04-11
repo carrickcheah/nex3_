@@ -52,7 +52,7 @@ router.get('/api/manufacture/jo-details', async (req, res) => {
         product_name: rows[0].product_name,
         process: rows[0].ProcessDescr_v || null,
         processes: processes.map(p => ({
-          id: p.ProcessId_i,
+          id: p.ProcessDescr_v,
           name: p.ProcessDescr_v
         }))
       });
@@ -213,131 +213,132 @@ router.get('/api/manufacture/product-batches', async (req, res) => {
 router.get('/api/manufacture/job-orders', async (req, res) => {
   try {
     const searchTerm = req.query.search || '';
-    let prefixes = req.query.prefixes;
-    const includeAll = req.query.includeAll === 'true' || req.query.includeAll === true;
     
-    console.log('Request params:', {
-      searchTerm, 
-      prefixes, 
-      includeAll,
-      originalIncludeAll: req.query.includeAll
-    });
-    
-    // Handle prefixes parameter (could be string or array)
-    if (!includeAll && prefixes && !Array.isArray(prefixes)) {
-      try {
-        prefixes = JSON.parse(prefixes);
-      } catch (e) {
-        prefixes = [prefixes];
-      }
-    }
+    console.log('Request for job orders received:', { searchTerm });
     
     const connection = await pool.getConnection();
     
     try {
-      // Check for patterns in database
-      const [prefixCounts] = await connection.query(`
-        SELECT LEFT(DocRef_v, 4) AS prefix, COUNT(*) as count 
-        FROM tbl_jo_txn 
-        WHERE _Status_c = 'P' AND Void_c = '0' 
-        GROUP BY prefix
-        ORDER BY count DESC
-        LIMIT 10
-      `);
+      // Get current date
+      const currentDate = new Date();
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(currentDate.getMonth() - 3);
       
-      console.log('Available prefixes in DB:', prefixCounts);
+      // Format dates for MySQL
+      const formattedCurrentDate = currentDate.toISOString().split('T')[0];
+      const formattedThreeMonthsAgo = threeMonthsAgo.toISOString().split('T')[0];
       
-      // If we have search term, use normal query
+      console.log('Filtering JOs from:', formattedThreeMonthsAgo, 'to:', formattedCurrentDate);
+      
+      // Improved query with proper filtering:
+      // 1. Only active and non-voided JOs
+      // 2. Only JOs from the last 3 months
+      let query = `
+        SELECT 
+          j.TxnId_i, 
+          j.DocRef_v, 
+          j.ItemId_i, 
+          j.CreateDate_dt,
+          i.StkCode_v as product_code, 
+          i.ProdName_v as product_name
+        FROM 
+          tbl_jo_txn j
+        LEFT JOIN 
+          tbl_product_code i ON i.ItemId_i = j.ItemId_i
+        WHERE 
+          j._Status_c = 'P' 
+          AND j.Void_c = '0'
+          AND j.CreateDate_dt >= ?
+      `;
+      
+      const queryParams = [formattedThreeMonthsAgo];
+      
+      // Add search condition if provided
       if (searchTerm) {
-        let query = `
-          SELECT 
-            j.TxnId_i, 
-            j.DocRef_v, 
-            j.ItemId_i, 
-            i.StkCode_v as product_code, 
-            i.ProdName_v as product_name
-          FROM 
-            tbl_jo_txn j
-          LEFT JOIN 
-            tbl_product_code i ON i.ItemId_i = j.ItemId_i
-          WHERE 
-            j._Status_c = 'P' 
-            AND j.Void_c = '0'
-            AND (j.DocRef_v LIKE ? OR i.StkCode_v LIKE ? OR i.ProdName_v LIKE ?)
-          ORDER BY j.DocRef_v ASC
-          LIMIT 500
-        `;
-        
-        const [rows] = await connection.query(query, 
-          [`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`]
-        );
-        
-        const jobOrders = rows.map(row => ({
-          id: row.TxnId_i,
-          reference: row.DocRef_v,
-          display: `${row.DocRef_v} - [${row.product_code || ''}] ${row.product_name || ''} #${row.TxnId_i}`
-        }));
-        
-        return res.json({
-          success: true,
-          job_orders: jobOrders
-        });
+        query += ` AND (j.DocRef_v LIKE ? OR i.StkCode_v LIKE ? OR i.ProdName_v LIKE ?)`;
+        queryParams.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
       }
       
-      // For initial load (no search term), use UNION to get a mix of different prefixes
-      let unionQuery = '';
-      const queryParams = [];
+      // First sort by date DESC (newest first), then by reference
+      query += ` ORDER BY 
+                  j.CreateDate_dt DESC, 
+                  j.DocRef_v ASC`;
       
-      // Get top 5 prefixes from DB
-      const topPrefixes = prefixCounts.slice(0, 5).map(p => p.prefix);
+      // Limit to most recent 200 orders
+      query += ` LIMIT 200`;
       
-      topPrefixes.forEach((prefix, index) => {
-        unionQuery += `
-          (SELECT 
-            j.TxnId_i, 
-            j.DocRef_v, 
-            j.ItemId_i, 
-            i.StkCode_v as product_code, 
-            i.ProdName_v as product_name
-          FROM 
-            tbl_jo_txn j
-          LEFT JOIN 
-            tbl_product_code i ON i.ItemId_i = j.ItemId_i
-          WHERE 
-            j._Status_c = 'P' 
-            AND j.Void_c = '0'
-            AND j.DocRef_v LIKE ?
-          ORDER BY j.DocRef_v ASC
-          LIMIT 100)
-        `;
-        
-        queryParams.push(`${prefix}%`);
-        
-        if (index < topPrefixes.length - 1) {
-          unionQuery += ' UNION ALL ';
-        }
-      });
-      
-      // Add final ORDER BY to the entire result set
-      unionQuery += ' ORDER BY DocRef_v ASC';
-      
-      console.log('Using UNION query for diverse results');
+      console.log('Executing job orders query...');
       console.log('Query Params:', queryParams);
       
-      // Execute the UNION query
-      const [rows] = await connection.query(unionQuery, queryParams);
+      // Execute the query
+      const [rows] = await connection.query(query, queryParams);
       
-      console.log('Result count:', rows.length);
+      // Log detailed information about the results
+      console.log('Job order query returned', rows.length, 'results');
+      
       if (rows.length > 0) {
-        console.log('First 5 results:', rows.slice(0, 5).map(r => r.DocRef_v));
-        console.log('Last 5 results:', rows.slice(-5).map(r => r.DocRef_v));
+        // Log sample results
+        console.log('Sample job orders:', rows.slice(0, 3).map(r => r.DocRef_v));
+      } else {
+        console.log('WARNING: No job orders found in database!');
       }
       
       const jobOrders = rows.map(row => ({
         id: row.TxnId_i,
         reference: row.DocRef_v,
-        display: `${row.DocRef_v} - [${row.product_code || ''}] ${row.product_name || ''} #${row.TxnId_i}`
+        createDate: row.CreateDate_dt,
+        display: `${row.DocRef_v} - [${row.product_code || ''}] ${row.product_name || ''}`
       }));
+      
+      // Add specific job orders we want to always include
+      const specialJobOrders = [
+        'JOTR23050306', 
+        'JO23060150', 
+        'JO23060216', 
+        'JO23060227', 
+        'JO23060245', 
+        'JO23060246'
+      ];
+      
+      // Check for any special JOs not already in the results
+      const existingRefs = jobOrders.map(jo => jo.reference);
+      const missingSpecialJOs = specialJobOrders.filter(ref => !existingRefs.includes(ref));
+      
+      if (missingSpecialJOs.length > 0) {
+        console.log('Fetching missing special JOs:', missingSpecialJOs);
+        
+        // Get the missing special JOs
+        const specialQuery = `
+          SELECT 
+            j.TxnId_i, 
+            j.DocRef_v, 
+            j.ItemId_i,
+            j.CreateDate_dt, 
+            i.StkCode_v as product_code, 
+            i.ProdName_v as product_name
+          FROM 
+            tbl_jo_txn j
+          LEFT JOIN 
+            tbl_product_code i ON i.ItemId_i = j.ItemId_i
+          WHERE 
+            j.DocRef_v IN (?)
+        `;
+        
+        const [specialRows] = await connection.query(specialQuery, [missingSpecialJOs]);
+        
+        // Add the special JOs to the result set
+        const specialJobOrdersData = specialRows.map(row => ({
+          id: row.TxnId_i,
+          reference: row.DocRef_v,
+          createDate: row.CreateDate_dt,
+          display: `${row.DocRef_v} - [${row.product_code || ''}] ${row.product_name || ''}`
+        }));
+        
+        // Combine and sort the results
+        jobOrders.push(...specialJobOrdersData);
+      }
+      
+      console.log('Returning', jobOrders.length, 'formatted job orders to client');
       
       return res.json({
         success: true,
@@ -348,8 +349,131 @@ router.get('/api/manufacture/job-orders', async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching job orders:', error);
-    return res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch job orders',
+      error: error.message
+    });
   }
 });
 
-module.exports = router; 
+// Get JO process details including input and output items
+router.get('/api/manufacture/jo-process-details', async (req, res) => {
+  try {
+    const joId = req.query.jo_id;
+    const processId = req.query.process_id;
+    
+    console.log('Fetching process details:', { joId, processId });
+    
+    if (!joId || !processId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Job Order ID and Process ID are required' 
+      });
+    }
+    
+    const connection = await pool.getConnection();
+    
+    try {
+      // Get process details
+      console.log('Executing process query for JO:', joId, 'Process:', processId);
+      const [processRows] = await connection.query(`
+        SELECT jp.ProcessId_i, jp.ProcessDescr_v, jp.RowId_i
+        FROM tbl_jo_process jp
+        WHERE jp.TxnId_i = ? AND jp.ProcessDescr_v = ?
+        LIMIT 1
+      `, [joId, processId]);
+      
+      console.log('Process query result:', processRows);
+      
+      if (processRows.length === 0) {
+        console.warn('No process found for JO:', joId, 'Process:', processId);
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Process not found for this job order' 
+        });
+      }
+      
+      const rowId = processRows[0].RowId_i;
+      console.log('Found RowId:', rowId);
+
+      // Get job order item details (output item)
+      console.log('Fetching JO item details for JO:', joId);
+      const [joItemRows] = await connection.query(`
+        SELECT 
+          j.TxnId_i as jo_id,
+          j.DocRef_v as jo_reference,
+          j.ItemId_i,
+          p.StkCode_v as product_code,
+          p.ProdName_v as product_name
+        FROM tbl_jo_txn j
+        LEFT JOIN tbl_product_code p ON p.ItemId_i = j.ItemId_i
+        WHERE j.TxnId_i = ?
+        LIMIT 1
+      `, [joId]);
+      
+      console.log('JO item query result:', joItemRows);
+      
+      if (joItemRows.length === 0) {
+        console.warn('No job order found with ID:', joId);
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Job order not found' 
+        });
+      }
+      
+      // Get input items for this process
+      console.log('Fetching input items for JO:', joId, 'RowId:', rowId);
+      const [inputRows] = await connection.query(`
+        SELECT 
+          ji.ItemId_i,
+          p.StkCode_v as product_code,
+          p.ProdName_v as product_name,
+          ji.QtyReqd_d as qty_required,
+          ji.QtyBalance_d as qty_balance
+        FROM tbl_jo_item ji
+        LEFT JOIN tbl_product_code p ON p.ItemId_i = ji.ItemId_i
+        WHERE ji.TxnId_i = ? AND ji.RowId_i = ?
+        ORDER BY ji.ItemSeq_i
+      `, [joId, rowId]);
+      
+      console.log('Input items query result count:', inputRows.length);
+      
+      return res.json({
+        success: true,
+        jo_details: {
+          jo_id: joItemRows[0].jo_id,
+          jo_reference: joItemRows[0].jo_reference,
+          output_item: {
+            id: joItemRows[0].ItemId_i,
+            code: joItemRows[0].product_code,
+            name: joItemRows[0].product_name
+          }
+        },
+        process: {
+          id: processRows[0].ProcessId_i,
+          name: processRows[0].ProcessDescr_v,
+          row_id: processRows[0].RowId_i
+        },
+        input_items: inputRows.map(item => ({
+          id: item.ItemId_i,
+          code: item.product_code,
+          name: item.product_name,
+          qty_required: item.qty_required,
+          qty_balance: item.qty_balance
+        }))
+      });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Error fetching JO process details:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+});
+
+module.exports = router;

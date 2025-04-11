@@ -251,6 +251,8 @@
       border: 1px solid #e0e0e0;
       border-radius: 4px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      max-height: none !important;
+      z-index: 9999;
     }
     
     .select2-results__option {
@@ -261,21 +263,37 @@
     .select2-container--default .select2-results__option--highlighted[aria-selected] {
       background-color: rgb(0,0,255);
     }
+    
+    /* Enhanced styles for searchable dropdowns */
+    .select2-search--dropdown .select2-search__field {
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #e0e0e0;
+      margin-bottom: 8px;
+      font-family: 'Poppins', sans-serif;
+    }
+    
+    .select2-search--dropdown .select2-search__field:focus {
+      border-color: rgb(0,0,255);
+      box-shadow: 0 0 0 3px rgba(0,0,255,0.1);
+      outline: none;
+    }
 
     /* Special styles for JO No Select2 */
     .jo-dropdown-select2 {
       width: 100% !important;
-      max-height: 500px !important;
-      overflow-y: auto !important;
+      max-height: none !important;
+      overflow-y: visible !important;
     }
     
     .select2-results__options {
-      max-height: 400px !important;
+      max-height: 450px !important;
+      overflow-y: auto !important;
     }
     
     .select2-results {
-      max-height: 450px !important;
-      overflow-y: auto !important;
+      max-height: none !important;
+      overflow-y: visible !important;
     }
     
     /* Force heights to be equal for all inputs and selects */
@@ -290,6 +308,38 @@
     .select2-container {
       display: block;
       width: 100% !important;
+    }
+
+    /* Include styles for select2 to match PHP system styling */
+    .jo-dropdown-select2 .select2-results__option {
+      padding: 8px 12px;
+      margin-bottom: 1px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .jo-dropdown-select2 .select2-results__option--highlighted {
+      background-color: #0000ff !important;
+      color: white !important;
+    }
+
+    .jo-dropdown-select2 .select2-results__option[aria-selected=true] {
+      background-color: #f0f0f0;
+    }
+
+    .jo-dropdown-select2 .select2-results__option:nth-child(odd) {
+      background-color: #f9f9f9;
+    }
+    
+    .jo-dropdown-select2 .select2-results__option:hover {
+      background-color: #0000ff;
+      color: white;
+    }
+    
+    .jo-item {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   </style>
 </head>
@@ -369,60 +419,150 @@
       width: '100%',
       dropdownParent: $('#jo-reference').parent(),
       dropdownCssClass: 'jo-dropdown-select2',
-      ajax: {
-        url: '/api/manufacture/job-orders',
-        dataType: 'json',
-        delay: 300,
-        data: function(params) {
-          return {
-            search: params.term || '',
-            includeAll: true  // Request all job orders without filtering by prefix
-          };
-        },
-        processResults: function(data) {
-          return {
-            results: data.job_orders.map(function(jo) {
-              return {
-                id: jo.reference,
-                text: jo.display,
-                jo_id: jo.id
-              };
-            })
-          };
-        },
-        cache: false // Disable caching to ensure fresh results each time
-      },
       minimumInputLength: 0,
-      dropdownAutoWidth: true
+      dropdownAutoWidth: true,
+      templateResult: formatJobOrder
     }).on("select2:opening", function(){
       // Increase dropdown height when opening
       setTimeout(function() {
-        $('.select2-results__options').css('max-height', '400px');
+        $('.select2-results__options').css('max-height', '500px');
       }, 0);
     });
+    
+    // Function to format the job order display
+    function formatJobOrder(state) {
+      if (!state.id) {
+        return state.text;
+      }
+      
+      var $state = $(
+        '<div class="jo-item">' + state.text + '</div>'
+      );
+      
+      return $state;
+    }
     
     // Immediately load all job orders after initializing Select2
     $.ajax({
       url: '/api/manufacture/job-orders',
       dataType: 'json',
       data: { 
-        search: '',
-        includeAll: true
+        search: '' 
+      },
+      beforeSend: function() {
+        console.log('Sending job order request to API...');
       },
       success: function(data) {
         console.log('Loaded job orders:', data.job_orders.length);
+        console.log('First 5 job orders:', data.job_orders.slice(0, 5));
         
-        // Manually create the options and add them to the select
-        const options = data.job_orders.map(function(jo) {
-          return new Option(jo.display, jo.reference, false, false);
+        // For debugging: Count occurrences of each prefix
+        const prefixCounts = {};
+        data.job_orders.forEach(jo => {
+          const prefix = jo.reference.substring(0, 4);
+          prefixCounts[prefix] = (prefixCounts[prefix] || 0) + 1;
+        });
+        console.log('Prefix counts in frontend:', prefixCounts);
+        
+        // Destroy and recreate the Select2 to ensure clean state
+        $('#jo-reference').select2('destroy');
+        
+        // Clear existing options
+        $('#jo-reference').empty();
+        console.log('Cleared existing options');
+        
+        // Add a placeholder option
+        $('#jo-reference').append(new Option('Select JO No', '', true, true));
+        
+        // Show an alert if no job orders found
+        if (data.job_orders.length === 0) {
+          console.error('NO JOB ORDERS FOUND IN DATABASE!');
+          alert('No job orders found in database. Please contact system administrator.');
+          return;
+        }
+        
+        // Add specific job orders from our recent search first
+        const specialJobOrders = [
+          'JOTR23050306', 
+          'JO23060150', 
+          'JO23060216', 
+          'JO23060227', 
+          'JO23060245', 
+          'JO23060246'
+        ];
+        
+        // Check if special JOs exist in the data
+        console.log('Checking for special job orders...');
+        specialJobOrders.forEach(reference => {
+          const matchingJO = data.job_orders.find(jo => jo.reference === reference);
+          if (matchingJO) {
+            console.log('Found special JO:', reference);
+          } else {
+            console.warn('Special JO not found in database:', reference);
+          }
         });
         
-        // Clear any existing options and add the new ones
-        $('#jo-reference').empty().append(options);
-        $('#jo-reference').trigger('change');
+        // Find and add these specific JOs first
+        let specialJOsFound = 0;
+        specialJobOrders.forEach(reference => {
+          const matchingJO = data.job_orders.find(jo => jo.reference === reference);
+          if (matchingJO) {
+            const option = new Option(matchingJO.display, matchingJO.reference, false, false);
+            $(option).data('jo_id', matchingJO.id);
+            $('#jo-reference').append(option);
+            specialJOsFound++;
+          }
+        });
+        console.log('Special JOs added to dropdown:', specialJOsFound);
+        
+        // Add the rest of the job orders
+        let otherJOsAdded = 0;
+        data.job_orders.forEach(function(jo) {
+          // Skip if already added as a special job order
+          if (!specialJobOrders.includes(jo.reference)) {
+            const option = new Option(jo.display, jo.reference, false, false);
+            $(option).data('jo_id', jo.id);
+            $('#jo-reference').append(option);
+            otherJOsAdded++;
+          }
+        });
+        
+        console.log('Added', otherJOsAdded, 'regular job orders to dropdown');
+        console.log('Total options in dropdown:', specialJOsFound + otherJOsAdded + 1); // +1 for placeholder
+        
+        // Reinitialize Select2 with all data preloaded
+        $('#jo-reference').select2({
+          placeholder: 'Select JO No',
+          allowClear: true,
+          width: '100%',
+          dropdownParent: $('#jo-reference').parent(),
+          dropdownCssClass: 'jo-dropdown-select2',
+          templateResult: formatJobOrder,
+          matcher: function(params, data) {
+            // If there is no search term, return all data
+            if ($.trim(params.term) === '') {
+              return data;
+            }
+            
+            // Skip if empty
+            if (!data.text) {
+              return null;
+            }
+            
+            // Search in the text (case insensitive)
+            if (data.text.toLowerCase().indexOf(params.term.toLowerCase()) > -1) {
+              return data;
+            }
+            
+            // If it doesn't contain the term, don't return anything
+            return null;
+          }
+        });
+        console.log('Reinitialized Select2 dropdown');
       },
       error: function(err) {
         console.error('Error loading job orders:', err);
+        console.error('Error details:', err.responseText || 'No response text available');
       }
     });
     
@@ -430,8 +570,11 @@
     $('#jo-reference').on('select2:select', function(e) {
       const data = e.params.data;
       if (data) {
+        // Get jo_id from data attribute or use a fallback method
+        const jo_id = $(data.element).data('jo_id') || data.jo_id;
+        
         // Set jo_id hidden input
-        $('#jo-id').val(data.jo_id);
+        $('#jo-id').val(jo_id);
         
         // Enable form fields
         $('#jo-process').prop('disabled', false);
@@ -515,6 +658,8 @@
                 // If there's a default process, select it
                 if (response.process) {
                   $('#jo-process').val(response.process);
+                  // Trigger change event to load output items
+                  $('#jo-process').trigger('change');
                 }
               }
               
@@ -536,6 +681,107 @@
         // Reset process dropdown
         $('#jo-process').empty();
         $('#jo-process').append('<option value="">Select Process</option>');
+      }
+    });
+    
+    // Process change handler to load output and input items
+    $('#jo-process').on('change', function() {
+      const processId = $(this).val();
+      const joId = $('#jo-id').val();
+      
+      if (processId && joId) {
+        console.log('Loading process details for JO ID:', joId, 'Process:', processId);
+        
+        // Make an AJAX request to fetch process details including output/input items
+        $.ajax({
+          url: '/api/manufacture/jo-process-details',
+          type: 'GET',
+          data: { 
+            jo_id: joId,
+            process_id: processId
+          },
+          success: function(response) {
+            if (response.success) {
+              console.log('Process details loaded:', response);
+              
+              // Clear existing output items
+              $('#output-items-table').html('');
+              
+              // Add output item (the product from the JO)
+              if (response.jo_details && response.jo_details.output_item) {
+                const outputItem = response.jo_details.output_item;
+                // Get the template
+                let template = $('#output-item-template').html();
+                
+                // Use template to create a new row
+                template = template.replace(/{index}/g, 1);
+                $('#output-items-table').append(template);
+                
+                // Initialize select2 and set the value to the output item
+                const $select = $('#output-items-table .output-product-select').last();
+                $select.select2({
+                  placeholder: "Select product",
+                  width: '100%'
+                });
+                
+                // Add the option
+                const option = new Option(
+                  `${outputItem.code} - ${outputItem.name}`, 
+                  outputItem.id, 
+                  true, 
+                  true
+                );
+                $select.append(option).trigger('change');
+              } else {
+                $('#output-items-table').html('<tr><td colspan="9" class="w3-center">No output items</td></tr>');
+              }
+              
+              // Clear existing input items
+              $('#input-items-table').html('');
+              
+              // Add input items
+              if (response.input_items && response.input_items.length > 0) {
+                response.input_items.forEach(function(item, index) {
+                  // Get the template
+                  let template = $('#input-item-template').html();
+                  
+                  // Replace index
+                  template = template.replace(/{index}/g, index + 1);
+                  $('#input-items-table').append(template);
+                  
+                  // Initialize select2 and set the value to the input item
+                  const $select = $('#input-items-table .input-product-select').last();
+                  $select.select2({
+                    placeholder: "Select product",
+                    width: '100%'
+                  });
+                  
+                  // Add the option
+                  const option = new Option(
+                    `${item.code} - ${item.name}`, 
+                    item.id, 
+                    true, 
+                    true
+                  );
+                  $select.append(option).trigger('change');
+                  
+                  // Set required quantity
+                  $select.closest('tr').find('.demand-qty').val(item.qty_required);
+                });
+              } else {
+                $('#input-items-table').html('<tr><td colspan="7" class="w3-center">No input items</td></tr>');
+              }
+            }
+          },
+          error: function(err) {
+            console.error('Error fetching process details:', err);
+            console.error('Error details:', err.responseText || 'No response text available');
+          }
+        });
+      } else {
+        // Clear items if no process is selected
+        $('#output-items-table').html('<tr><td colspan="9" class="w3-center">No output items</td></tr>');
+        $('#input-items-table').html('<tr><td colspan="7" class="w3-center">No input items</td></tr>');
       }
     });
     
