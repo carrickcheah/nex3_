@@ -12,6 +12,7 @@ router.get('/page/manufacture/daily_output/view/:id', dailyOutputController.dail
 router.get('/page/manufacture/daily_inquiry', dailyOutputController.dailyOutputInquiry);
 router.get('/page/daily-output/inquiry', dailyOutputController.dailyOutputInquiry);
 router.get('/page/daily-output/inquiry/sample', dailyOutputController.generateSampleData);
+router.get('/page/daily-output/export-csv', dailyOutputController.exportToCsv);
 router.get('/page/daily-output/inquiry/json', async (req, res) => {
   try {
     // Simple test route to check data

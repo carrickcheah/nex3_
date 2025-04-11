@@ -741,6 +741,96 @@ exports.generateSampleData = async (req, res) => {
   }
 };
 
+/**
+ * Export daily output data to CSV
+ */
+exports.exportToCsv = async (req, res) => {
+  try {
+    console.log('Starting CSV export with query params:', req.query);
+    
+    // Get the same filters that would be used for the inquiry page
+    const filters = {
+      from_date: req.query.from_date || '',
+      to_date: req.query.to_date || '',
+      reference: req.query.reference || '',
+      job_order: req.query.job_order || ''
+    };
+    
+    // Use the same pagination as the current page view
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 30;
+    
+    console.log('Filters for CSV export:', filters);
+    
+    try {
+      // Get data with the same pagination as the current page
+      console.log('Calling getDailyOutputList for CSV export');
+      const result = await DailyOutputModel.getDailyOutputList(filters, { page, limit });
+      console.log('Retrieved records for CSV:', result?.data?.length || 0);
+      
+      if (!result.data || result.data.length === 0) {
+        console.log('No data found for CSV export');
+        return res.status(404).send('No data to export');
+      }
+      
+      // Create CSV header
+      const headers = [
+        'TXN ID', 'DOC DATE', 'START TIME', 'END TIME', 'DAILY NO',
+        'JO NO', 'PROCESS DESCRIPTION', 'MASTER CODE', 'OUTPUT ITEM',
+        'OUTPUT QTY', 'REJECT QTY', 'LEAD TIME', 'MAN COUNT',
+        'MACHINE', 'OPERATOR', 'REMARK', 'CREATE DATE', 'ISSUED BY'
+      ];
+      
+      console.log('Creating CSV rows from data');
+      // Create CSV rows from data
+      const rows = result.data.map(item => [
+        item.txn_id,
+        item.doc_date,
+        item.start_time,
+        item.end_time,
+        item.daily_no,
+        item.jo_no,
+        item.process_description || 'N/A',
+        item.master_code || 'N/A',
+        item.output_item || 'N/A',
+        item.output_qty || '0',
+        item.reject_qty || '0',
+        item.lead_time || 'N/A',
+        item.man_count || '1',
+        item.machine || 'N/A',
+        item.operator || 'N/A',
+        item.remark || '',
+        item.create_date || 'N/A',
+        item.issued_by || 'N/A'
+      ]);
+      
+      // Combine header and rows
+      console.log('Generating CSV content');
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(','))
+      ].join('\n');
+      
+      console.log('CSV generation complete, size:', csvContent.length, 'bytes');
+      // Set headers for CSV download
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename=daily_output_page${page}_${new Date().toISOString().slice(0,10)}.csv`);
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Pragma', 'no-cache');
+      
+      // Send CSV data
+      console.log('Sending CSV response');
+      return res.end(csvContent);
+    } catch (innerError) {
+      console.error('Inner error in exportToCsv:', innerError);
+      return res.status(500).send('Error in data processing: ' + innerError.message);
+    }
+  } catch (error) {
+    console.error('Error exporting to CSV:', error);
+    return res.status(500).send('Error generating CSV: ' + error.message);
+  }
+};
+
 // Helper functions
 async function getMachines(connection, txn_id) {
   const [rows] = await DailyOutputModel.getMachines(connection, txn_id);
@@ -786,5 +876,6 @@ module.exports = {
   createDailyOutput: exports.createDailyOutput,
   updateDailyOutput: exports.updateDailyOutput,
   dailyOutputInquiry: exports.dailyOutputInquiry,
-  generateSampleData: exports.generateSampleData
+  generateSampleData: exports.generateSampleData,
+  exportToCsv: exports.exportToCsv
 };
