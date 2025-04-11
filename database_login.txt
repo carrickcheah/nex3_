@@ -1,0 +1,2 @@
+mysql -u myuser -pmypassword -h localhost nex_valiant
+

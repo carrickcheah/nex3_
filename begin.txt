@@ -17,7 +17,8 @@ npm run dev
 node app.js     | uv run python main.py
 npm install     | pip install -r requirements.txt
 
-
+lsof -i :3000
+kill -9 PID
 
 ##################
     Structure
@@ -40,9 +41,33 @@ daily-output-refactor/
 
 
 ########################
+##      Maria DB      ##
+########################
+
+mysql -u myuser -pmypassword -h localhost -e "SHOW TABLES FROM nex_valiant" | cat
+mysql -u myuser -pmypassword -h localhost -e "DESCRIBE tbl_daily_txn" nex_valiant | cat
+mysql -u myuser -pmypassword -h localhost -e "DESCRIBE tbl_jo_txn" nex_valiant | cat
+mysql -u myuser -pmypassword -h localhost -e "DESCRIBE tbl_jo_process" nex_valiant | cat
+mysql -u myuser -pmypassword -h localhost -e "DESCRIBE tbl_product" nex_valiant | cat
+mysql -u myuser -pmypassword -h localhost -e "DESCRIBE tbl_daily_item" nex_valiant | cat
+mysql -u myuser -pmypassword -h localhost -e "DESCRIBE tbl_daily_operator" nex_valiant | cat
+mysql -u myuser -pmypassword -h localhost -e "DESCRIBE tbl_daily_machine" nex_valiant | cat
+mysql -u myuser -pmypassword -h localhost -e "DESCRIBE tbl_machine" nex_valiant | cat
+mysql -u myuser -pmypassword -h localhost -e "DESCRIBE tbl_user" nex_valiant | cat
+
+
+# Update database
+$ cp VPSB-250411-041.sql VPSB-250411-041.sql.bak
+$ sed -i '' 's/DEFINER=`root`@`%`/DEFINER=CURRENT_USER/g' VPSB-250411-041.sql
+
+
+
+
+
+
+########################
 ##        TODO        ##
 ########################
-::  machine breaktime
 
 
 
@@ -59,7 +84,8 @@ Let me create a comprehensive Node.js implementation that covers all the functio
 
 i share u my code. u study and wait me. if u understand, say 'yes boss !' 
 
-i am refactoring old code to node.js . If there are existing file, use it. else u can create new file.
+i am refactoring old code to node.js . 
+If there are existing file, use it. else u can create new file.
 
 
 
@@ -71,5 +97,19 @@ row 477. dailyoutModel.js
 ########################
 
 
+
+
+
+
+
+
+########################
+##      other        ##
+########################
+
+This is because the query in dailyOutputModel.js is not joining the necessary tables from your original PHP application to get the complete data. Let me help you update the query to match what your PHP code was doing.
+Would you like me to:
+Update the getDailyOutputList method in dailyOutputModel.js to join the relevant tables
+Fix the query to properly display all the data from your original PHP code
 
 

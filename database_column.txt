@@ -1,0 +1,237 @@
+tbl_stkrw_in_batch
+tbl_stkrw_in_item
+tbl_stkrw_in_serial
+tbl_stkrw_machine
+tbl_stkrw_mold
+tbl_stkrw_movement
+tbl_stkrw_operator
+tbl_stkrw_out_batch
+tbl_stkrw_out_item
+tbl_stkrw_out_serial
+tbl_stkrw_tool
+tbl_stkrw_txn
+tbl_stock_in_txn
+tbl_stock_out_txn
+tbl_supp_billaddr
+tbl_supp_contact
+tbl_supp_curr
+tbl_supplier
+tbl_suppmoq_setup
+tbl_syspref
+tbl_syspref_remark
+tbl_taxcode
+tbl_taxtype
+tbl_template_sdi
+tbl_template_sfc
+tbl_template_sorder
+tbl_tolerance
+tbl_tool
+tbl_trans
+tbl_transport
+tbl_txntype
+tbl_uom
+tbl_user
+v_product
+carrickcheah@cheahs-MacBook-Pro ~ % clear
+
+carrickcheah@cheahs-MacBook-Pro ~ % mysql -u myuser -pmypassword -h localhost -e "DESCRIBE tbl_daily_txn" nex_valiant | cat
+Field	Type	Null	Key	Default	Extra
+TxnId_i	int(10) unsigned	NO	PRI	NULL	auto_increment
+SessionKey_v	varchar(30)	YES	UNI	NULL	
+Purpose_c	varchar(1)	NO		S	
+SiteId_i	tinyint(3) unsigned	NO		NULL	
+LocId_i	smallint(5) unsigned	NO		1	
+DlocId_i	smallint(5) unsigned	NO		1	
+DocRef_v	varchar(60)	NO		NULL	
+ProcessId_i	mediumint(8) unsigned	YES		NULL	
+RowId_i	tinyint(3) unsigned	NO		NULL	
+JoId_i	int(10) unsigned	NO		NULL	
+OutputBatch_v	varchar(60)	YES		NULL	
+TxnDate_dd	date	NO		NULL	
+StartTime_tt	time	NO		NULL	
+EndTime_tt	time	NO		NULL	
+BreakTime_d	double	NO		0	
+WorkingHour_d	double	NO		0	
+Machine_v	varchar(256)	YES		NULL	
+Mold_v	varchar(256)	YES		NULL	
+Tool_v	varchar(256)	YES		NULL	
+Operator_v	varchar(256)	YES		NULL	
+BasicHour_d	double(4,1) unsigned	NO		0.0	
+MachineUtilize_d	double(5,2)	NO		0.00	
+OwnerId_i	smallint(5) unsigned	NO		NULL	
+Status_c	char(1)	NO		P	
+Void_c	char(1)	NO		0	
+DocRemark_v	varchar(1024)	YES		NULL	
+TransId_i	int(10) unsigned	YES		NULL	
+UpdateKey_i	tinyint(3) unsigned	NO		0	
+CreateId_i	smallint(5) unsigned	NO		1	
+UpdateId_i	smallint(5) unsigned	NO		1	
+VoidId_i	smallint(5) unsigned	NO		0	
+CreateDate_dt	datetime	NO		current_timestamp()	
+UpdateDate_dt	datetime	NO		current_timestamp()	on update current_timestamp()
+carrickcheah@cheahs-MacBook-Pro ~ % mysql -u myuser -pmypassword -h localhost -e "DESCRIBE tbl_jo_txn" nex_valiant | cat
+Field	Type	Null	Key	Default	Extra
+TxnId_i	int(10) unsigned	NO	PRI	NULL	auto_increment
+SessionKey_v	varchar(30)	YES	UNI	NULL	
+SiteId_i	tinyint(3) unsigned	NO		NULL	
+LocId_i	smallint(5) unsigned	YES		0	
+Toggle_c	char(1)	NO		0	
+PlocgrpId_i	mediumint(9)	YES		0	
+ItemId_i	mediumint(8) unsigned	NO		NULL	
+BstkId_i	mediumint(8) unsigned	YES		0	
+CustId_i	smallint(5) unsigned	NO		0	
+ParentId_i	int(10) unsigned	NO		0	
+ProwId_i	tinyint(3) unsigned	NO		0	
+DocRef_v	varchar(60)	YES		NULL	
+TxnDate_dd	date	NO		NULL	
+TargetDate_dd	date	YES		NULL	
+MaterialDate_dd	date	YES		NULL	
+SoQty_d	double unsigned	NO		0	
+JoQty_d	double unsigned	NO		0	
+QtyDone_d	double	NO		0	
+SerialNo_v	varchar(100)	YES		NULL	
+SerialPrefix_v	varchar(20)	YES		NULL	
+SerialDate_v	varchar(10)	YES			
+SerialFrom_i	mediumint(9)	NO		0	
+SerialTo_i	mediumint(9)	NO		0	
+LeadTime_i	smallint(5) unsigned	YES		NULL	
+ImportId_i	smallint(5) unsigned	NO		0	
+OwnerId_i	smallint(5) unsigned	NO		NULL	
+IgnoreCheck_c	char(1)	NO		0	
+_Status_c	char(1)	NO		P	
+DocStatus_c	char(2)	NO		DF	
+Void_c	char(1)	NO		0	
+DocRemark_v	varchar(1024)	YES		NULL	
+Locked_i	tinyint(1)	NO		0	
+TransId_i	int(10) unsigned	YES		NULL	
+UpdateKey_i	tinyint(3) unsigned	NO		0	
+CreateId_i	smallint(5) unsigned	NO		NULL	
+UpdateId_i	smallint(5) unsigned	NO		1	
+ConfirmId_i	smallint(5) unsigned	NO		0	
+ConfirmDate_dt	datetime	YES		NULL	
+VoidId_i	smallint(5) unsigned	NO		0	
+CreateDate_dt	datetime	NO		current_timestamp()	
+UpdateDate_dt	datetime	NO		current_timestamp()	
+carrickcheah@cheahs-MacBook-Pro ~ % mysql -u myuser -pmypassword -h localhost -e "DESCRIBE tbl_jo_process" nex_valiant | cat
+Field	Type	Null	Key	Default	Extra
+TxnId_i	int(11)	NO	MUL	NULL	
+ProcessId_i	mediumint(9)	YES		NULL	
+RowId_i	tinyint(3) unsigned	NO		NULL	
+Task_v	varchar(100)	YES		NULL	
+ProcesstypeId_i	smallint(5) unsigned	NO		NULL	
+ProcesstypeDescr_v	varchar(120)	NO		NULL	
+ProcessDescr_v	varchar(256)	NO		NULL	
+CapQty_d	double unsigned	NO		NULL	
+CapMin_d	double unsigned	NO		NULL	
+SuppmoqIds_v	varchar(60)	YES		NULL	
+SetupTime_d	double	NO		0	
+CycleTime_d	double	NO		0	
+LeadTime_d	double	NO		0	
+DifficultyLevel_i	tinyint(3) unsigned	NO		NULL	
+Machine_v	varchar(512)	YES		NULL	
+Mold_v	varchar(512)	YES		NULL	
+Tool_v	varchar(512)	YES		NULL	
+Operator_v	varchar(512)	YES		NULL	
+ManCount_i	tinyint(3) unsigned	NO		0	
+Remark_v	varchar(120)	YES		NULL	
+LocId_i	smallint(5) unsigned	NO		0	
+DlocId_i	smallint(5) unsigned	NO		0	
+OsdnDone_c	char(1)	NO		0	
+OsgrDone_c	char(1)	NO		0	
+Void_c	char(1)	NO		0	
+QtyStatus_c	char(2)	NO		DF	
+TransId_i	int(10) unsigned	NO		0	
+CreateId_i	smallint(5) unsigned	NO		1	
+UpdateId_i	smallint(5) unsigned	NO		1	
+CreateDate_dt	datetime	NO		current_timestamp()	
+UpdateDate_dt	datetime	NO		current_timestamp()	
+carrickcheah@cheahs-MacBook-Pro ~ % mysql -u myuser -pmypassword -h localhost -e "DESCRIBE tbl_product" nex_valiant | cat
+Field	Type	Null	Key	Default	Extra
+ProductId_i	mediumint(8) unsigned	NO		NULL	
+ProductCode_v	varchar(50)	YES		NULL	
+ProductName_v	varchar(100)	YES		NULL	
+ProductType_c	char(1)	YES		F	
+ItemId_i	mediumint(8) unsigned	NO		NULL	
+ProdCode_v	varchar(50)	YES		NULL	
+ProdDescr_v	varchar(100)	YES		NULL	
+StkId_i	int(10) unsigned	NO		0	
+PartNo_v	varchar(50)	YES		NULL	
+UomId_i	smallint(5) unsigned	YES		NULL	
+Weight_d	decimal(10,4)	YES		0.0000	
+Status_c	char(1)	YES		A	
+Active_c	char(1)	YES		Y	
+StkType_c	char(1)	YES		F	
+carrickcheah@cheahs-MacBook-Pro ~ % mysql -u myuser -pmypassword -h localhost -e "DESCRIBE tbl_daily_item" nex_valiant | cat
+Field	Type	Null	Key	Default	Extra
+TxnId_i	int(11)	NO	MUL	NULL	
+InOut_c	char(1)	NO		Z	
+JoId_i	int(10) unsigned	NO		NULL	
+RowId_i	tinyint(3) unsigned	NO		0	
+ProcessrowId_i	tinyint(3) unsigned	NO		0	
+GrpId_i	tinyint(3) unsigned	NO		1	
+ItemId_i	mediumint(8) unsigned	NO		NULL	
+StkId_i	mediumint(8) unsigned	NO		NULL	
+Qty_d	double unsigned	NO		NULL	
+Reject_d	double	NO		0	
+Extra_d	double	NO		0	
+Void_c	char(1)	NO		0	
+TransId_i	int(10) unsigned	NO		0	
+CreateId_i	smallint(5) unsigned	NO		1	
+UpdateId_i	smallint(5) unsigned	NO		1	
+CreateDate_dt	datetime	NO		current_timestamp()	
+UpdateDate_dt	datetime	NO		current_timestamp()	on update current_timestamp()
+carrickcheah@cheahs-MacBook-Pro ~ % mysql -u myuser -pmypassword -h localhost -e "DESCRIBE tbl_daily_operator" nex_valiant | cat
+Field	Type	Null	Key	Default	Extra
+TxnId_i	int(10) unsigned	NO		NULL	
+OperatorId_i	smallint(5) unsigned	NO		NULL	
+Void_c	char(1)	NO		0	
+TransId_i	int(10) unsigned	NO		0	
+CreateId_i	smallint(5) unsigned	NO		1	
+UpdateId_i	smallint(5) unsigned	NO		1	
+CreateDate_dt	datetime	NO		current_timestamp()	
+UpdateDate_dt	datetime	NO		current_timestamp()	on update current_timestamp()
+carrickcheah@cheahs-MacBook-Pro ~ % mysql -u myuser -pmypassword -h localhost -e "DESCRIBE tbl_daily_machine" nex_valiant | cat
+Field	Type	Null	Key	Default	Extra
+TxnId_i	int(10) unsigned	NO		NULL	
+MachineId_i	smallint(5) unsigned	NO		NULL	
+Void_c	char(1)	NO		0	
+TransId_i	int(10) unsigned	NO		0	
+CreateId_i	smallint(5) unsigned	NO		1	
+UpdateId_i	smallint(5) unsigned	NO		1	
+CreateDate_dt	datetime	NO		current_timestamp()	
+UpdateDate_dt	datetime	NO		current_timestamp()	on update current_timestamp()
+carrickcheah@cheahs-MacBook-Pro ~ % mysql -u myuser -pmypassword -h localhost -e "DESCRIBE tbl_machine" nex_valiant | cat
+Field	Type	Null	Key	Default	Extra
+MachineId_i	smallint(5) unsigned	NO	PRI	NULL	auto_increment
+MachineName_v	varchar(100)	YES		NULL	
+MachineDescr_v	varchar(512)	YES		NULL	
+MachinetypeId_i	tinyint(3) unsigned	YES		NULL	
+DivisionId_i	tinyint(3) unsigned	YES		NULL	
+AcctcategoryId_i	tinyint(3) unsigned	NO		0	
+LocId_i	tinyint(3) unsigned	YES		NULL	
+Status_i	tinyint(4)	NO		1	
+machine_id_v	varchar(30)	YES		NULL	
+CreateId_i	smallint(5) unsigned	NO		1	
+UpdateId_i	smallint(5) unsigned	NO		1	
+CreateDate_dt	datetime	NO		current_timestamp()	
+UpdateDate_dt	datetime	NO		current_timestamp()	on update current_timestamp()
+carrickcheah@cheahs-MacBook-Pro ~ % mysql -u myuser -pmypassword -h localhost -e "DESCRIBE tbl_user" nex_valiant | cat
+Field	Type	Null	Key	Default	Extra
+UserId_i	smallint(5) unsigned	NO	PRI	NULL	auto_increment
+UserName_v	varchar(60)	NO		NULL	
+UserAbbrev_v	varchar(60)	YES		NULL	
+UserLogin_v	varchar(60)	YES		NULL	
+UserPassword_v	varchar(60)	YES		NULL	
+UserHash_v	varchar(256)	YES		NULL	
+UserPasscode_v	varchar(6)	NO		000000	
+UserTimeout_v	varchar(5)	NO		0	
+UserSites_v	varchar(60)	YES		1	
+Production_c	char(1)	NO		0	
+RoleCode_c	char(8)	YES		NULL	
+ParentId_i	smallint(5) unsigned	YES		NULL	
+Status_i	tinyint(4)	YES		1	
+CreateId_i	smallint(5) unsigned	NO		1	
+UpdateId_i	smallint(5) unsigned	NO		1	
+CreateDate_dt	datetime	NO		current_timestamp()	
+UpdateDate_dt	datetime	NO		current_timestamp()	on update current_timestamp()
+
