@@ -41,7 +41,7 @@ router.get('/api/manufacture/jo-details', async (req, res) => {
       
       // Get all processes for this job order - don't limit to 1 process
       const [processes] = await connection.query(`
-        SELECT ProcessId_i, ProcessDescr_v
+        SELECT ProcessId_i, ProcessDescr_v, RowId_i, Task_v
         FROM tbl_jo_process
         WHERE TxnId_i = ?
         ORDER BY RowId_i
@@ -49,7 +49,15 @@ router.get('/api/manufacture/jo-details', async (req, res) => {
       
       console.log('Found processes:', processes.length);
       if (processes.length > 0) {
-        console.log('First process:', processes[0].ProcessDescr_v);
+        // Log more details about each process
+        processes.forEach((proc, idx) => {
+          console.log(`Process ${idx+1}:`, {
+            RowId: proc.RowId_i,
+            ProcessId: proc.ProcessId_i,
+            ProcessDescr: proc.ProcessDescr_v, 
+            Task: proc.Task_v
+          });
+        });
       } else {
         console.warn('No processes found for JO:', joReference);
       }
@@ -260,7 +268,7 @@ router.get('/api/manufacture/job-orders', async (req, res) => {
         LEFT JOIN 
           tbl_product_code i ON i.ItemId_i = j.ItemId_i
         WHERE 
-          j._Status_c = 'P' 
+          (j._Status_c = 'P' OR j._Status_c = 'C')
           AND j.Void_c = '0'
           AND j.CreateDate_dt >= ?
       `;
@@ -273,8 +281,8 @@ router.get('/api/manufacture/job-orders', async (req, res) => {
         recentQueryParams.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
       }
       
-      // Sort and limit
-      recentQuery += ` ORDER BY j.CreateDate_dt DESC, j.DocRef_v ASC LIMIT 200`;
+      // Sort and limit - newest first
+      recentQuery += ` ORDER BY j.CreateDate_dt DESC, j.DocRef_v ASC LIMIT 550`;
       
       console.log('Executing recent job orders query...');
       
@@ -283,8 +291,7 @@ router.get('/api/manufacture/job-orders', async (req, res) => {
       
       console.log('Recent job orders query returned', recentRows.length, 'results');
       
-      // Second query: Get older but important JOs from 2023 and 2024
-      // Look for JOs that start with specific prefixes (JO23, JO24, JOST23, JOST24, JOTR23, JOTR24)
+      // Second query: Get older important JOs from 2023 until now
       let olderQuery = `
         SELECT 
           j.TxnId_i, 
@@ -298,18 +305,10 @@ router.get('/api/manufacture/job-orders', async (req, res) => {
         LEFT JOIN 
           tbl_product_code i ON i.ItemId_i = j.ItemId_i
         WHERE 
-          j._Status_c = 'P' 
+          (j._Status_c = 'P' OR j._Status_c = 'C')
           AND j.Void_c = '0'
           AND j.CreateDate_dt >= ?
           AND j.CreateDate_dt < ?
-          AND (
-            j.DocRef_v LIKE 'JO23%' OR 
-            j.DocRef_v LIKE 'JO24%' OR
-            j.DocRef_v LIKE 'JOST23%' OR 
-            j.DocRef_v LIKE 'JOST24%' OR
-            j.DocRef_v LIKE 'JOTR23%' OR 
-            j.DocRef_v LIKE 'JOTR24%'
-          )
       `;
       
       const olderQueryParams = [formatted2023Start, formattedThreeMonthsAgo];
@@ -320,8 +319,8 @@ router.get('/api/manufacture/job-orders', async (req, res) => {
         olderQueryParams.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
       }
       
-      // Sort and limit
-      olderQuery += ` ORDER BY j.CreateDate_dt DESC, j.DocRef_v ASC LIMIT 200`;
+      // Sort by newest date first
+      olderQuery += ` ORDER BY j.CreateDate_dt DESC, j.DocRef_v ASC LIMIT 550`;
       
       console.log('Executing older important job orders query...');
       
@@ -397,7 +396,26 @@ router.get('/api/manufacture/jo-process-details', async (req, res) => {
     const connection = await pool.getConnection();
     
     try {
-      // Get process details
+      // First, check what processes exist for this job order to help debugging
+      console.log('Checking all available processes for JO:', joId);
+      const [allProcesses] = await connection.query(`
+        SELECT ProcessId_i, ProcessDescr_v, RowId_i, Task_v
+        FROM tbl_jo_process
+        WHERE TxnId_i = ?
+        ORDER BY RowId_i
+      `, [joId]);
+      
+      console.log('Available processes found:', allProcesses.length);
+      allProcesses.forEach((proc, idx) => {
+        console.log(`Available Process ${idx+1}:`, {
+          RowId: proc.RowId_i,
+          ProcessId: proc.ProcessId_i,
+          ProcessDescr: proc.ProcessDescr_v, 
+          Task: proc.Task_v
+        });
+      });
+      
+      // Now get the specific process
       console.log('Executing process query for JO:', joId, 'Process:', processId);
       const [processRows] = await connection.query(`
         SELECT jp.ProcessId_i, jp.ProcessDescr_v, jp.RowId_i
@@ -410,6 +428,18 @@ router.get('/api/manufacture/jo-process-details', async (req, res) => {
       
       if (processRows.length === 0) {
         console.warn('No process found for JO:', joId, 'Process:', processId);
+        
+        // Try a more flexible search to see if there's a similar process
+        console.log('Trying more flexible search for process');
+        const [flexibleProcessRows] = await connection.query(`
+          SELECT jp.ProcessId_i, jp.ProcessDescr_v, jp.RowId_i
+          FROM tbl_jo_process jp
+          WHERE jp.TxnId_i = ? AND jp.ProcessDescr_v LIKE ?
+          LIMIT 1
+        `, [joId, `%${processId.split('-')[0]}%`]);
+        
+        console.log('Flexible search results:', flexibleProcessRows);
+        
         return res.status(404).json({ 
           success: false, 
           message: 'Process not found for this job order' 
@@ -494,6 +524,46 @@ router.get('/api/manufacture/jo-process-details', async (req, res) => {
       success: false, 
       message: 'Server error', 
       error: error.message 
+    });
+  }
+});
+
+// Get machines for dropdown
+router.get('/api/manufacture/machines', async (req, res) => {
+  try {
+    console.log('Request for machines received');
+    
+    const connection = await pool.getConnection();
+    
+    try {
+      // Get all active machines from the database
+      const [rows] = await connection.query(`
+        SELECT 
+          m.MachineId_i as id, 
+          m.MachineName_v as name
+        FROM 
+          tbl_machine m
+        WHERE 
+          m.Status_i = 1
+        ORDER BY 
+          m.MachineName_v
+      `);
+      
+      console.log('Machines query returned', rows.length, 'results');
+      
+      return res.json({
+        success: true,
+        machines: rows
+      });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Error fetching machines:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch machines',
+      error: error.message
     });
   }
 });
