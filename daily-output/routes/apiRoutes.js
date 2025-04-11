@@ -22,11 +22,12 @@ router.get('/api/manufacture/jo-details', async (req, res) => {
       // Get JO details
       const [rows] = await connection.query(`
         SELECT j.TxnId_i, j.DocRef_v, j.ItemId_i, p.ProcessDescr_v,
-               i.ProductCode_v, i.ProductName_v
+               i.StkCode_v as product_code, 
+               i.ProdName_v as product_name
         FROM tbl_jo_txn j
         LEFT JOIN tbl_jo_process p ON p.TxnId_i = j.TxnId_i
-        LEFT JOIN tbl_product i ON i.ProductId_i = j.ItemId_i
-        WHERE j.DocRef_v = ? AND j.Status_c = 'A'
+        LEFT JOIN tbl_product_code i ON i.ItemId_i = j.ItemId_i
+        WHERE j.DocRef_v = ? AND j._Status_c = 'P' AND j.Void_c = '0'
         LIMIT 1
       `, [joReference]);
       
@@ -48,7 +49,7 @@ router.get('/api/manufacture/jo-details', async (req, res) => {
         jo_id: rows[0].TxnId_i,
         reference: rows[0].DocRef_v,
         product_id: rows[0].ItemId_i,
-        product_name: `(${rows[0].ProductCode_v}) ${rows[0].ProductName_v}`,
+        product_name: rows[0].product_name,
         process: rows[0].ProcessDescr_v || null,
         processes: processes.map(p => ({
           id: p.ProcessId_i,
@@ -78,10 +79,13 @@ router.get('/api/manufacture/product-details', async (req, res) => {
     try {
       // Get product details
       const [rows] = await connection.query(`
-        SELECT p.ProductId_i, p.ProductCode_v, p.ProductName_v,
-               p.UnitPrice_d, p.UnitCost_d, p.QtyOnHand_d
-        FROM tbl_product p
-        WHERE p.ProductId_i = ? AND p.Status_c = 'A'
+        SELECT p.ItemId_i, 
+               p.StkCode_v as code, 
+               p.ProdName_v as name,
+               p.UomId_i as uom,
+               p.RefCost_d as cost
+        FROM tbl_product_code p
+        WHERE p.ItemId_i = ? AND p.Deleted_c = '0'
         LIMIT 1
       `, [productId]);
       
@@ -102,12 +106,12 @@ router.get('/api/manufacture/product-details', async (req, res) => {
       // Return product details
       return res.json({
         success: true,
-        product_id: rows[0].ProductId_i,
-        product_code: rows[0].ProductCode_v,
-        product_name: rows[0].ProductName_v,
-        unit_price: rows[0].UnitPrice_d,
-        unit_cost: rows[0].UnitCost_d,
-        qty_on_hand: rows[0].QtyOnHand_d,
+        product_id: rows[0].ItemId_i,
+        product_code: rows[0].code,
+        product_name: rows[0].name,
+        unit_price: rows[0].cost,
+        unit_cost: rows[0].cost,
+        qty_on_hand: rows[0].uom,
         outstanding: outstanding
       });
     } finally {
@@ -214,19 +218,29 @@ router.get('/api/manufacture/job-orders', async (req, res) => {
     try {
       // Query to get active job orders with product details
       const [rows] = await connection.query(`
-        SELECT j.TxnId_i, j.DocRef_v, j.ItemId_i, p.ProductCode_v, p.ProductName_v
-        FROM tbl_jo_txn j
-        LEFT JOIN tbl_product p ON p.ProductId_i = j.ItemId_i
-        WHERE j.Status_c = 'A' 
-        AND (j.DocRef_v LIKE ? OR p.ProductCode_v LIKE ? OR p.ProductName_v LIKE ?)
-        ORDER BY j.DocRef_v DESC
+        SELECT 
+          j.TxnId_i, 
+          j.DocRef_v, 
+          j.ItemId_i, 
+          i.StkCode_v as product_code, 
+          i.ProdName_v as product_name
+        FROM 
+          tbl_jo_txn j
+        LEFT JOIN 
+          tbl_product_code i ON i.ItemId_i = j.ItemId_i
+        WHERE 
+          j._Status_c = 'P' 
+          AND j.Void_c = '0'
+          AND (j.DocRef_v LIKE ? OR i.StkCode_v LIKE ? OR i.ProdName_v LIKE ?)
+        ORDER BY 
+          j.DocRef_v DESC
         LIMIT 20
       `, [`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`]);
       
       const jobOrders = rows.map(row => ({
         id: row.TxnId_i,
         reference: row.DocRef_v,
-        display: `${row.DocRef_v} - ${row.ProductCode_v ? `[${row.ProductCode_v}]` : ''} ${row.ProductName_v || ''}`
+        display: `${row.DocRef_v} - [${row.product_code || ''}] ${row.product_name || ''} #${row.TxnId_i}`
       }));
       
       return res.json({

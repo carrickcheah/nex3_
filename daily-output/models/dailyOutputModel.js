@@ -430,9 +430,9 @@ class DailyOutputModel {
       SELECT m.MachineId_i as id, 
              m.MachineName_v as name,
              dm.Selected_c as selected
-      FROM tbl_comp_machine m
+      FROM tbl_machine m
       LEFT JOIN tbl_daily_machine dm ON dm.MachineId_i = m.MachineId_i AND dm.TxnId_i = ?
-      WHERE m.Status_c = 'A'
+      WHERE m.Status_i = 1
       ORDER BY m.MachineName_v
     `, [txn_id || 0]);
     
@@ -520,13 +520,21 @@ class DailyOutputModel {
     const connection = await pool.getConnection();
     try {
       const [rows] = await connection.query(`
-        SELECT m.MachineId_i as id, 
-               m.MachineName_v as name,
-               dm.Selected_c as selected
-        FROM tbl_comp_machine m
-        LEFT JOIN tbl_daily_machine dm ON dm.MachineId_i = m.MachineId_i AND dm.TxnId_i = ?
-        WHERE m.Status_c = 'A'
-        ORDER BY m.MachineName_v
+        SELECT 
+          m.MachineId_i as id, 
+          m.MachineName_v as name,
+          CASE 
+            WHEN dm.MachineId_i IS NOT NULL THEN 1 
+            ELSE 0 
+          END as selected
+        FROM 
+          tbl_machine m
+        LEFT JOIN 
+          tbl_daily_machine dm ON dm.MachineId_i = m.MachineId_i AND dm.TxnId_i = ?
+        WHERE 
+          m.Status_i = 1
+        ORDER BY 
+          m.MachineName_v
       `, [txn_id || 0]);
       
       return rows;
@@ -544,13 +552,21 @@ class DailyOutputModel {
     const connection = await pool.getConnection();
     try {
       const [rows] = await connection.query(`
-        SELECT m.MoldId_i as id, 
-               m.MoldName_v as name,
-               dm.Selected_c as selected
-        FROM tbl_comp_mold m
-        LEFT JOIN tbl_daily_mold dm ON dm.MoldId_i = m.MoldId_i AND dm.TxnId_i = ?
-        WHERE m.Status_c = 'A'
-        ORDER BY m.MoldName_v
+        SELECT 
+          m.MoldId_i as id, 
+          m.MoldDescr_v as name,
+          CASE 
+            WHEN dm.MoldId_i IS NOT NULL THEN 1 
+            ELSE 0 
+          END as selected
+        FROM 
+          tbl_mold m
+        LEFT JOIN 
+          tbl_daily_mold dm ON dm.MoldId_i = m.MoldId_i AND dm.TxnId_i = ?
+        WHERE 
+          m.Status_i = 1
+        ORDER BY 
+          m.MoldDescr_v
       `, [txn_id || 0]);
       
       return rows;
@@ -568,13 +584,21 @@ class DailyOutputModel {
     const connection = await pool.getConnection();
     try {
       const [rows] = await connection.query(`
-        SELECT u.UserId_i as id, 
-               u.UserName_v as name,
-               du.Selected_c as selected
-        FROM tbl_user u
-        LEFT JOIN tbl_daily_operator du ON du.UserId_i = u.UserId_i AND du.TxnId_i = ?
-        WHERE u.Status_c = 'A' AND u.UserGroup_c = 'O'
-        ORDER BY u.UserName_v
+        SELECT 
+          u.UserId_i as id, 
+          u.UserName_v as name,
+          CASE 
+            WHEN du.OperatorId_i IS NOT NULL THEN 1 
+            ELSE 0 
+          END as selected
+        FROM 
+          tbl_user u
+        LEFT JOIN 
+          tbl_daily_operator du ON du.OperatorId_i = u.UserId_i AND du.TxnId_i = ?
+        WHERE 
+          u.Status_i = 1
+        ORDER BY 
+          u.UserName_v
       `, [txn_id || 0]);
       
       return rows;
@@ -592,13 +616,21 @@ class DailyOutputModel {
     const connection = await pool.getConnection();
     try {
       const [rows] = await connection.query(`
-        SELECT t.ToolId_i as id, 
-               t.ToolName_v as name,
-               dt.Selected_c as selected
-        FROM tbl_comp_tool t
-        LEFT JOIN tbl_daily_tool dt ON dt.ToolId_i = t.ToolId_i AND dt.TxnId_i = ?
-        WHERE t.Status_c = 'A'
-        ORDER BY t.ToolName_v
+        SELECT 
+          t.ToolId_i as id, 
+          t.ToolDescr_v as name,
+          CASE 
+            WHEN dt.ToolId_i IS NOT NULL THEN 1 
+            ELSE 0 
+          END as selected
+        FROM 
+          tbl_tool t
+        LEFT JOIN 
+          tbl_daily_tool dt ON dt.ToolId_i = t.ToolId_i AND dt.TxnId_i = ?
+        WHERE 
+          t.Status_i = 1
+        ORDER BY 
+          t.ToolDescr_v
       `, [txn_id || 0]);
       
       return rows;
@@ -616,20 +648,20 @@ class DailyOutputModel {
   static async processItemsAndBatches(connection, txn_id) {
     // Get output items
     const [outputRows] = await connection.query(`
-      SELECT di.*, p.ProductCode_v, p.ProductName_v,
-             CONCAT('(',p.ProductCode_v,') ',p.ProductName_v) as product_description
+      SELECT di.*, p.StkCode_v as ProductCode_v, p.ProdName_v as ProductName_v,
+             CONCAT('(',p.StkCode_v,') ',p.ProdName_v) as product_description
       FROM tbl_daily_item di
-      LEFT JOIN tbl_product p ON p.ProductId_i = di.ProductId_i
+      LEFT JOIN tbl_product_code p ON p.ItemId_i = di.ProductId_i
       WHERE di.TxnId_i = ? AND di.ItemType_c = 'O'
       ORDER BY di.RowId_i
     `, [txn_id]);
     
     // Get input items
     const [inputRows] = await connection.query(`
-      SELECT di.*, p.ProductCode_v, p.ProductName_v,
-             CONCAT('(',p.ProductCode_v,') ',p.ProductName_v) as product_description
+      SELECT di.*, p.StkCode_v as ProductCode_v, p.ProdName_v as ProductName_v,
+             CONCAT('(',p.StkCode_v,') ',p.ProdName_v) as product_description
       FROM tbl_daily_item di
-      LEFT JOIN tbl_product p ON p.ProductId_i = di.ProductId_i
+      LEFT JOIN tbl_product_code p ON p.ItemId_i = di.ProductId_i
       WHERE di.TxnId_i = ? AND di.ItemType_c = 'I'
       ORDER BY di.RowId_i
     `, [txn_id]);
@@ -687,11 +719,11 @@ class DailyOutputModel {
     const connection = await pool.getConnection();
     try {
       const [rows] = await connection.query(`
-        SELECT p.ProductId_i as id, 
-               CONCAT('(',p.ProductCode_v,') ',p.ProductName_v) as name
-        FROM tbl_product p
-        WHERE p.Status_c = 'A'
-        ORDER BY p.ProductName_v
+        SELECT p.ItemId_i as id, 
+               CONCAT('(',p.StkCode_v,') ',p.ProdName_v) as name
+        FROM tbl_product_code p
+        WHERE p.Deleted_c = '0'
+        ORDER BY p.ProdName_v
       `);
       
       return rows;
@@ -711,11 +743,11 @@ class DailyOutputModel {
     }
     
     const [rows] = await connection.query(`
-      SELECT p.ProductId_i as id, 
-             CONCAT('(',p.ProductCode_v,') ',p.ProductName_v) as name
-      FROM tbl_product p
-      WHERE p.Status_c = 'A'
-      ORDER BY p.ProductName_v
+      SELECT p.ItemId_i as id, 
+             CONCAT('(',p.StkCode_v,') ',p.ProdName_v) as name
+      FROM tbl_product_code p
+      WHERE p.Deleted_c = '0'
+      ORDER BY p.ProdName_v
     `);
     
     return rows;
@@ -785,9 +817,9 @@ class DailyOutputModel {
         SELECT m.MachineId_i as machine_id, 
                m.MachineName_v as machine_name,
                dm.Selected_c as selected
-        FROM tbl_comp_machine m
+        FROM tbl_machine m
         LEFT JOIN tbl_daily_machine dm ON dm.MachineId_i = m.MachineId_i AND dm.TxnId_i = ?
-        WHERE m.Status_c = 'A'
+        WHERE m.Status_i = 1
         ORDER BY m.MachineName_v
       `, [txn_id || 0]);
       
@@ -855,20 +887,20 @@ class DailyOutputModel {
     try {
       // Get output items
       const [outputRows] = await connection.query(`
-        SELECT di.*, p.ProductCode_v, p.ProductName_v,
-               CONCAT('(',p.ProductCode_v,') ',p.ProductName_v) as product_description
+        SELECT di.*, p.StkCode_v as ProductCode_v, p.ProdName_v as ProductName_v,
+               CONCAT('(',p.StkCode_v,') ',p.ProdName_v) as product_description
         FROM tbl_daily_item di
-        LEFT JOIN tbl_product p ON p.ProductId_i = di.ProductId_i
+        LEFT JOIN tbl_product_code p ON p.ItemId_i = di.ProductId_i
         WHERE di.TxnId_i = ? AND di.ItemType_c = 'O'
         ORDER BY di.RowId_i
       `, [txn_id]);
       
       // Get input items
       const [inputRows] = await connection.query(`
-        SELECT di.*, p.ProductCode_v, p.ProductName_v,
-               CONCAT('(',p.ProductCode_v,') ',p.ProductName_v) as product_description
+        SELECT di.*, p.StkCode_v as ProductCode_v, p.ProdName_v as ProductName_v,
+               CONCAT('(',p.StkCode_v,') ',p.ProdName_v) as product_description
         FROM tbl_daily_item di
-        LEFT JOIN tbl_product p ON p.ProductId_i = di.ProductId_i
+        LEFT JOIN tbl_product_code p ON p.ItemId_i = di.ProductId_i
         WHERE di.TxnId_i = ? AND di.ItemType_c = 'I'
         ORDER BY di.RowId_i
       `, [txn_id]);
@@ -911,11 +943,11 @@ class DailyOutputModel {
     const connection = await pool.getConnection();
     try {
       const [rows] = await connection.query(`
-        SELECT p.ProductId_i as product_id, 
-               CONCAT('(',p.ProductCode_v,') ',p.ProductName_v) as product_name
-        FROM tbl_product p
-        WHERE p.Status_c = 'A' AND p.ProductType_c = 'F'
-        ORDER BY p.ProductName_v
+        SELECT p.ItemId_i as product_id, 
+               CONCAT('(',p.StkCode_v,') ',p.ProdName_v) as product_name
+        FROM tbl_product_code p
+        WHERE p.Deleted_c = '0'
+        ORDER BY p.ProdName_v
       `);
       
       return rows;
@@ -1244,12 +1276,23 @@ class DailyOutputModel {
             IFNULL(
               CASE 
                 WHEN d.StartTime_tt IS NOT NULL AND d.EndTime_tt IS NOT NULL THEN
-                  CONCAT(
-                    FLOOR(TIME_TO_SEC(TIMEDIFF(d.EndTime_tt, d.StartTime_tt)) / 3600), 
-                    'h ',
-                    FLOOR((TIME_TO_SEC(TIMEDIFF(d.EndTime_tt, d.StartTime_tt)) % 3600) / 60), 
-                    'm'
-                  )
+                  CASE
+                    WHEN TIME_TO_SEC(TIMEDIFF(d.EndTime_tt, d.StartTime_tt)) >= 0 THEN
+                      CONCAT(
+                        FLOOR(TIME_TO_SEC(TIMEDIFF(d.EndTime_tt, d.StartTime_tt)) / 3600), 
+                        'h ',
+                        FLOOR((TIME_TO_SEC(TIMEDIFF(d.EndTime_tt, d.StartTime_tt)) % 3600) / 60), 
+                        'm'
+                      )
+                    ELSE
+                      /* When end time is earlier than start time, assume it spans overnight and add 24 hours */
+                      CONCAT(
+                        FLOOR((TIME_TO_SEC(TIMEDIFF(d.EndTime_tt, d.StartTime_tt)) + 86400) / 3600), 
+                        'h ',
+                        FLOOR(((TIME_TO_SEC(TIMEDIFF(d.EndTime_tt, d.StartTime_tt)) + 86400) % 3600) / 60), 
+                        'm'
+                      )
+                  END
                 ELSE NULL
               END,
               'N/A'
