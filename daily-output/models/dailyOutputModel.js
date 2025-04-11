@@ -1240,9 +1240,22 @@ class DailyOutputModel {
              WHERE di.TxnId_i = d.TxnId_i AND di.InOut_c = 'O'), 
             0
           ) AS reject_qty,
-          CONCAT(FLOOR(TIME_TO_SEC(TIMEDIFF(d.EndTime_tt, d.StartTime_tt)) / 3600), 'h ',
-                FLOOR((TIME_TO_SEC(TIMEDIFF(d.EndTime_tt, d.StartTime_tt)) % 3600) / 60), 'm') AS lead_time,
-          (SELECT COUNT(*) FROM tbl_daily_operator WHERE TxnId_i = d.TxnId_i) AS man_count,
+          CONCAT(
+            IFNULL(
+              CASE 
+                WHEN d.StartTime_tt IS NOT NULL AND d.EndTime_tt IS NOT NULL THEN
+                  CONCAT(
+                    FLOOR(TIME_TO_SEC(TIMEDIFF(d.EndTime_tt, d.StartTime_tt)) / 3600), 
+                    'h ',
+                    FLOOR((TIME_TO_SEC(TIMEDIFF(d.EndTime_tt, d.StartTime_tt)) % 3600) / 60), 
+                    'm'
+                  )
+                ELSE NULL
+              END,
+              'N/A'
+            )
+          ) AS lead_time,
+          IFNULL((SELECT COUNT(*) FROM tbl_daily_operator WHERE TxnId_i = d.TxnId_i), 0) AS man_count,
           IFNULL(
             (SELECT GROUP_CONCAT(m.MachineName_v) 
              FROM tbl_daily_machine dm 
@@ -1251,7 +1264,7 @@ class DailyOutputModel {
             'N/A'
           ) AS machine,
           IFNULL(
-            (SELECT GROUP_CONCAT(u.UserAbbrev_v) 
+            (SELECT GROUP_CONCAT(CONCAT(u.UserAbbrev_v, ' #', u.UserId_i) SEPARATOR ', ') 
              FROM tbl_daily_operator dop 
              JOIN tbl_user u ON u.UserId_i = dop.OperatorId_i 
              WHERE dop.TxnId_i = d.TxnId_i),
