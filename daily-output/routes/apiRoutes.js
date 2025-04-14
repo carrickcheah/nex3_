@@ -594,14 +594,21 @@ router.get('/api/manufacture/jo-process-details', async (req, res) => {
           ji.ItemId_i,
           p.StkCode_v as product_code,
           p.ProdName_v as product_name,
-          ji.Qty_d as qty_required,
+          COALESCE(di.Qty_d, ji.Qty_d) as qty_required,
           COALESCE(pq.AvailQty_d, 0) as qty_balance
         FROM tbl_jo_item ji
         LEFT JOIN tbl_product_code p ON p.ItemId_i = ji.ItemId_i
         LEFT JOIN tbl_product_qty pq ON pq.ItemId_i = ji.ItemId_i
+        LEFT JOIN tbl_daily_item di ON di.ItemId_i = ji.ItemId_i AND di.InOut_c = 'I' 
+          AND di.TxnId_i = (
+            SELECT dt.TxnId_i FROM tbl_daily_txn dt 
+            WHERE dt.JoId_i = ? AND dt.RowId_i = ? 
+            ORDER BY dt.CreateDate_dt DESC LIMIT 1
+          )
         WHERE ji.TxnId_i = ? AND ji.RowId_i = ?
+          AND COALESCE(pq.AvailQty_d, 0) > 0
         ORDER BY ji.Id_i
-      `, [joId, rowId]);
+      `, [joId, rowId, joId, rowId]);
       
       console.log('Input items query result count:', inputRows.length);
       
@@ -631,15 +638,23 @@ router.get('/api/manufacture/jo-process-details', async (req, res) => {
             ji.ItemId_i,
             p.StkCode_v as product_code,
             p.ProdName_v as product_name,
-            ji.Qty_d as qty_required,
-            (SELECT PrQty_d FROM tbl_product_qty WHERE PrQty_d > 0 ORDER BY PrQty_d LIMIT 1) as qty_balance,
+            COALESCE(di.Qty_d, ji.Qty_d) as qty_required,
+            COALESCE(pq.AvailQty_d, 0) as qty_balance,
             ji.RowId_i
           FROM tbl_jo_item ji
           LEFT JOIN tbl_product_code p ON p.ItemId_i = ji.ItemId_i
+          LEFT JOIN tbl_product_qty pq ON pq.ItemId_i = ji.ItemId_i
+          LEFT JOIN tbl_daily_item di ON di.ItemId_i = ji.ItemId_i AND di.InOut_c = 'I'
+            AND di.TxnId_i = (
+              SELECT dt.TxnId_i FROM tbl_daily_txn dt 
+              WHERE dt.JoId_i = ? 
+              ORDER BY dt.CreateDate_dt DESC LIMIT 1
+            )
           WHERE ji.TxnId_i = ?
+            AND COALESCE(pq.AvailQty_d, 0) > 0
           ORDER BY ji.RowId_i, ji.Id_i
-          LIMIT 20
-        `, [joId]);
+          LIMIT 10
+        `, [joId, joId]);
         
         if (fallbackInputRows.length > 0) {
           console.log('Found fallback input items:', fallbackInputRows.length);
