@@ -1149,11 +1149,11 @@
                         <option value="${outputItem.id}" selected>${outputItem.code} - ${outputItem.name}</option>
                       </select>
                     </td>
-                    <td><input type="number" class="w3-input output-qty" name="output_items[0][output_qty]" value="0" min="0" step="0.01"></td>
+                    <td><input type="number" class="w3-input output-qty" name="output_items[0][output_qty]" value="${outputItem.quantity}" min="0" step="0.01"></td>
                     <td><input type="number" class="w3-input reject-qty" name="output_items[0][reject_qty]" value="0" min="0" step="0.01"></td>
                     <td><input type="number" class="w3-input extra-qty" name="output_items[0][extra_qty]" value="0" min="0" step="0.01"></td>
-                    <td><span class="total-output">0.00</span></td>
-                    <td class="outstanding">0</td>
+                    <td><span class="total-output">${outputItem.quantity}</span></td>
+                    <td><input type="number" class="w3-input outstanding-qty" name="output_items[0][outstanding_qty]" value="0" min="0" step="0.01"></td>
                     <td><button type="button" class="w3-button remove-output-item"><i class="fas fa-trash-alt"></i></button></td>
                   </tr>
                 `;
@@ -1171,12 +1171,14 @@
               // Set input items
               if (response.input_items && response.input_items.length > 0) {
                 console.log('Setting input items:', response.input_items.length);
+                console.log('Input items sample:', response.input_items[0]);
                 
                 // Clear existing table
                 $('#input-items-table').empty();
                 
                 // Add input item rows
                 response.input_items.forEach(function(item, index) {
+                  console.log(`Input item ${index}:`, item);
                   const inputRowHtml = `
                     <tr>
                       <td class="input-item-index">${index + 1}</td>
@@ -1185,9 +1187,9 @@
                           <option value="${item.id}" selected>${item.code} - ${item.name}</option>
                         </select>
                       </td>
-                      <td><input type="number" class="w3-input demand-qty" name="input_items[${index}][demand_qty]" value="${item.qty_required || 0}" readonly></td>
-                      <td><input type="number" class="w3-input used-qty" name="input_items[${index}][used_qty]" value="0" min="0" step="0.01"></td>
-                      <td>${item.qty_balance || 0}</td>
+                      <td>${parseFloat(item.qty_balance) || 0}</td>
+                      <td><input type="number" class="w3-input demand-qty" name="input_items[${index}][demand_qty]" value="${parseFloat(item.qty_required) || 0}" min="0" step="0.01"></td>
+                      <td>${item.lot || ''}</td>
                       <td><button type="button" class="w3-button remove-input-item"><i class="fas fa-trash-alt"></i></button></td>
                     </tr>
                   `;
@@ -1238,7 +1240,7 @@
     }
     
     // Add event listener for quantity changes
-    $(document).on('change keyup', '.output-qty, .reject-qty, .extra-qty', function() {
+    $(document).on('change keyup', '.output-qty, .reject-qty, .extra-qty, .outstanding-qty', function() {
       calculateOutputTotals($(this).closest('tr'));
     });
     

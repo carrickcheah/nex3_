@@ -255,12 +255,11 @@
           <tr>
             <th>#</th>
             <th>Product Description</th>
-            <th>Output Qty (PCS,Sheet)</th>
-            <th>Reject Qty (Sheet Disposal)</th>
-            <th>Extra Qty (Stock/Use)</th>
-            <th>Total (Output)</th>
-            <th>Outstanding</th>
-            <th>Value</th>
+            <th>Output Qty (Include Reject)</th>
+            <th>Reject Qty (Direct Dispose)</th>
+            <th>Extra Qty (Stock-In)</th>
+            <th>Total Stock-in</th>
+            <th>Next Outstanding</th>
             <% if (!viewOnly) { %><th>Action</th><% } %>
           </tr>
         </thead>
@@ -281,11 +280,10 @@
         <thead>
           <tr>
             <th>#</th>
-            <th>Product Description</th>
-            <th>PRD Batch</th>
+            <th>Production Description</th>
+            <th>Production Available</th>
             <th>Demand Qty</th>
             <th>Lot</th>
-            <th>Value</th>
             <% if (!viewOnly) { %><th>Action</th><% } %>
           </tr>
         </thead>
@@ -380,8 +378,9 @@
     <td><input type="number" class="w3-input form-control reject-qty" name="reject-qty[]" value="0" min="0" step="0.01"></td>
     <td><input type="number" class="w3-input form-control extra-qty" name="extra-qty[]" value="0" min="0" step="0.01"></td>
     <td><span class="total-output">0</span></td>
-    <td><span class="outstanding">0</span></td>
-    <td><span class="output-value">0.00</span></td>
+    <td>
+      <input type="number" class="w3-input form-control outstanding-qty" name="outstanding-qty[]" value="0" min="0" step="0.01">
+    </td>
     <td>
       <button type="button" class="w3-button w3-small w3-red remove-output-item">
         <i class="fas fa-trash"></i>
@@ -407,7 +406,6 @@
     <td><input type="text" class="w3-input form-control" name="input-batch[]" value=""></td>
     <td><input type="number" class="w3-input form-control demand-qty" name="demand-qty[]" value="0" min="0" step="0.01"></td>
     <td><input type="text" class="w3-input form-control" name="input-lot[]" value=""></td>
-    <td><span class="input-value">0.00</span></td>
     <td>
       <button type="button" class="w3-button w3-small w3-red remove-input-item">
         <i class="fas fa-trash"></i>
@@ -610,7 +608,7 @@ $(document).ready(function() {
           [${item.product_code || ''}] ${item.product_name || ''}
         </td>
         <td>
-          <input type="number" class="w3-input form-control output-qty" name="output-qty[]" value="${item.quantity || 1}" min="0" step="0.01">
+          <input type="number" class="w3-input form-control output-qty" name="output-qty[]" value="${item.quantity || item.planned_qty || 0}" min="0" step="0.01">
         </td>
         <td>
           <input type="number" class="w3-input form-control reject-qty" name="reject-qty[]" value="0" min="0" step="0.01">
@@ -618,38 +616,58 @@ $(document).ready(function() {
         <td>
           <input type="number" class="w3-input form-control extra-qty" name="extra-qty[]" value="0" min="0" step="0.01">
         </td>
-        <td><span class="total-output">${item.quantity || 1}</span></td>
-        <td><span class="outstanding">0</span></td>
-        <td><span class="output-value">0.00</span></td>
-        <td></td>
+        <td><span class="total-output">${item.quantity || item.planned_qty || 0}</span></td>
+        <td>
+          <input type="number" class="w3-input form-control outstanding-qty" name="outstanding-qty[]" value="0" min="0" step="0.01">
+        </td>
+        <td>
+          <button type="button" class="w3-button w3-small w3-red remove-output-item">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
       </tr>
     `;
   }
   
   // Helper function to create input item HTML
   function createInputItemHtml(item, index) {
+    console.log('Creating input item HTML with:', item);
+    // Convert to number and ensure it's not null/undefined
+    const qtyBalance = parseFloat(item.qty_balance) || 0;
+    const qtyRequired = parseFloat(item.qty_required) || 0;
+    
+    console.log('Parsed quantities:', {
+      qty_balance: qtyBalance,
+      qty_required: qtyRequired,
+      original_balance: item.qty_balance,
+      original_required: item.qty_required
+    });
+    
     return `
       <tr class="input-item-row">
         <td>${index}</td>
         <td>
-          <input type="hidden" name="input-product-id[]" value="${item.item_id}">
-          [${item.product_code || ''}] ${item.product_name || ''}
+          <input type="hidden" name="input-product-id[]" value="${item.id}">
+          [${item.code || ''}] ${item.name || ''}
         </td>
-        <td>${item.available_qty || 0} ${item.available_qty > 0 ? `(Est Out ${item.available_qty})` : ''}</td>
+        <td>${qtyBalance}</td>
         <td>
-          <input type="number" class="w3-input form-control demand-qty" name="demand-qty[]" value="${item.quantity_required || 0}" min="0" step="0.01">
+          <input type="number" class="w3-input form-control demand-qty" name="demand-qty[]" value="${qtyRequired}" min="0" step="0.01">
         </td>
         <td>
-          <input type="text" class="w3-input form-control" name="input-lot[]" value="">
+          ${item.lot || ''}
         </td>
-        <td><span class="input-value">0.00</span></td>
-        <td></td>
+        <td>
+          <button type="button" class="w3-button w3-small w3-red remove-input-item">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
       </tr>
     `;
   }
   
   // Output quantity calculations
-  $(document).on('change keyup', '.output-qty, .reject-qty, .extra-qty', function() {
+  $(document).on('change keyup', '.output-qty, .reject-qty, .extra-qty, .outstanding-qty', function() {
     const row = $(this).closest('tr');
     const outputQty = parseFloat(row.find('.output-qty').val()) || 0;
     const rejectQty = parseFloat(row.find('.reject-qty').val()) || 0;

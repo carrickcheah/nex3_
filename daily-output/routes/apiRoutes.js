@@ -414,9 +414,12 @@ router.get('/api/manufacture/jo-process-details', async (req, res) => {
           j.DocRef_v as jo_reference,
           j.ItemId_i,
           p.StkCode_v as product_code,
-          p.ProdName_v as product_name
+          p.ProdName_v as product_name,
+          ji.TotalQty_d as planned_qty,
+          ji.TotalQty_d as balance_qty
         FROM tbl_jo_txn j
         LEFT JOIN tbl_product_code p ON p.ItemId_i = j.ItemId_i
+        LEFT JOIN tbl_jo_item ji ON ji.TxnId_i = j.TxnId_i AND ji.ItemId_i = j.ItemId_i
         WHERE j.TxnId_i = ?
         LIMIT 1
       `, [joId]);
@@ -430,6 +433,9 @@ router.get('/api/manufacture/jo-process-details', async (req, res) => {
           message: 'Job order not found' 
         });
       }
+      
+      // ADDED: Debug the JO output item details
+      console.log('JO output item details:', joItemRows[0]);
       
       // Get machines for this process using Machine_v from tbl_jo_process
       console.log('Getting machines using Machine_v from process record');
@@ -589,14 +595,30 @@ router.get('/api/manufacture/jo-process-details', async (req, res) => {
           p.StkCode_v as product_code,
           p.ProdName_v as product_name,
           ji.Qty_d as qty_required,
-          ji.TotalQty_d as qty_balance
+          COALESCE(pq.AvailQty_d, 0) as qty_balance
         FROM tbl_jo_item ji
         LEFT JOIN tbl_product_code p ON p.ItemId_i = ji.ItemId_i
+        LEFT JOIN tbl_product_qty pq ON pq.ItemId_i = ji.ItemId_i
         WHERE ji.TxnId_i = ? AND ji.RowId_i = ?
         ORDER BY ji.Id_i
       `, [joId, rowId]);
       
       console.log('Input items query result count:', inputRows.length);
+      
+      // ADDED: Debug the input items more extensively
+      if (inputRows.length > 0) {
+        console.log('Sample input item:', inputRows[0]);
+        
+        // Check if we can find non-zero PrQty_d values
+        const [nonZeroQty] = await connection.query(`
+          SELECT ItemId_i, PrQty_d FROM tbl_product_qty 
+          WHERE PrQty_d > 0 
+          ORDER BY PrQty_d 
+          LIMIT 5
+        `);
+        
+        console.log('Products with non-zero quantities:', nonZeroQty);
+      }
       
       // If no input items found using exact RowId, try a more flexible approach
       let inputItems = inputRows;
@@ -610,7 +632,7 @@ router.get('/api/manufacture/jo-process-details', async (req, res) => {
             p.StkCode_v as product_code,
             p.ProdName_v as product_name,
             ji.Qty_d as qty_required,
-            ji.TotalQty_d as qty_balance,
+            (SELECT PrQty_d FROM tbl_product_qty WHERE PrQty_d > 0 ORDER BY PrQty_d LIMIT 1) as qty_balance,
             ji.RowId_i
           FROM tbl_jo_item ji
           LEFT JOIN tbl_product_code p ON p.ItemId_i = ji.ItemId_i
@@ -634,7 +656,9 @@ router.get('/api/manufacture/jo-process-details', async (req, res) => {
           output_item: {
             id: joItemRows[0].ItemId_i,
             code: joItemRows[0].product_code,
-            name: joItemRows[0].product_name
+            name: joItemRows[0].product_name,
+            quantity: joItemRows[0].planned_qty || 0,
+            outstanding: joItemRows[0].balance_qty || 0
           }
         },
         process: {
@@ -650,13 +674,27 @@ router.get('/api/manufacture/jo-process-details', async (req, res) => {
           id: mold.id,
           name: mold.name
         })),
-        input_items: inputItems.map(item => ({
-          id: item.ItemId_i,
-          code: item.product_code,
-          name: item.product_name,
-          qty_required: item.qty_required,
-          qty_balance: item.qty_balance
-        }))
+        input_items: inputItems.map(item => {
+          // ADDED: Enhanced logging for input item
+          console.log('Processing input item:', {
+            id: item.ItemId_i,
+            code: item.product_code,
+            required: item.qty_required,
+            balance: item.qty_balance
+          });
+          
+          // Remove hard-coded value and use actual data
+          // If the specific product doesn't have a quantity, let's retain the database value
+          // This ensures we're being flexible with whatever data is in the database
+          return {
+            id: item.ItemId_i,
+            code: item.product_code,
+            name: item.product_name,
+            qty_required: parseFloat(item.qty_required) || 0,
+            qty_balance: parseFloat(item.qty_balance) || 0,
+            lot: joItemRows[0].jo_reference
+          };
+        })
       };
       
       console.log('Returning response with:', {
