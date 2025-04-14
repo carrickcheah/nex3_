@@ -3,7 +3,7 @@
 ########################
 
 git add .
-git commit -m "update  "
+git commit -m "update goos stop "
 git push origin main
 
 
@@ -111,5 +111,17 @@ This is because the query in dailyOutputModel.js is not joining the necessary ta
 Would you like me to:
 Update the getDailyOutputList method in dailyOutputModel.js to join the relevant tables
 Fix the query to properly display all the data from your original PHP code
+
+
+
+
+
+
+
+
+
+
+
+
 
 
