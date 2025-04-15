@@ -405,11 +405,13 @@
   </form>
 </div>
 
-<!-- Add a clearly visible loading indicator -->
-<div id="loading-indicator" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background-color:rgba(255,255,255,0.9); padding:20px; border-radius:5px; box-shadow:0 0 10px rgba(0,0,0,0.3); z-index:9999;">
-  <div style="text-align:center;">
-    <i class="fas fa-spinner fa-spin fa-3x"></i>
-    <div style="margin-top:10px; font-weight:bold;">Loading process details...</div>
+<!-- Loading indicator -->
+<div id="loading-indicator" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 9999;">
+  <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 20px; border-radius: 5px; text-align: center;">
+    <div class="w3-spin" style="font-size: 24px;">
+      <i class="fa fa-circle-notch"></i>
+    </div>
+    <p style="margin-top: 10px;">Loading process details...</p>
   </div>
 </div>
 
@@ -498,18 +500,16 @@
     }
     
     // Function to format the machine display like JO
-    function formatMachine(machine) {
-      if (!machine.id) {
-        return machine.text;
+    function formatMachine(state) {
+      if (!state.id) {
+        return state.text;
       }
       
-      try {
-        // Simple text formatting to avoid errors
-        return $('<span>').text(machine.text || machine.name || machine.id).addClass('machine-option');
-      } catch (err) {
-        console.error('Error formatting machine option:', err);
-        return machine.text || machine.id;
-      }
+      var $state = $(
+        '<div class="jo-item">' + state.text + '</div>'
+      );
+      
+      return $state;
     }
     
     // Call the function to load machines
@@ -563,7 +563,7 @@
               width: '100%',
               dropdownParent: $('#mold-descr').parent(),
               dropdownCssClass: 'jo-dropdown-select2',
-              templateResult: formatMold
+              templateResult: formatDropdownItem
             });
             
             console.log('Mold dropdown Select2 initialized with JO styles');
@@ -1031,14 +1031,11 @@
             process_id: processId
           },
           success: function(response) {
-            console.log('Process details response received:', response);
-            
             if (response.success) {
               console.log('Process details loaded successfully:', {
                 machines: response.machines?.length || 0,
                 molds: response.molds?.length || 0,
-                inputItems: response.input_items?.length || 0,
-                outputItem: response.jo_details?.output_item ? 'present' : 'missing'
+                inputItems: response.input_items?.length || 0
               });
               
               // Cancel any other machine/mold loading that might be in progress
@@ -1051,167 +1048,162 @@
               
               // Set machines if available
               if (response.machines && response.machines.length > 0) {
-                // Clear machine dropdown
-                $('#machine-descr').empty();
+                console.log('Setting machines:', response.machines.map(m => m.name).join(', '));
                 
-                // Destroy Select2 if it exists
-                if ($('#machine-descr').hasClass("select2-hidden-accessible")) {
-                  $('#machine-descr').select2('destroy');
+                // Get the select element - IMPORTANT: This is a multiple select
+                const $machineSelect = $('#machine-descr');
+                
+                // Clear and reinitialize select if needed
+                if ($machineSelect.hasClass('select2-hidden-accessible')) {
+                  $machineSelect.select2('destroy');
                 }
                 
-                // Add machines to the dropdown
+                // Clear existing options
+                $machineSelect.empty();
+                
+                // Add the machine options WITH selected=true for multiple select
                 response.machines.forEach(function(machine) {
-                  const option = new Option(machine.name, machine.id, false, false);
-                  $('#machine-descr').append(option);
+                  const option = new Option(machine.name, machine.id, true, true);
+                  $machineSelect.append(option);
                 });
                 
-                // Initialize Select2 for the machine dropdown
-                $('#machine-descr').select2({
-                  placeholder: 'Select Machine',
-                  allowClear: false,
+                // Reinitialize Select2 properly for multiple select
+                $machineSelect.select2({
+                  placeholder: 'Select machines...',
                   width: '100%',
-                  dropdownParent: $('#machine-descr').parent(),
-                  dropdownCssClass: 'jo-dropdown-select2',
-                  templateResult: formatMachine
+                  allowClear: true,
+                  multiple: true
                 });
                 
-                // Enable machine selection
-                $('#machine-descr').prop('disabled', false);
+                // For multiple select, we need to set the values after initialization
+                $machineSelect.val(response.machines.map(m => m.id)).trigger('change');
+                
+                // Enable the select
+                $machineSelect.prop('disabled', false);
+                
+                // Log what we've set
+                console.log('Machine dropdown now contains:', Array.from($machineSelect.find('option')).map(o => o.text));
+                console.log('Selected machine values:', $machineSelect.val());
+              } else {
+                console.warn('No machines found for this process');
+                $('#machine-descr').empty().prop('disabled', true);
               }
               
               // Set molds if available
               if (response.molds && response.molds.length > 0) {
-                // Clear mold dropdown
-                $('#mold-descr').empty();
+                console.log('Setting molds:', response.molds.map(m => m.name).join(', '));
                 
-                // Destroy Select2 if it exists
-                if ($('#mold-descr').hasClass("select2-hidden-accessible")) {
-                  $('#mold-descr').select2('destroy');
+                // Get the select element - IMPORTANT: This is a multiple select
+                const $moldSelect = $('#mold-descr');
+                
+                // Clear and reinitialize select if needed
+                if ($moldSelect.hasClass('select2-hidden-accessible')) {
+                  $moldSelect.select2('destroy');
                 }
                 
-                // Add molds to the dropdown
+                // Clear existing options
+                $moldSelect.empty();
+                
+                // Add the mold options WITH selected=true for multiple select
                 response.molds.forEach(function(mold) {
-                  const option = new Option(mold.name, mold.id, false, false);
-                  $('#mold-descr').append(option);
+                  const option = new Option(mold.name, mold.id, true, true);
+                  $moldSelect.append(option);
                 });
                 
-                // Initialize Select2 for the mold dropdown
-                $('#mold-descr').select2({
-                  placeholder: 'Select Mold',
-                  allowClear: false,
+                // Reinitialize Select2 properly for multiple select
+                $moldSelect.select2({
+                  placeholder: 'Select molds...',
                   width: '100%',
-                  dropdownParent: $('#mold-descr').parent(),
-                  dropdownCssClass: 'jo-dropdown-select2',
-                  templateResult: formatMold
+                  allowClear: true,
+                  multiple: true
                 });
                 
-                // Enable mold selection
-                $('#mold-descr').prop('disabled', false);
+                // For multiple select, we need to set the values after initialization
+                $moldSelect.val(response.molds.map(m => m.id)).trigger('change');
+                
+                // Enable the select
+                $moldSelect.prop('disabled', false);
+                
+                // Log what we've set
+                console.log('Mold dropdown now contains:', Array.from($moldSelect.find('option')).map(o => o.text));
+                console.log('Selected mold values:', $moldSelect.val());
+              } else {
+                console.warn('No molds found for this process');
+                $('#mold-descr').empty().prop('disabled', true);
               }
               
-              // Clear output items table
-              $('#output-items-table').empty();
-              
-              // Add output item if available
+              // Set output items
               if (response.jo_details && response.jo_details.output_item) {
+                console.log('Setting output item:', response.jo_details.output_item.name);
+                
+                // Clear existing table
+                $('#output-items-table').empty();
+                
+                // Add the output item row
                 const outputItem = response.jo_details.output_item;
-                console.log('Adding output item:', outputItem);
-                
-                // Add the output item to the table
-                var outputRow = $(`
+                const outputRowHtml = `
                   <tr>
-                    <td>1</td>
+                    <td class="output-item-index">1</td>
                     <td>
-                      <input type="hidden" name="output-product-id[]" value="${outputItem.id}">
-                      [${outputItem.code || ''}] ${outputItem.name || ''}
+                      <select class="output-product-select" name="output_items[0][product_id]" style="width:100%">
+                        <option value="${outputItem.id}" selected>${outputItem.code} - ${outputItem.name}</option>
+                      </select>
                     </td>
-                    <td>
-                      <input type="number" class="w3-input form-control output-qty" name="output-qty[]" value="${parseFloat(outputItem.quantity || 0).toFixed(2)}" min="0" step="0.01">
-                    </td>
-                    <td>
-                      <input type="number" class="w3-input form-control reject-qty" name="reject-qty[]" value="0" min="0" step="0.01">
-                    </td>
-                    <td>
-                      <input type="number" class="w3-input form-control extra-qty" name="extra-qty[]" value="0" min="0" step="0.01">
-                    </td>
-                    <td><span class="total-output">${parseFloat(outputItem.quantity || 0).toFixed(2)}</span></td>
-                    <td>
-                      <span class="outstanding">${parseFloat(outputItem.outstanding || 0).toFixed(2)}</span>
-                    </td>
-                    <td>
-                      <button type="button" class="w3-button w3-small w3-red remove-output-item">
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </td>
+                    <td><input type="number" class="w3-input output-qty" name="output_items[0][output_qty]" value="${outputItem.quantity}" min="0" step="0.01"></td>
+                    <td><input type="number" class="w3-input reject-qty" name="output_items[0][reject_qty]" value="0" min="0" step="0.01"></td>
+                    <td><input type="number" class="w3-input extra-qty" name="output_items[0][extra_qty]" value="0" min="0" step="0.01"></td>
+                    <td><span class="total-output">${outputItem.quantity}</span></td>
+                    <td><input type="number" class="w3-input outstanding-qty" name="output_items[0][outstanding_qty]" value="0" min="0" step="0.01"></td>
+                    <td><button type="button" class="w3-button remove-output-item"><i class="fas fa-trash-alt"></i></button></td>
                   </tr>
-                `);
+                `;
+                $('#output-items-table').append(outputRowHtml);
                 
-                // Add the row to the table
-                $('#output-items-table').append(outputRow);
-                
-                // Initialize event handlers
-                calculateOutputTotals(outputRow);
-                
-                // Set up event handling for quantity changes
-                outputRow.find('.output-qty, .reject-qty, .extra-qty').on('change keyup', function() {
-                  calculateOutputTotals(outputRow);
+                // Initialize Select2 for the output item
+                $('#output-items-table .output-product-select').select2({
+                  placeholder: "Select product",
+                  width: '100%'
                 });
               } else {
-                console.warn('No output item found in response');
-                $('#output-items-table').html('<tr><td colspan="9" class="w3-center">No output items found for this process</td></tr>');
+                $('#output-items-table').html('<tr><td colspan="9" class="w3-center">No output items</td></tr>');
               }
               
-              // Clear input items table
-              $('#input-items-table').empty();
-              
-              // Add input items if available
+              // Set input items
               if (response.input_items && response.input_items.length > 0) {
-                console.log('Adding input items:', response.input_items.length);
+                console.log('Setting input items:', response.input_items.length);
+                console.log('Input items sample:', response.input_items[0]);
                 
-                // Loop through input items and add to table
-                response.input_items.forEach(function(inputItem, index) {
-                  // Parse quantities to ensure numeric values
-                  const qtyRequired = parseFloat(inputItem.qty_required) || 0;
-                  const qtyBalance = parseFloat(inputItem.qty_balance) || 0;
-                  
-                  console.log(`Processing input item ${index+1}:`, {
-                    id: inputItem.id,
-                    code: inputItem.code,
-                    name: inputItem.name,
-                    qty_required: qtyRequired,
-                    qty_balance: qtyBalance
-                  });
-                  
-                  // Create the row
-                  var inputRow = $(`
+                // Clear existing table
+                $('#input-items-table').empty();
+                
+                // Add input item rows
+                response.input_items.forEach(function(item, index) {
+                  console.log(`Input item ${index}:`, item);
+                  const inputRowHtml = `
                     <tr>
-                      <td>${index + 1}</td>
+                      <td class="input-item-index">${index + 1}</td>
                       <td>
-                        <input type="hidden" name="input-product-id[]" value="${inputItem.id}">
-                        [${inputItem.code || ''}] ${inputItem.name || ''}
+                        <select class="input-product-select" name="input_items[${index}][product_id]" style="width:100%">
+                          <option value="${item.id}" selected>${item.code} - ${item.name}</option>
+                        </select>
                       </td>
-                      <td>${qtyBalance.toFixed(2)}</td>
-                      <td>
-                        <input type="number" class="w3-input form-control demand-qty" name="demand-qty[]" value="${qtyRequired.toFixed(2)}" min="0" step="0.01">
-                        <span class="unit-label" style="color:#F44336;">${inputItem.unit_code || ''}</span>
-                      </td>
-                      <td>
-                        <input type="text" class="w3-input form-control" name="input-lot[]" value="${inputItem.lot || ''}">
-                      </td>
-                      <td>
-                        <button type="button" class="w3-button w3-small w3-red remove-input-item">
-                          <i class="fas fa-trash"></i>
-                        </button>
-                      </td>
+                      <td>${parseFloat(item.qty_balance) || 0}</td>
+                      <td><input type="number" class="w3-input demand-qty" name="input_items[${index}][demand_qty]" value="${parseFloat(item.qty_required) || 0}" min="0" step="0.01"></td>
+                      <td>${item.lot || ''}</td>
+                      <td><button type="button" class="w3-button remove-input-item"><i class="fas fa-trash-alt"></i></button></td>
                     </tr>
-                  `);
+                  `;
+                  $('#input-items-table').append(inputRowHtml);
                   
-                  // Add the row to the table
-                  $('#input-items-table').append(inputRow);
+                  // Initialize Select2 for each input item
+                  const $select = $('#input-items-table .input-product-select').last();
+                  $select.select2({
+                    placeholder: "Select product",
+                    width: '100%'
+                  });
                 });
               } else {
-                console.warn('No input items found in response');
-                $('#input-items-table').html('<tr><td colspan="7" class="w3-center">No input items found for this process</td></tr>');
+                $('#input-items-table').html('<tr><td colspan="7" class="w3-center">No input items</td></tr>');
               }
               
               // Hide loading indicator
@@ -1220,8 +1212,6 @@
               console.error('Error in process details response:', response.message);
               alert('Error loading process details: ' + (response.message || 'Unknown error'));
               $('#loading-indicator').hide();
-              $('#output-items-table').html('<tr><td colspan="9" class="w3-center">Error loading output items</td></tr>');
-              $('#input-items-table').html('<tr><td colspan="7" class="w3-center">Error loading input items</td></tr>');
             }
           },
           error: function(err) {
@@ -1229,11 +1219,7 @@
             console.error('Error details:', err.responseText || 'No response text available');
             alert('Error loading process details. Please try again.');
             $('#loading-indicator').hide();
-            $('#output-items-table').html('<tr><td colspan="9" class="w3-center">Error loading output items</td></tr>');
-            $('#input-items-table').html('<tr><td colspan="7" class="w3-center">Error loading input items</td></tr>');
-          },
-          // Add timeout to prevent hanging forever
-          timeout: 30000
+          }
         });
       } else {
         // Clear items if no process is selected
@@ -1512,95 +1498,6 @@
     $('.output-qty, .reject-qty, .extra-qty').each(function() {
       calculateOutputTotals($(this).closest('tr'));
     });
-
-    $(document).on('change', '.input-product-select', function() {
-      const rowIndex = $(this).data('row');
-      const productId = $(this).val();
-      const row = $(this).closest('tr');
-      
-      if (productId) {
-        // Clear batch dropdown
-        const batchSelect = row.find('.batch-select');
-        batchSelect.empty().append('<option value="">Please select</option>');
-        
-        // Fetch product details
-        $.ajax({
-          url: '/api/products/' + productId,
-          method: 'GET',
-          success: function(response) {
-            row.find('.input-item-uom').val(response.uom);
-          },
-          error: function(err) {
-            console.error('Error fetching product details:', err);
-          }
-        });
-        
-        // Fetch available batches
-        $.ajax({
-          url: '/api/manufacture/product-batches?product_id=' + productId,
-          method: 'GET',
-          success: function(response) {
-            if (response.success && response.batches && response.batches.length > 0) {
-              response.batches.forEach(function(batch) {
-                batchSelect.append(`<option value="${batch.batch_no}" data-qty="${batch.qty_available}">${batch.batch_no} (${batch.qty_available})</option>`);
-              });
-            }
-          },
-          error: function(err) {
-            console.error('Error fetching product batches:', err);
-          }
-        });
-      } else {
-        row.find('.input-item-uom').val('');
-      }
-    });
-
-    $(document).on('change', '.batch-select', function() {
-      const selectedOption = $(this).find('option:selected');
-      const availableQty = selectedOption.data('qty') || 0;
-      const row = $(this).closest('tr');
-      
-      // Suggest the available quantity as the input quantity
-      if (availableQty > 0) {
-        row.find('.input-item-qty').val(availableQty);
-      }
-    });
-
-    // Initialize the datepicker
-    $('.datepicker').datepicker({
-      dateFormat: 'dd-mm-yy',
-      changeMonth: true,
-      changeYear: true
-    });
-    
-    // Format functions for select2 dropdowns
-    function formatMachine(machine) {
-      if (!machine.id) {
-        return machine.text;
-      }
-      
-      try {
-        // Simple text formatting to avoid errors
-        return $('<span>').text(machine.text || machine.name || machine.id).addClass('machine-option');
-      } catch (err) {
-        console.error('Error formatting machine option:', err);
-        return machine.text || machine.id;
-      }
-    }
-    
-    function formatMold(mold) {
-      if (!mold.id) {
-        return mold.text;
-      }
-      
-      try {
-        // Simple text formatting to avoid errors
-        return $('<span>').text(mold.text || mold.name || mold.id).addClass('mold-option');
-      } catch (err) {
-        console.error('Error formatting mold option:', err);
-        return mold.text || mold.id;
-      }
-    }
   });
 </script>
 </body>
