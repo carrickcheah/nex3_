@@ -190,11 +190,10 @@ router.post('/api/manufacture/daily-output/void/:id', async (req, res) => {
   }
 });
 
-// Get available batches for a product - supports both URL parameter and query parameter
-router.get('/api/manufacture/product-batches/:productId?', async (req, res) => {
+// Get available batches for a product
+router.get('/api/manufacture/product-batches/:productId', async (req, res) => {
   try {
-    // Get productId from either URL params or query params
-    const productId = req.params.productId || req.query.product_id;
+    const productId = req.params.productId;
     
     if (!productId) {
       return res.status(400).json({ 
@@ -203,29 +202,29 @@ router.get('/api/manufacture/product-batches/:productId?', async (req, res) => {
       });
     }
     
-    console.log('Request for product batches received for product:', productId);
+    console.log('Fetching batches for product:', productId);
     
     const connection = await pool.getConnection();
     
     try {
-      // Get batches/lots for this product with available quantities
+      // Get available batches with quantity balances
       const [rows] = await connection.query(`
         SELECT 
-          b.BatchNo_v as batch_no,
-          b.PrQty_d as qty_available,
-          DATE_FORMAT(b.ExpDate_d, '%Y-%m-%d') as expiry_date,
-          DATE_FORMAT(b.ManDate_d, '%Y-%m-%d') as mfg_date
+          sb.StockId_i as id,
+          sb.BatchCode_v as batch_code,
+          sb.QtyBalance_d as qty_balance,
+          sb.ExpDate_dd as exp_date
         FROM 
-          tbl_product_batch b
+          tbl_stock_batch sb
         WHERE 
-          b.ItemId_i = ? 
-          AND b.PrQty_d > 0
+          sb.ProductId_i = ? 
+          AND sb.QtyBalance_d > 0 
+          AND sb.Status_c = 'A'
         ORDER BY 
-          b.ExpDate_d ASC, 
-          b.BatchNo_v ASC
+          sb.CreateDate_dt
       `, [productId]);
       
-      console.log('Batches query returned', rows.length, 'results for product', productId);
+      console.log(`Found ${rows.length} available batches for product ${productId}`);
       
       return res.json({
         success: true,
@@ -262,28 +261,21 @@ router.get('/api/manufacture/job-orders', async (req, res) => {
       
       // Single query to get all job orders since 2023-01-01
       let query = `
-        WITH JobOrdersRanked AS (
-          SELECT 
-            j.TxnId_i, 
-            j.DocRef_v, 
-            j.ItemId_i, 
-            j.CreateDate_dt,
-            i.StkCode_v as product_code, 
-            i.ProdName_v as product_name,
-            SUBSTRING_INDEX(j.DocRef_v, '-', 1) AS jo_prefix,
-            ROW_NUMBER() OVER (PARTITION BY SUBSTRING_INDEX(j.DocRef_v, '-', 1) ORDER BY j.CreateDate_dt DESC, j.DocRef_v DESC) AS rn
-          FROM 
-            tbl_jo_txn j
-          LEFT JOIN 
-            tbl_product_code i ON i.ItemId_i = j.ItemId_i
-          WHERE 
-            (j._Status_c = 'P' OR j._Status_c = 'C')
-            AND j.Void_c = '0'
-            AND j.CreateDate_dt >= ?
-        )
-        SELECT * FROM JobOrdersRanked WHERE rn <= 3
-        ORDER BY CreateDate_dt DESC, DocRef_v ASC 
-        LIMIT 500
+        SELECT 
+          j.TxnId_i, 
+          j.DocRef_v, 
+          j.ItemId_i, 
+          j.CreateDate_dt,
+          i.StkCode_v as product_code, 
+          i.ProdName_v as product_name
+        FROM 
+          tbl_jo_txn j
+        LEFT JOIN 
+          tbl_product_code i ON i.ItemId_i = j.ItemId_i
+        WHERE 
+          (j._Status_c = 'P' OR j._Status_c = 'C')
+          AND j.Void_c = '0'
+          AND j.CreateDate_dt >= ?
       `;
       
       const queryParams = [formatted2023Start];
@@ -293,6 +285,9 @@ router.get('/api/manufacture/job-orders', async (req, res) => {
         query += ` AND (j.DocRef_v LIKE ? OR i.StkCode_v LIKE ? OR i.ProdName_v LIKE ?)`;
         queryParams.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
       }
+      
+      // Sort and limit - newest first
+      query += ` ORDER BY j.CreateDate_dt DESC, j.DocRef_v ASC LIMIT 1000`;
       
       console.log('Executing job orders query...');
       
@@ -893,6 +888,59 @@ router.get('/api/manufacture/operators', async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch operators',
+      error: error.message
+    });
+  }
+});
+
+// Get available batches/lots for a product
+router.get('/api/manufacture/product-batches', async (req, res) => {
+  try {
+    const productId = req.query.product_id;
+    
+    if (!productId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Product ID is required'
+      });
+    }
+    
+    console.log('Request for product batches received for product:', productId);
+    
+    const connection = await pool.getConnection();
+    
+    try {
+      // Get batches/lots for this product with available quantities
+      const [rows] = await connection.query(`
+        SELECT 
+          b.BatchNo_v as batch_no,
+          b.PrQty_d as qty_available,
+          DATE_FORMAT(b.ExpDate_d, '%Y-%m-%d') as expiry_date,
+          DATE_FORMAT(b.ManDate_d, '%Y-%m-%d') as mfg_date
+        FROM 
+          tbl_product_batch b
+        WHERE 
+          b.ItemId_i = ? 
+          AND b.PrQty_d > 0
+        ORDER BY 
+          b.ExpDate_d ASC, 
+          b.BatchNo_v ASC
+      `, [productId]);
+      
+      console.log('Batches query returned', rows.length, 'results for product', productId);
+      
+      return res.json({
+        success: true,
+        batches: rows
+      });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Error fetching product batches:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch product batches',
       error: error.message
     });
   }

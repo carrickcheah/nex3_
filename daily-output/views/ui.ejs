@@ -642,42 +642,40 @@ $(document).ready(function() {
   
   // Helper function to create input item HTML
   function createInputItemHtml(item, index) {
-    console.log('Creating input item HTML with:', item);
-    // Convert to number and ensure it's not null/undefined
-    const qtyBalance = parseFloat(item.qty_balance) || 0;
-    const qtyRequired = parseFloat(item.qty_required) || 0;
-    
-    console.log('Parsed quantities:', {
-      qty_balance: qtyBalance,
-      qty_required: qtyRequired,
-      original_balance: item.qty_balance,
-      original_required: item.qty_required
-    });
-    
-    return `
-      <tr class="input-item-row">
-        <td>${index}</td>
+    let html = `
+      <tr class="input-item" data-row="${index}">
         <td>
-          <input type="hidden" name="input-product-id[]" value="${item.id}">
-          [${item.code || ''}] ${item.name || ''}
+          <select class="form-control select2 input-product-select" data-row="${index}" name="input_items[${index}][product_id]">
+            <option value="">Please select</option>
+            <% if (options && options.products) { %>
+              <% options.products.forEach(function(product) { %>
+                <option value="<%= product.id %>"><%= product.name %></option>
+              <% }); %>
+            <% } %>
+          </select>
         </td>
         <td>
-          <span class="production-available">${qtyBalance.toFixed(2)}</span>
+          <select class="form-control batch-select" name="input_items[${index}][batch_no]">
+            <option value="">Please select</option>
+          </select>
         </td>
         <td>
-          <input type="number" class="w3-input form-control demand-qty" name="demand-qty[]" value="${qtyRequired.toFixed(2)}" min="0" step="0.01">
-          <span class="unit-label" style="color:#F44336;">${item.unit_code || ''}</span>
+          <input type="text" class="form-control input-item-uom" name="input_items[${index}][product_uom]" value="${item.product_uom || ''}" readonly />
         </td>
         <td>
-          ${item.lot || ''}
+          <input type="number" min="0" step="0.01" class="form-control input-item-qty" name="input_items[${index}][quantity]" value="${item.quantity || 0}" />
         </td>
         <td>
-          <button type="button" class="w3-button w3-small w3-red remove-input-item">
-            <i class="fas fa-trash"></i>
+          <input type="text" class="form-control input-item-lot" name="input_items[${index}][lot_no]" value="${item.lot_no || ''}" />
+        </td>
+        <td>
+          <button type="button" class="btn btn-sm btn-danger remove-input-item">
+            <i class="fa fa-times"></i>
           </button>
         </td>
       </tr>
     `;
+    return html;
   }
   
   // Output quantity calculations
