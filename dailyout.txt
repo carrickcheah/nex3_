@@ -1,4 +1,3 @@
-Yes boss!
 
 This code is part of your @nexerp system, which was originally built in PHP. 
 

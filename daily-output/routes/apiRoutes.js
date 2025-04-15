@@ -415,7 +415,7 @@ router.get('/api/manufacture/jo-process-details', async (req, res) => {
           j.ItemId_i,
           p.StkCode_v as product_code,
           p.ProdName_v as product_name,
-          ji.TotalQty_d as planned_qty,
+          ji.Qty_d as planned_qty,
           ji.TotalQty_d as balance_qty
         FROM tbl_jo_txn j
         LEFT JOIN tbl_product_code p ON p.ItemId_i = j.ItemId_i
@@ -588,79 +588,45 @@ router.get('/api/manufacture/jo-process-details', async (req, res) => {
       console.log('Final mold count:', molds.length);
       
       // Get input items for this process
-      console.log('Fetching input items for JO:', joId, 'RowId:', rowId);
-      const [inputRows] = await connection.query(`
+      console.log('Fetching input items for Process RowId:', rowId);
+      
+      // Get demand quantity from tbl_daily_item.Qty_d
+      let [inputItems] = await connection.query(`
         SELECT 
           ji.ItemId_i,
           p.StkCode_v as product_code,
           p.ProdName_v as product_name,
-          COALESCE(di.Qty_d, ji.Qty_d) as qty_required,
-          COALESCE(pq.AvailQty_d, 0) as qty_balance
+          COALESCE(pq.AvailQty_d, 0) as qty_balance,
+          di.Qty_d as qty_required,
+          u.UomCode_v as unit_code
         FROM tbl_jo_item ji
         LEFT JOIN tbl_product_code p ON p.ItemId_i = ji.ItemId_i
         LEFT JOIN tbl_product_qty pq ON pq.ItemId_i = ji.ItemId_i
-        LEFT JOIN tbl_daily_item di ON di.ItemId_i = ji.ItemId_i AND di.InOut_c = 'I' 
+        LEFT JOIN tbl_uom u ON u.UomId_i = p.UomId_i
+        LEFT JOIN tbl_daily_item di ON di.ItemId_i = ji.ItemId_i AND di.InOut_c = 'I'
           AND di.TxnId_i = (
             SELECT dt.TxnId_i FROM tbl_daily_txn dt 
-            WHERE dt.JoId_i = ? AND dt.RowId_i = ? 
+            WHERE dt.JoId_i = ? 
             ORDER BY dt.CreateDate_dt DESC LIMIT 1
           )
-        WHERE ji.TxnId_i = ? AND ji.RowId_i = ?
-          AND COALESCE(pq.AvailQty_d, 0) > 0
-        ORDER BY ji.Id_i
-      `, [joId, rowId, joId, rowId]);
+        WHERE ji.TxnId_i = ?
+        ORDER BY ji.RowId_i
+        LIMIT 100
+      `, [joId, joId]);
       
-      console.log('Input items query result count:', inputRows.length);
+      console.log(`Input items query returned ${inputItems.length} items for process ${processId}`);
       
-      // ADDED: Debug the input items more extensively
-      if (inputRows.length > 0) {
-        console.log('Sample input item:', inputRows[0]);
-        
-        // Check if we can find non-zero PrQty_d values
-        const [nonZeroQty] = await connection.query(`
-          SELECT ItemId_i, PrQty_d FROM tbl_product_qty 
-          WHERE PrQty_d > 0 
-          ORDER BY PrQty_d 
-          LIMIT 5
-        `);
-        
-        console.log('Products with non-zero quantities:', nonZeroQty);
-      }
-      
-      // If no input items found using exact RowId, try a more flexible approach
-      let inputItems = inputRows;
-      if (inputRows.length === 0) {
-        console.log('No input items found with exact RowId, trying fallback...');
-        
-        // Try to get any input items for this JO
-        const [fallbackInputRows] = await connection.query(`
-          SELECT 
-            ji.ItemId_i,
-            p.StkCode_v as product_code,
-            p.ProdName_v as product_name,
-            COALESCE(di.Qty_d, ji.Qty_d) as qty_required,
-            COALESCE(pq.AvailQty_d, 0) as qty_balance,
-            ji.RowId_i
-          FROM tbl_jo_item ji
-          LEFT JOIN tbl_product_code p ON p.ItemId_i = ji.ItemId_i
-          LEFT JOIN tbl_product_qty pq ON pq.ItemId_i = ji.ItemId_i
-          LEFT JOIN tbl_daily_item di ON di.ItemId_i = ji.ItemId_i AND di.InOut_c = 'I'
-            AND di.TxnId_i = (
-              SELECT dt.TxnId_i FROM tbl_daily_txn dt 
-              WHERE dt.JoId_i = ? 
-              ORDER BY dt.CreateDate_dt DESC LIMIT 1
-            )
-          WHERE ji.TxnId_i = ?
-            AND COALESCE(pq.AvailQty_d, 0) > 0
-          ORDER BY ji.RowId_i, ji.Id_i
-          LIMIT 10
-        `, [joId, joId]);
-        
-        if (fallbackInputRows.length > 0) {
-          console.log('Found fallback input items:', fallbackInputRows.length);
-          inputItems = fallbackInputRows;
-        }
-      }
+      // Enhanced debug for input items
+      inputItems.forEach((item, idx) => {
+        console.log(`Input Item ${idx+1}:`, {
+          id: item.ItemId_i,
+          code: item.product_code,
+          name: item.product_name,
+          qty_balance: item.qty_balance,
+          qty_required: item.qty_required,
+          unit_code: item.unit_code
+        });
+      });
       
       // Prepare response
       const response = {
@@ -698,16 +664,14 @@ router.get('/api/manufacture/jo-process-details', async (req, res) => {
             balance: item.qty_balance
           });
           
-          // Remove hard-coded value and use actual data
-          // If the specific product doesn't have a quantity, let's retain the database value
-          // This ensures we're being flexible with whatever data is in the database
           return {
             id: item.ItemId_i,
             code: item.product_code,
             name: item.product_name,
             qty_required: parseFloat(item.qty_required) || 0,
             qty_balance: parseFloat(item.qty_balance) || 0,
-            lot: joItemRows[0].jo_reference
+            lot: joItemRows[0].jo_reference,
+            unit_code: item.unit_code
           };
         })
       };

@@ -282,7 +282,7 @@
             <th>#</th>
             <th>Production Description</th>
             <th>Production Available</th>
-            <th>Demand Qty</th>
+            <th>Demand Qty (KG)</th>
             <th>Lot</th>
             <% if (!viewOnly) { %><th>Action</th><% } %>
           </tr>
@@ -600,15 +600,26 @@ $(document).ready(function() {
   
   // Helper function to create output item HTML
   function createOutputItemHtml(item) {
+    // Ensure we have numeric values for quantities
+    const quantity = parseFloat(item.quantity || item.planned_qty || 0);
+    const outstanding = parseFloat(item.outstanding || 0);
+    
+    console.log('Creating output item with quantities:', {
+      quantity: quantity,
+      outstanding: outstanding,
+      original_quantity: item.quantity,
+      planned_qty: item.planned_qty
+    });
+    
     return `
       <tr class="output-item-row">
         <td>1</td>
         <td>
-          <input type="hidden" name="output-product-id[]" value="${item.item_id}">
-          [${item.product_code || ''}] ${item.product_name || ''}
+          <input type="hidden" name="output-product-id[]" value="${item.id}">
+          [${item.code || ''}] ${item.product_name || ''}
         </td>
         <td>
-          <input type="number" class="w3-input form-control output-qty" name="output-qty[]" value="${item.quantity || item.planned_qty || 0}" min="0" step="0.01">
+          <input type="number" class="w3-input form-control output-qty" name="output-qty[]" value="${quantity.toFixed(2)}" min="0" step="0.01">
         </td>
         <td>
           <input type="number" class="w3-input form-control reject-qty" name="reject-qty[]" value="0" min="0" step="0.01">
@@ -616,9 +627,9 @@ $(document).ready(function() {
         <td>
           <input type="number" class="w3-input form-control extra-qty" name="extra-qty[]" value="0" min="0" step="0.01">
         </td>
-        <td><span class="total-output">${item.quantity || item.planned_qty || 0}</span></td>
+        <td><span class="total-output">${quantity.toFixed(2)}</span></td>
         <td>
-          <input type="number" class="w3-input form-control outstanding-qty" name="outstanding-qty[]" value="0" min="0" step="0.01">
+          <input type="number" class="w3-input form-control outstanding-qty" name="outstanding-qty[]" value="${outstanding.toFixed(2)}" min="0" step="0.01">
         </td>
         <td>
           <button type="button" class="w3-button w3-small w3-red remove-output-item">
@@ -650,9 +661,12 @@ $(document).ready(function() {
           <input type="hidden" name="input-product-id[]" value="${item.id}">
           [${item.code || ''}] ${item.name || ''}
         </td>
-        <td>${qtyBalance}</td>
         <td>
-          <input type="number" class="w3-input form-control demand-qty" name="demand-qty[]" value="${qtyRequired}" min="0" step="0.01">
+          <span class="production-available">${qtyBalance.toFixed(2)}</span>
+        </td>
+        <td>
+          <input type="number" class="w3-input form-control demand-qty" name="demand-qty[]" value="${qtyRequired.toFixed(2)}" min="0" step="0.01">
+          <span class="unit-label" style="color:#F44336;">${item.unit_code || ''}</span>
         </td>
         <td>
           ${item.lot || ''}
@@ -700,3 +714,18 @@ $(document).ready(function() {
   });
 });
 </script>
+
+<style>
+  /* Unit label styling */
+  .unit-label {
+    display: inline-block;
+    margin-left: 5px;
+    font-weight: bold;
+  }
+  
+  /* Make demand-qty input field display inline to allow room for the unit label */
+  .demand-qty {
+    display: inline-block;
+    width: calc(100% - 50px) !important;
+  }
+</style>
