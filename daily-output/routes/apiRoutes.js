@@ -244,51 +244,78 @@ router.get('/api/manufacture/job-orders', async (req, res) => {
       
       console.log('Filtering JOs since:', formatted2023Start);
       
-      // Single query to get all job orders since 2023-01-01
+      // Improved query to get only the latest record for each DocRef_v
+      // Ensuring we get the exact same DocRef_v only once
       let query = `
+        WITH latest_jos AS (
+          SELECT 
+            j.TxnId_i,
+            j.DocRef_v,
+            j.ItemId_i,
+            j.CreateDate_dt,
+            ROW_NUMBER() OVER (PARTITION BY j.DocRef_v ORDER BY j.CreateDate_dt DESC) as row_num
+          FROM 
+            tbl_jo_txn j
+          WHERE 
+            (j._Status_c = 'P' OR j._Status_c = 'C')
+            AND j.Void_c = '0'
+            AND j.CreateDate_dt >= ?
+        )
         SELECT 
-          j.TxnId_i, 
-          j.DocRef_v, 
-          j.ItemId_i, 
-          j.CreateDate_dt,
+          lj.TxnId_i, 
+          lj.DocRef_v, 
+          lj.ItemId_i, 
+          lj.CreateDate_dt,
           i.StkCode_v as product_code, 
           i.ProdName_v as product_name
         FROM 
-          tbl_jo_txn j
+          latest_jos lj
         LEFT JOIN 
-          tbl_product_code i ON i.ItemId_i = j.ItemId_i
+          tbl_product_code i ON i.ItemId_i = lj.ItemId_i
         WHERE 
-          (j._Status_c = 'P' OR j._Status_c = 'C')
-          AND j.Void_c = '0'
-          AND j.CreateDate_dt >= ?
+          lj.row_num = 1
       `;
       
       const queryParams = [formatted2023Start];
       
       // Add search condition if provided
       if (searchTerm) {
-        query += ` AND (j.DocRef_v LIKE ? OR i.StkCode_v LIKE ? OR i.ProdName_v LIKE ?)`;
+        query += ` AND (lj.DocRef_v LIKE ? OR i.StkCode_v LIKE ? OR i.ProdName_v LIKE ?)`;
         queryParams.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
       }
       
       // Sort and limit - newest first
-      query += ` ORDER BY j.CreateDate_dt DESC, j.DocRef_v ASC LIMIT 1000`;
+      query += ` ORDER BY lj.CreateDate_dt DESC, lj.DocRef_v ASC LIMIT 1000`;
       
-      console.log('Executing job orders query...');
+      console.log('Executing improved job orders query...');
       
       // Execute the query
       const [rows] = await connection.query(query, queryParams);
       
       console.log('Job orders query returned', rows.length, 'results');
       
-      if (rows.length > 0) {
+      // Double-check for duplicates on server side
+      const uniqueRefs = new Set();
+      const uniqueRows = rows.filter(row => {
+        if (uniqueRefs.has(row.DocRef_v)) {
+          return false;
+        }
+        uniqueRefs.add(row.DocRef_v);
+        return true;
+      });
+      
+      if (uniqueRows.length !== rows.length) {
+        console.log(`Removed ${rows.length - uniqueRows.length} duplicate job orders on server side`);
+      }
+      
+      if (uniqueRows.length > 0) {
         // Log sample results
-        console.log('Sample job orders:', rows.slice(0, 3).map(r => r.DocRef_v));
+        console.log('Sample job orders:', uniqueRows.slice(0, 3).map(r => r.DocRef_v));
       } else {
         console.log('WARNING: No job orders found in database!');
       }
       
-      const jobOrders = rows.map(row => ({
+      const jobOrders = uniqueRows.map(row => ({
         id: row.TxnId_i,
         reference: row.DocRef_v,
         createDate: row.CreateDate_dt,

@@ -781,15 +781,6 @@
       },
       success: function(data) {
         console.log('Loaded job orders:', data.job_orders.length);
-        console.log('First 5 job orders:', data.job_orders.slice(0, 5));
-        
-        // For debugging: Count occurrences of each prefix
-        const prefixCounts = {};
-        data.job_orders.forEach(jo => {
-          const prefix = jo.reference.substring(0, 4);
-          prefixCounts[prefix] = (prefixCounts[prefix] || 0) + 1;
-        });
-        console.log('Prefix counts in frontend:', prefixCounts);
         
         // Destroy and recreate the Select2 to ensure clean state
         $('#jo-reference').select2('destroy');
@@ -808,54 +799,30 @@
           return;
         }
         
-        // Add specific job orders from our recent search first
-        const specialJobOrders = [
-          'JOTR23050306', 
-          'JO23060150', 
-          'JO23060216', 
-          'JO23060227', 
-          'JO23060245', 
-          'JO23060246'
-        ];
-        
-        // Check if special JOs exist in the data
-        console.log('Checking for special job orders...');
-        specialJobOrders.forEach(reference => {
-          const matchingJO = data.job_orders.find(jo => jo.reference === reference);
-          if (matchingJO) {
-            console.log('Found special JO:', reference);
-          } else {
-            console.warn('Special JO not found in database:', reference);
-          }
-        });
-        
-        // Find and add these specific JOs first
-        let specialJOsFound = 0;
-        specialJobOrders.forEach(reference => {
-          const matchingJO = data.job_orders.find(jo => jo.reference === reference);
-          if (matchingJO) {
-            const option = new Option(matchingJO.display, matchingJO.reference, false, false);
-            $(option).data('jo_id', matchingJO.id);
-            $('#jo-reference').append(option);
-            specialJOsFound++;
-          }
-        });
-        console.log('Special JOs added to dropdown:', specialJOsFound);
-        
-        // Add the rest of the job orders
-        let otherJOsAdded = 0;
+        // Deduplicate job orders by reference
+        const uniqueJobOrders = {};
         data.job_orders.forEach(function(jo) {
-          // Skip if already added as a special job order
-          if (!specialJobOrders.includes(jo.reference)) {
-            const option = new Option(jo.display, jo.reference, false, false);
-            $(option).data('jo_id', jo.id);
-            $('#jo-reference').append(option);
-            otherJOsAdded++;
+          // Only keep the first occurrence of each reference (which should be the latest due to API sorting)
+          if (!uniqueJobOrders[jo.reference]) {
+            uniqueJobOrders[jo.reference] = jo;
           }
         });
         
-        console.log('Added', otherJOsAdded, 'regular job orders to dropdown');
-        console.log('Total options in dropdown:', specialJOsFound + otherJOsAdded + 1); // +1 for placeholder
+        // Convert the object back to an array
+        const uniqueJobOrdersArray = Object.values(uniqueJobOrders);
+        
+        // Log the before and after counts to verify deduplication worked
+        console.log('Original job orders count:', data.job_orders.length);
+        console.log('Deduplicated job orders count:', uniqueJobOrdersArray.length);
+        
+        // Add all unique job orders to the dropdown
+        uniqueJobOrdersArray.forEach(function(jo) {
+          const option = new Option(jo.display, jo.reference, false, false);
+          $(option).data('jo_id', jo.id);
+          $('#jo-reference').append(option);
+        });
+        
+        console.log('Added', uniqueJobOrdersArray.length, 'unique job orders to dropdown');
         
         // Reinitialize Select2 with all data preloaded
         $('#jo-reference').select2({
@@ -916,13 +883,29 @@
               // Enable machine, mold, tool, and operator selections
               $('#machine-descr, #mold-descr, #tool-descr, #operator-descr').prop('disabled', false);
               
-              // Clear and populate process dropdown with options from the job order
+              // Clear and populate process dropdown with unique options from the job order
               $('#jo-process').empty();
               $('#jo-process').append('<option value="">Select Process</option>');
               
               if (response.processes && response.processes.length > 0) {
+                console.log('Received processes:', response.processes.length);
+                
+                // Deduplicate processes by name
+                const uniqueProcesses = {};
                 response.processes.forEach(function(process) {
-                  $('#jo-process').append(`<option value="${process.name}">${process.name}</option>`);
+                  if (!uniqueProcesses[process.name]) {
+                    uniqueProcesses[process.name] = process;
+                  }
+                });
+                
+                // Convert to array
+                const uniqueProcessArray = Object.values(uniqueProcesses);
+                console.log('Unique processes after deduplication:', uniqueProcessArray.length);
+                
+                // Add each unique process to the dropdown
+                uniqueProcessArray.forEach(function(process, index) {
+                  // Add process number to make selection clearer
+                  $('#jo-process').append(`<option value="${process.name}">${index + 1}. ${process.name}</option>`);
                 });
                 
                 // If there's a default process, select it
@@ -973,13 +956,28 @@
               // Enable machine, mold, tool, and operator selections
               $('#machine-descr, #mold-descr, #tool-descr, #operator-descr').prop('disabled', false);
               
-              // Clear and populate process dropdown with options from the job order
+              // Clear and populate process dropdown with unique options from the job order
               $('#jo-process').empty();
               $('#jo-process').append('<option value="">Select Process</option>');
               
               if (response.processes && response.processes.length > 0) {
+                console.log('Received processes:', response.processes.length);
+                
+                // Deduplicate processes by name
+                const uniqueProcesses = {};
                 response.processes.forEach(function(process) {
-                  $('#jo-process').append(`<option value="${process.name}">${process.name}</option>`);
+                  if (!uniqueProcesses[process.name]) {
+                    uniqueProcesses[process.name] = process;
+                  }
+                });
+                
+                // Convert to array
+                const uniqueProcessArray = Object.values(uniqueProcesses);
+                console.log('Unique processes after deduplication:', uniqueProcessArray.length);
+                
+                // Add each unique process to the dropdown with numbering
+                uniqueProcessArray.forEach(function(process, index) {
+                  $('#jo-process').append(`<option value="${process.name}">${index + 1}. ${process.name}</option>`);
                 });
                 
                 // If there's a default process, select it

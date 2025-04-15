@@ -120,21 +120,8 @@ Fix the query to properly display all the data from your original PHP code
 
 
 
-After extensive searching through the database, I can see that:
-The M1000* and S1000* patterns appear to be reference numbers that are:
-M1000* = Machine reference number
-S1000* = Serial reference number
-However, these numbers don't appear to be stored directly in any of the obvious tables:
-Not in tbl_machine.machine_id_v
-Not in tbl_product_code.MachineId_v
-Not in tbl_product_serial.Serial_v
-Not in tbl_jo_txn.SerialNo_v or SerialPrefix_v
-This suggests that these numbers are either:
-a) Generated dynamically by application logic (PHP/Node.js code)
-b) Stored in a different format and transformed for display
-c) Stored in a different table we haven't found yet
-Let me check one more possibility - the daily output tables since this is in the daily output context:
 
 
 
 
+checkpoint"Demand Qty	retrieve data from what column"
