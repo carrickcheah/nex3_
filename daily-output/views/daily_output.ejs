@@ -890,22 +890,10 @@
               if (response.processes && response.processes.length > 0) {
                 console.log('Received processes:', response.processes.length);
                 
-                // Deduplicate processes by name
-                const uniqueProcesses = {};
+                // Add each process to the dropdown using the index from API
                 response.processes.forEach(function(process) {
-                  if (!uniqueProcesses[process.name]) {
-                    uniqueProcesses[process.name] = process;
-                  }
-                });
-                
-                // Convert to array
-                const uniqueProcessArray = Object.values(uniqueProcesses);
-                console.log('Unique processes after deduplication:', uniqueProcessArray.length);
-                
-                // Add each unique process to the dropdown
-                uniqueProcessArray.forEach(function(process, index) {
-                  // Add process number to make selection clearer
-                  $('#jo-process').append(`<option value="${process.name}">${index + 1}. ${process.name}</option>`);
+                  // Use the index provided by the API
+                  $('#jo-process').append(`<option value="${process.name}">${process.index}. ${process.name}</option>`);
                 });
                 
                 // If there's a default process, select it
@@ -963,21 +951,10 @@
               if (response.processes && response.processes.length > 0) {
                 console.log('Received processes:', response.processes.length);
                 
-                // Deduplicate processes by name
-                const uniqueProcesses = {};
+                // Add each process to the dropdown using the index from API
                 response.processes.forEach(function(process) {
-                  if (!uniqueProcesses[process.name]) {
-                    uniqueProcesses[process.name] = process;
-                  }
-                });
-                
-                // Convert to array
-                const uniqueProcessArray = Object.values(uniqueProcesses);
-                console.log('Unique processes after deduplication:', uniqueProcessArray.length);
-                
-                // Add each unique process to the dropdown with numbering
-                uniqueProcessArray.forEach(function(process, index) {
-                  $('#jo-process').append(`<option value="${process.name}">${index + 1}. ${process.name}</option>`);
+                  // Use the index provided by the API
+                  $('#jo-process').append(`<option value="${process.name}">${process.index}. ${process.name}</option>`);
                 });
                 
                 // If there's a default process, select it

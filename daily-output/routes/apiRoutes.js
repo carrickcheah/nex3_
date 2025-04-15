@@ -62,17 +62,32 @@ router.get('/api/manufacture/jo-details', async (req, res) => {
         console.warn('No processes found for JO:', joReference);
       }
       
-      // Return JO details
+      // Deduplicate processes by ProcessDescr_v
+      const uniqueProcessMap = {};
+      processes.forEach(proc => {
+        if (!uniqueProcessMap[proc.ProcessDescr_v]) {
+          uniqueProcessMap[proc.ProcessDescr_v] = proc;
+        }
+      });
+      
+      // Convert the map back to an array
+      const uniqueProcesses = Object.values(uniqueProcessMap);
+      
+      console.log('Unique processes after deduplication:', uniqueProcesses.length);
+      
+      // Return JO details with deduplicated processes
       return res.json({
         success: true,
         jo_id: rows[0].TxnId_i,
         reference: rows[0].DocRef_v,
         product_id: rows[0].ItemId_i,
         product_name: rows[0].product_name,
-        process: processes.length > 0 ? processes[0].ProcessDescr_v : null,
-        processes: processes.map(p => ({
+        process: uniqueProcesses.length > 0 ? uniqueProcesses[0].ProcessDescr_v : null,
+        processes: uniqueProcesses.map((p, idx) => ({
           id: p.ProcessDescr_v,
-          name: p.ProcessDescr_v
+          name: p.ProcessDescr_v,
+          row_id: p.RowId_i,
+          index: idx + 1
         }))
       });
     } finally {
@@ -380,11 +395,23 @@ router.get('/api/manufacture/jo-process-details', async (req, res) => {
       });
       
       // Get the specific process with more flexible matching
-      // Clean up processId to handle formats like "1. CE03-002-P01-02"
+      // Clean up processId to handle various formats:
+      // - "1. ProcessName" (new format with index)
+      // - "ProcessName" (original format)
       let cleanProcessId = processId;
-      if (processId.includes('. ')) {
+      
+      // Handle new format with index number
+      const indexMatch = processId.match(/^\d+\.\s+(.+)$/);
+      if (indexMatch) {
+        cleanProcessId = indexMatch[1];
+        console.log('Extracted process name from indexed format:', cleanProcessId);
+      } 
+      // Handle original format with process number (legacy support)
+      else if (processId.includes('. ')) {
         cleanProcessId = processId.split('. ')[1];
+        console.log('Extracted process name from legacy format:', cleanProcessId);
       }
+      
       console.log('Using clean process ID for matching:', cleanProcessId);
       
       // Try multiple matching approaches in order of specificity
@@ -634,7 +661,8 @@ router.get('/api/manufacture/jo-process-details', async (req, res) => {
           )
         WHERE ji.TxnId_i = ? AND ji.RowId_i = ?
           AND COALESCE(pq.AvailQty_d, 0) > 0
-        ORDER BY ji.Id_i
+        GROUP BY ji.ItemId_i  /* Group by ItemId_i to eliminate duplicates */
+        ORDER BY p.ProdName_v  /* Order by product name for better display */
       `, [joId, rowId, joId, rowId]);
       
       console.log('Input items query result count:', inputRows.length);
@@ -689,6 +717,22 @@ router.get('/api/manufacture/jo-process-details', async (req, res) => {
         }
       }
       
+      // Deduplicate input items by ItemId_i - only keep latest entry for each unique product
+      // Also filter to ensure only items with qty_balance > 0 are included
+      console.log('Deduplicating input items and filtering for available qty > 0');
+      const uniqueItemsMap = {};
+      
+      // First pass: collect items by ItemId_i, keeping only latest entry (assuming ordered by Id_i)
+      inputItems.forEach(item => {
+        if (parseFloat(item.qty_balance) > 0) {
+          uniqueItemsMap[item.ItemId_i] = item;
+        }
+      });
+      
+      // Convert back to array
+      const deduplicatedItems = Object.values(uniqueItemsMap);
+      console.log(`Deduplicated from ${inputItems.length} to ${deduplicatedItems.length} input items`);
+      
       // Prepare response
       const response = {
         success: true,
@@ -716,7 +760,7 @@ router.get('/api/manufacture/jo-process-details', async (req, res) => {
           id: mold.id,
           name: mold.name
         })),
-        input_items: inputItems.map(item => {
+        input_items: deduplicatedItems.map(item => {
           // ADDED: Enhanced logging for input item
           console.log('Processing input item:', {
             id: item.ItemId_i,
