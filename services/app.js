@@ -24,6 +24,7 @@ const PORT = process.env.PORT || 3000;
 // Import route modules for modular approach
 const dailyOutputRoutes = require('./m_manufacturing/m_daily_output/routes/dailyOutputRoutes');
 const apiRoutes = require('./m_manufacturing/m_daily_output/routes/apiRoutes');
+const { userRoutes } = require('./m_administration');
 
 // Middleware
 app.use(express.static(path.join(__dirname, 'm_manufacturing/m_daily_output/public')));
@@ -32,7 +33,13 @@ app.use(bodyParser.json());
 
 // Set view engine
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'm_manufacturing/m_daily_output/views'));
+
+// Configure multiple view directories
+app.set('views', [
+  path.join(__dirname, 'm_manufacturing/m_daily_output/views'),
+  path.join(__dirname),
+  path.join(__dirname, 'shared')
+]);
 
 // Session configuration
 app.use(session({
@@ -83,6 +90,7 @@ const OPTION_DAILY_PURPOSE = {
 // Register modular routes for daily output functionality
 app.use('/', dailyOutputRoutes);
 app.use('/', apiRoutes);
+app.use('/', userRoutes);
 
 // Root route - redirect to manufacturing landing page
 app.get('/', (req, res) => {

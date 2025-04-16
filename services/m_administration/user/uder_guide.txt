@@ -1,0 +1,46 @@
+<exerp/core -name "*admin*.php" -o -name "*user*.php"
+/Users/carrickcheah/nex3/nexerp/core/site_cls/nexterp.my/user.cls.php
+/Users/carrickcheah/nex3/nexerp/core/site_cls/nexterp.my/admin.cls.php
+carrickcheah@cheahs-MacBook-Pro services %
+
+
+
+
+two relevant files:
+/Users/carrickcheah/nex3/nexerp/core/site_cls/nexterp.my/user.cls.php
+/Users/carrickcheah/nex3/nexerp/core/site_cls/nexterp.my/admin.cls.php
+
+
+
+The PHP code for user administration is in two main files:
+/Users/carrickcheah/nex3/nexerp/core/site_cls/nexterp.my/user.cls.php - This contains the User class that handles user management functions like:
+ebos_new() - Creates new users
+ebos_read() - Reads user details
+ebos_create() - Saves new users
+ebos_update() - Updates user information
+ebos_delete() - Deletes users
+ebos_inquiry() - Shows the user list/search interface
+/Users/carrickcheah/nex3/nexerp/core/site_cls/nexterp.my/admin.cls.php - This contains the Admin class that handles administration routing, including user administration.
+The URL path to access the user administration page is /page/administration/user. This is confirmed by the admin.cls.php file which has this case:
+
+
+case 'user' :
+    if (! all_exist_acl('GI2A1')) access_denied();	
+    
+    include __CORE__.'/'.__CORE_VER__.'/site_cls/'.__SITE_ROOT__.'/user.cls.php';
+    ebos_heading($lng['SET_USER'], 'fa-user-o', false);				
+    $_instance = new User($this->_oparams);
+    $_instance->ebos_inquiry();				
+    break;
+
+
+This confirms that when you access /page/administration/user, it:
+Checks if you have the right access control (GI2A1)
+Includes the user.cls.php file
+Creates a User instance
+Calls the ebos_inquiry() method to display the user list/management interface
+So if you want to access the user administration page, you should use the URL: /page/administration/user
+
+
+
+

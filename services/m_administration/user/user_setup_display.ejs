@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+        }
+        
+        /* Table font size settings */
+        #usersTable {
+            font-size: 14px;
+        }
+        
+        #usersTable thead th {
+            font-size: 15px;
+            font-weight: 600;
+        }
+        
+        .badge {
+            font-size: 14px; /* Match table font size */
+            color: #212529; /* Regular text color */
+            background: transparent; /* Remove background */
+            font-weight: normal; /* Regular font weight */
+            padding: 0; /* Remove padding */
+            text-align: left; /* Left align like other text */
+            display: inline; /* Display as inline text */
+            border-radius: 0; /* Remove rounded corners */
+            font-family: inherit; /* Inherit font from table */
+        }
+        
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border: none;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #0669f4, #5441e9);
+            color: white;
+            border-radius: 8px 8px 0 0 !important;
+            font-weight: 600;
+            padding: 15px 20px;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background-color: #0669f4;
+            border-color: #0669f4;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0558d6;
+            border-color: #0558d6;
+        }
+        
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(6, 105, 244, 0.05);
+        }
+        
+        .action-buttons .btn {
+            margin-right: 5px;
+        }
+        
+        /* Status indicators with icons instead of colors */
+        .status-text {
+            display: inline-flex;
+            align-items: center;
+            font-weight: normal;
+        }
+        
+        .status-text i {
+            margin-right: 5px;
+        }
+        
+        /* Icon colors */
+        .fa-check-circle {
+            color: #28a745; /* Green */
+        }
+        
+        .fa-times-circle {
+            color: #dc3545; /* Red */
+        }
+        
+        /* Role color badges remain */
+        .badge.role-ADMIN {
+            background-color: #0669f4;
+        }
+        
+        .badge.role-MANAGER {
+            background-color: #17a2b8;
+        }
+        
+        .badge.role-USER {
+            background-color: #6c757d;
+        }
+        
+        /* Column widths for better alignment */
+        #usersTable th:nth-child(1), #usersTable td:nth-child(1) { width: 8%; }  /* ID */
+        #usersTable th:nth-child(2), #usersTable td:nth-child(2) { width: 25%; } /* FULL NAME */
+        #usersTable th:nth-child(3), #usersTable td:nth-child(3) { width: 10%; } /* SHORT NAME */
+        #usersTable th:nth-child(4), #usersTable td:nth-child(4) { width: 15%; } /* LOGIN NAME */
+        #usersTable th:nth-child(5), #usersTable td:nth-child(5) { width: 12%; } /* ROLE NAME */
+        #usersTable th:nth-child(6), #usersTable td:nth-child(6) { width: 10%; } /* IS OPERATOR? */
+        #usersTable th:nth-child(7), #usersTable td:nth-child(7) { width: 20%; } /* STATUS */
+    </style>
+</head>
+<body>
+
+<%- include('../../shared/components/header') %>
+
+<div class="container-fluid mt-4 px-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-users-cog me-2"></i>User Management</span>
+                    <a href="/page/administration/user/add" class="btn btn-light btn-sm">
+                        <i class="fas fa-plus me-1"></i>Add New User
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- Search and filter controls -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <input type="text" id="searchUsername" class="form-control" placeholder="Search by username...">
+                        </div>
+                        <div class="col-md-8 text-end">
+                            <select id="filterRole" class="form-select d-inline-block w-auto">
+                                <option value="">All Roles</option>
+                                <% if (typeof roles !== 'undefined' && roles.length > 0) { %>
+                                    <% roles.forEach(function(role) { %>
+                                        <option value="<%= role.RoleCode_c %>"><%= role.RoleName_v %></option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                            
+                            <select id="filterStatus" class="form-select d-inline-block w-auto ms-2">
+                                <option value="">All Status</option>
+                                <option value="1">Active</option>
+                                <option value="0">Inactive</option>
+                            </select>
+                            
+                            <button id="applyFilters" class="btn btn-primary ms-2">
+                                <i class="fas fa-filter me-1"></i> Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Users table -->
+                    <div class="table-responsive">
+                        <table id="usersTable" class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>FULL NAME</th>
+                                    <th>SHORT NAME</th>
+                                    <th>LOGIN NAME</th>
+                                    <th>ROLE NAME</th>
+                                    <th>IS OPERATOR?</th>
+                                    <th>STATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Table body will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <nav aria-label="User pagination">
+                        <ul id="pagination" class="pagination justify-content-center">
+                            <!-- Pagination will be populated by JavaScript -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0669f4, #5441e9); color: white;">
+                <h5 class="modal-title" id="editUserModalLabel">Edit User</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    <input type="hidden" id="editUserId" name="userId">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editUserName" class="form-label">User Name</label>
+                            <input type="text" class="form-control" id="editUserName" name="userName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editUserAbbrev" class="form-label">Abbreviation</label>
+                            <input type="text" class="form-control" id="editUserAbbrev" name="userAbbrev" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editUserLogin" class="form-label">Login</label>
+                            <input type="text" class="form-control" id="editUserLogin" name="userLogin" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editRoleCode" class="form-label">Role</label>
+                            <select class="form-select" id="editRoleCode" name="roleCode" required>
+                                <option value="">Select Role</option>
+                                <% if (typeof roles !== 'undefined' && roles.length > 0) { %>
+                                    <% roles.forEach(function(role) { %>
+                                        <option value="<%= role.RoleCode_c %>"><%= role.RoleName_v %></option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editUserTimeout" class="form-label">Timeout (minutes)</label>
+                            <input type="number" class="form-control" id="editUserTimeout" name="userTimeout" min="1" max="120">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editStatus" class="form-label">Status</label>
+                            <select class="form-select" id="editStatus" name="status">
+                                <option value="1">Active</option>
+                                <option value="0">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="changePassword">
+                                <label class="form-check-label" for="changePassword">
+                                    Change Password
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="passwordFields" class="row mb-3" style="display: none;">
+                        <div class="col-md-6">
+                            <label for="editPassword" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="editPassword" name="password">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editConfirmPassword" class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" id="editConfirmPassword">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveUserBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this user? This action cannot be undone.</p>
+                <input type="hidden" id="deleteUserId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap and jQuery Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        let currentPage = 1;
+        const limit = 100;
+        
+        // Load users
+        loadUsers();
+        
+        // Apply filters
+        $('#applyFilters').on('click', function() {
+            currentPage = 1;
+            loadUsers();
+        });
+        
+        // Handle change password checkbox
+        $('#changePassword').on('change', function() {
+            if ($(this).is(':checked')) {
+                $('#passwordFields').show();
+            } else {
+                $('#passwordFields').hide();
+                $('#editPassword, #editConfirmPassword').val('');
+            }
+        });
+        
+        // Save user changes
+        $('#saveUserBtn').on('click', function() {
+            const userId = $('#editUserId').val();
+            const formData = {
+                userName: $('#editUserName').val(),
+                userAbbrev: $('#editUserAbbrev').val(),
+                userLogin: $('#editUserLogin').val(),
+                roleCode: $('#editRoleCode').val(),
+                userTimeout: $('#editUserTimeout').val(),
+                status: $('#editStatus').val()
+            };
+            
+            // Add password if changed
+            if ($('#changePassword').is(':checked')) {
+                const password = $('#editPassword').val();
+                const confirmPassword = $('#editConfirmPassword').val();
+                
+                if (password !== confirmPassword) {
+                    alert('Passwords do not match!');
+                    return;
+                }
+                
+                if (password) {
+                    formData.password = password;
+                }
+            }
+            
+            // Update user
+            $.ajax({
+                url: `/api/users/${userId}`,
+                type: 'PUT',
+                data: JSON.stringify(formData),
+                contentType: 'application/json',
+                success: function(response) {
+                    if (response.success) {
+                        $('#editUserModal').modal('hide');
+                        loadUsers();
+                    } else {
+                        alert('Error updating user: ' + response.message);
+                    }
+                },
+                error: function(xhr) {
+                    alert('Error updating user: ' + (xhr.responseJSON?.message || 'Unknown error'));
+                }
+            });
+        });
+        
+        // Confirm delete
+        $('#confirmDeleteBtn').on('click', function() {
+            const userId = $('#deleteUserId').val();
+            
+            $.ajax({
+                url: `/api/users/${userId}`,
+                type: 'DELETE',
+                success: function(response) {
+                    if (response.success) {
+                        $('#deleteModal').modal('hide');
+                        loadUsers();
+                    } else {
+                        alert('Error deleting user: ' + response.message);
+                    }
+                },
+                error: function(xhr) {
+                    alert('Error deleting user: ' + (xhr.responseJSON?.message || 'Unknown error'));
+                }
+            });
+        });
+        
+        // Function to load users with pagination and filters
+        function loadUsers() {
+            const username = $('#searchUsername').val();
+            const role = $('#filterRole').val();
+            const status = $('#filterStatus').val();
+            
+            $.ajax({
+                url: '/api/users',
+                type: 'GET',
+                data: {
+                    page: currentPage,
+                    limit: limit,
+                    username: username,
+                    role: role,
+                    status: status
+                },
+                success: function(response) {
+                    if (response.success) {
+                        renderUsers(response.data);
+                        renderPagination(response.pagination);
+                    } else {
+                        alert('Error loading users: ' + response.message);
+                    }
+                },
+                error: function(xhr) {
+                    alert('Error loading users: ' + (xhr.responseJSON?.message || 'Unknown error'));
+                }
+            });
+        }
+        
+        // Function to render users table
+        function renderUsers(users) {
+            const tbody = $('#usersTable tbody');
+            tbody.empty();
+            
+            if (users.length === 0) {
+                tbody.append('<tr><td colspan="7" class="text-center">No users found</td></tr>');
+                return;
+            }
+            
+            users.forEach(function(user, index) {
+                const row = $('<tr>');
+                
+                row.append(`<td>${user.id}</td>`);    // ID
+                row.append(`<td>${user.userName}</td>`);  // FULL NAME
+                row.append(`<td>${user.userAbbrev}</td>`); // SHORT NAME
+                row.append(`<td>${user.userLogin}</td>`); // LOGIN NAME
+                
+                const roleClass = `role-${user.roleCode}`;
+                row.append(`<td><span class="badge ${roleClass}">${user.roleName}</span></td>`); // ROLE NAME
+                
+                // IS OPERATOR? column using the isOperator property from the server
+                row.append(`<td>${user.isOperator}</td>`);
+                
+                // Use icons instead of colored badges for status
+                const statusIcon = user.statusCode === 1 ? 
+                    '<i class="fas fa-check-circle"></i>' : 
+                    '<i class="fas fa-times-circle"></i>';
+                    
+                row.append(`<td>
+                    <span class="status-text">${statusIcon} ${user.status}</span>
+                    <div class="float-end">
+                        <button class="btn btn-sm btn-outline-primary edit-btn" data-id="${user.id}" title="Edit"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${user.id}" title="Delete"><i class="fas fa-trash"></i></button>
+                    </div>
+                </td>`); // STATUS with action buttons
+                
+                tbody.append(row);
+            });
+            
+            // Attach event handlers to the edit and delete buttons
+            $('.edit-btn').on('click', function() {
+                const userId = $(this).data('id');
+                editUser(userId);
+            });
+            
+            $('.delete-btn').on('click', function() {
+                const userId = $(this).data('id');
+                $('#deleteUserId').val(userId);
+                $('#deleteModal').modal('show');
+            });
+        }
+        
+        // Function to render pagination
+        function renderPagination(pagination) {
+            const paginationEl = $('#pagination');
+            paginationEl.empty();
+            
+            // Previous button
+            const prevLi = $('<li class="page-item">');
+            if (pagination.page <= 1) {
+                prevLi.addClass('disabled');
+            }
+            
+            const prevLink = $('<a class="page-link" href="#">Previous</a>');
+            prevLink.on('click', function(e) {
+                e.preventDefault();
+                if (pagination.page > 1) {
+                    currentPage = pagination.page - 1;
+                    loadUsers();
+                }
+            });
+            
+            prevLi.append(prevLink);
+            paginationEl.append(prevLi);
+            
+            // Page numbers
+            for (let i = 1; i <= pagination.pages; i++) {
+                const pageLi = $('<li class="page-item">');
+                if (i === pagination.page) {
+                    pageLi.addClass('active');
+                }
+                
+                const pageLink = $(`<a class="page-link" href="#">${i}</a>`);
+                pageLink.on('click', function(e) {
+                    e.preventDefault();
+                    currentPage = i;
+                    loadUsers();
+                });
+                
+                pageLi.append(pageLink);
+                paginationEl.append(pageLi);
+            }
+            
+            // Next button
+            const nextLi = $('<li class="page-item">');
+            if (pagination.page >= pagination.pages) {
+                nextLi.addClass('disabled');
+            }
+            
+            const nextLink = $('<a class="page-link" href="#">Next</a>');
+            nextLink.on('click', function(e) {
+                e.preventDefault();
+                if (pagination.page < pagination.pages) {
+                    currentPage = pagination.page + 1;
+                    loadUsers();
+                }
+            });
+            
+            nextLi.append(nextLink);
+            paginationEl.append(nextLi);
+        }
+        
+        // Function to load user details for editing
+        function editUser(userId) {
+            $.ajax({
+                url: `/api/users/${userId}`,
+                type: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        const user = response.data;
+                        
+                        // Populate form fields
+                        $('#editUserId').val(user.id);
+                        $('#editUserName').val(user.userName);
+                        $('#editUserAbbrev').val(user.userAbbrev);
+                        $('#editUserLogin').val(user.userLogin);
+                        $('#editRoleCode').val(user.roleCode);
+                        $('#editUserTimeout').val(user.userTimeout || 30);
+                        $('#editStatus').val(user.status);
+                        
+                        // Reset password fields
+                        $('#changePassword').prop('checked', false);
+                        $('#passwordFields').hide();
+                        $('#editPassword, #editConfirmPassword').val('');
+                        
+                        // Show modal
+                        $('#editUserModal').modal('show');
+                    } else {
+                        alert('Error loading user details: ' + response.message);
+                    }
+                },
+                error: function(xhr) {
+                    alert('Error loading user details: ' + (xhr.responseJSON?.message || 'Unknown error'));
+                }
+            });
+        }
+    });
+</script>
+
+</body>
+</html>
