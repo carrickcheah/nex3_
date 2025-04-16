@@ -33,6 +33,11 @@ The implementation we created in your daily-output directory is modeled after th
 Express, and EJS templates instead.
 
 
+
+
+Search this from the database.
+By this method:
+
 Search with %keyword%:
 mysql -u myuser -pmypassword -e "SELECT TABLE_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'nex_valiant' AND COLUMN_NAME LIKE '%Selected%';" | cat
 
