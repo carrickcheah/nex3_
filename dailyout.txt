@@ -29,4 +29,13 @@ tbl_jo_process
 And several others
 This is excellent news because it means you have the complete source code for 
 the functionality you're trying to recreate in Node.js. 
-The implementation we created in your daily-output directory is modeled after this PHP code, but using Node.js, Express, and EJS templates instead.
+The implementation we created in your daily-output directory is modeled after this PHP code, but using Node.js, 
+Express, and EJS templates instead.
+
+
+Search with %keyword%:
+mysql -u myuser -pmypassword -e "SELECT TABLE_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'nex_valiant' AND COLUMN_NAME LIKE '%Selected%';" | cat
+
+
+
+
