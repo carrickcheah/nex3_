@@ -187,14 +187,15 @@ exports.dailyOutputView = async (req, res) => {
 };
 
 /**
- * Reads data from the database
+ * Reads daily output data from the database
  */
 async function dailyOutputRead(req, res, dbData) {
   try {
     const txn_mode = dbData.txn_mode;
     const txn_id = dbData.txn_id;
-    const txn_prev = txn_mode + '_prev';
+    const txn_prev = `${txn_mode}_prev`;
     
+    // Set some default values for all modes
     dbData.input_table_rows = '';
     dbData.output_table_rows = '';
     dbData.tool_table_rows = '';
@@ -203,80 +204,68 @@ async function dailyOutputRead(req, res, dbData) {
     req.session[txn_mode] = {};
     req.session[txn_prev] = {};
     
-    // Set session data
     req.session[txn_mode] = {
       txn_id: txn_id,
       txntype_id: 25, // Daily Output
-      items_list: {
-        input: [],
-        output: [],
-        tool: []
-      },
-      loc_batches: [],
-      dloc_batches: [],
-      item_ids: [],
+      items_list: {},
+      loc_batches: {},
+      dloc_batches: {},
+      item_ids: {},
       session_key: Date.now().toString()
     };
     
-    // Get connection from pool
+    // Get daily transaction data from database
     const connection = await pool.getConnection();
     
     try {
-      // Query daily transaction details
-      const [rows] = await DailyOutputModel.getDailyTransactionDetails(connection, txn_id);
-      
-      if (rows.length === 1) {
-        const row = rows[0];
+      if (txn_id) {
+        // Main transaction data
+        const [rows] = await DailyOutputModel.getDailyTransactionDetails(connection, txn_id);
         
-        // Map column data to dbData
-        const colMap = {
-          'Purpose_c': 'purpose',
-          'SiteId_i': 'site_id',
-          'JoId_i': 'jo_id',
-          'RowId_i': 'row_id',
-          'ProcessId_i': 'process_id',
-          'DocRef_v': 'doc_ref',
-          'StartTime_tt': 'start_time',
-          'EndTime_tt': 'end_time',
-          'BreakTime_d': 'break_time',
-          'OwnerId_i': 'owner_id',
-          'UserAbbrev_v': 'owner_abbrev',
-          'LocId_i': 'loc_id',
-          'DlocId_i': 'dloc_id',
-          'DocRemark_v': 'doc_remark',
-          'LocCode_v': 'wc',
-          'input_loc': 'input_loc',
-          'output_loc': 'output_loc',
-          'jo_item_id': 'jo_item_id',
-          'jo_reference': 'jo_reference',
-          'jo_process': 'jo_process',
-          'UpdateKey_i': 'update_key',
-          'Status_c': 'status',
-          'Void_c': 'void'
-        };
-        
-        // Copy column values to dbData
-        for (const [dbCol, jsVar] of Object.entries(colMap)) {
-          if (row[dbCol] !== undefined) {
-            dbData[jsVar] = row[dbCol];
-            req.session[txn_mode][jsVar] = row[dbCol];
-          }
+        if (rows.length === 0) {
+          console.error('No transaction found with ID:', txn_id);
+          return res.status(404).render('error', { 
+            message: 'Daily Output record not found',
+            error: { status: 404 }
+          });
         }
         
-        // Handle date fields
-        const dateMap = {
-          'TxnDate_dd': 'txn_date'
-        };
+        const daily = rows[0];
         
-        for (const [dbCol, jsVar] of Object.entries(dateMap)) {
-          if (row[dbCol]) {
-            dbData[jsVar] = helpers.sql2date(row[dbCol]);
-            req.session[txn_mode][jsVar] = row[dbCol];
-          }
-        }
+        // Map data to the view model
+        dbData.txn_id = daily.TxnId_i;
+        dbData.status = daily.Status_c;
+        dbData.status_name = daily.StatusName_v;
+        dbData.status_css = daily.StatusCss_v || '';
+        dbData.update_key = daily.UpdateKey_i;
+        dbData.action_key = helpers.keyHelper(dbData.txn_id, dbData.txn_mode);
+        dbData.doc_ref = daily.DocRef_v;
+        dbData.txn_date = moment(daily.TxnDate_dd).format('DD-MM-YYYY');
+        dbData.sql_date = daily.TxnDate_dd;
+        dbData.jo_id = daily.JoId_i;
+        dbData.jo_reference = daily.jo_reference || '';
+        dbData.jo_item_id = daily.jo_item_id || 0;
+        dbData.jo_process = daily.jo_process || '';
+        dbData.loc_id = daily.LocId_i || 0;
+        dbData.dloc_id = daily.DlocId_i || 0;
+        dbData.input_loc = daily.input_loc || '';
+        dbData.output_loc = daily.output_loc || '';
+        dbData.wc = daily.LocCode_v || '';
+        dbData.start_time = daily.StartTime_tt ? moment(daily.StartTime_tt, 'HH:mm:ss').format('HH:mm') : '';
+        dbData.end_time = daily.EndTime_tt ? moment(daily.EndTime_tt, 'HH:mm:ss').format('HH:mm') : '';
+        dbData.break_time = daily.BreakTime_d || 0;
+        dbData.process_id = daily.RowId_i || 0;
+        dbData.purpose = daily.Purpose_c || 'S';
+        dbData.owner_id = daily.OwnerId_i || req.session.user?.id || 0;
+        dbData.remark = daily.DocRemark_v || '';
+        dbData.void = daily.Void_c || '0';
+        dbData.allow_void = daily.Status_c === 'A' ? '1' : '0';
+        dbData.row_id = daily.RowId_i || 0;
+        dbData.created_by = daily.UserAbbrev_v || req.session.user?.name || 'SYSTEM';
+        dbData.create_date = moment(daily.CreateDate_dt).format('DD-MM-YYYY HH:mm:ss');
         
         // Get machines
-        const machines = await DailyOutputModel.getMachines(connection, txn_id);
+        const machines = await DailyOutputModel.getMachines(txn_id);
         dbData.machine_options = machines.map(m => ({
           value: m.machine_id,
           text: m.machine_name,
@@ -284,7 +273,7 @@ async function dailyOutputRead(req, res, dbData) {
         }));
         
         // Get molds
-        const molds = await DailyOutputModel.getMolds(connection, txn_id);
+        const molds = await DailyOutputModel.getMolds(txn_id);
         dbData.mold_options = molds.map(m => ({
           value: m.mold_id,
           text: m.mold_name,
@@ -292,7 +281,7 @@ async function dailyOutputRead(req, res, dbData) {
         }));
         
         // Get operators
-        const operators = await DailyOutputModel.getOperators(connection, txn_id);
+        const operators = await DailyOutputModel.getOperators(txn_id);
         dbData.operator_options = operators.map(op => ({
           value: op.operator_id,
           text: op.operator_name,
@@ -336,8 +325,22 @@ async function dailyOutputRender(req, res, dbData) {
       option_daily_purpose: OPTION_DAILY_PURPOSE
     };
     
-    // Render the template
-    res.render('daily_output', viewData);
+    // Render the template - use view_daily_output for view mode
+    if (dbData.txn_mode === 'daily_view') {
+      // Use the daily output viewing template
+      res.render('view_daily_output', {
+        title: 'View Daily Output',
+        daily: dbData,
+        input_items: dbData.input_items || [],
+        output_items: dbData.output_items || [],
+        machine_options: dbData.machine_options || [],
+        operator_options: dbData.operator_options || [],
+        user: req.session.user || { name: 'SYSTEM ADMIN' }
+      });
+    } else {
+      // For edit and new modes, use the regular form
+      res.render('daily_output', viewData);
+    }
   } catch (error) {
     console.error('Error rendering daily output:', error);
     res.status(500).send('Server error');
@@ -902,7 +905,7 @@ async function generateDocReference(dbData) {
  */
 exports.jobOrderView = async (req, res) => {
   try {
-    const joId = req.params.id;
+    const joId = parseInt(req.params.id) || 0;
     
     if (!joId) {
       return res.status(400).send('Job Order ID is required');
@@ -936,6 +939,11 @@ exports.jobOrderView = async (req, res) => {
       
       const joData = joRows[0];
       
+      // Get machines, molds, and operators (using the methods from dailyOutputNew)
+      const machines = await DailyOutputModel.getMachinesById(joId);
+      const molds = await DailyOutputModel.getMoldsById(joId);
+      const operators = await DailyOutputModel.getOperatorsById(joId);
+      
       // Get processes for this job order
       const [processRows] = await connection.query(`
         SELECT 
@@ -959,7 +967,7 @@ exports.jobOrderView = async (req, res) => {
           p.ProdName_v as item_name,
           ji.Qty_d as quantity,
           u.UomCode_v as uom,
-          ji.UnitPrice_d as unit_price
+          0 as unit_price
         FROM tbl_jo_item ji
         LEFT JOIN tbl_product_code p ON p.ItemId_i = ji.ItemId_i
         LEFT JOIN tbl_uom u ON u.UomId_i = p.UomId_i
@@ -1002,6 +1010,9 @@ exports.jobOrderView = async (req, res) => {
         processes: processRows,
         materials: bomRows,
         dailyOutputs: dailyOutputRows,
+        machines: machines || [],
+        molds: molds || [],
+        operators: operators || [],
         moment: moment
       });
     } finally {

@@ -186,6 +186,9 @@ class DailyOutputModel {
    * @returns {Promise<Array>} - Transaction details
    */
   static async getDailyTransactionDetails(connection, txn_id) {
+    // Use a safe integer value for the transaction ID
+    const safeId = Number.isInteger(parseInt(txn_id)) ? parseInt(txn_id) : 0;
+    
     return await connection.query(`
       SELECT d.*, u.UserAbbrev_v,
       j.ItemId_i AS jo_item_id, 
@@ -202,7 +205,7 @@ class DailyOutputModel {
       LEFT JOIN tbl_user u ON u.UserId_i = d.OwnerId_i	
       LEFT JOIN tbl_status stt ON stt.Status_c = d.Status_c
       WHERE d.TxnId_i = ?
-    `, [txn_id]);
+    `, [safeId]);
   }
 
   /**
@@ -285,8 +288,8 @@ class DailyOutputModel {
    */
   static async insertMachine(connection, txn_id, machine_id) {
     return await connection.execute(`
-      INSERT INTO tbl_daily_machine (TxnId_i, MachineId_i, Selected_c)
-      VALUES (?, ?, '1')
+      INSERT INTO tbl_daily_machine (TxnId_i, MachineId_i)
+      VALUES (?, ?)
     `, [txn_id, machine_id]);
   }
 
@@ -311,8 +314,8 @@ class DailyOutputModel {
    */
   static async insertMold(connection, txn_id, mold_id) {
     return await connection.execute(`
-      INSERT INTO tbl_daily_mold (TxnId_i, MoldId_i, Selected_c)
-      VALUES (?, ?, '1')
+      INSERT INTO tbl_daily_mold (TxnId_i, MoldId_i)
+      VALUES (?, ?)
     `, [txn_id, mold_id]);
   }
 
@@ -337,8 +340,8 @@ class DailyOutputModel {
    */
   static async insertOperator(connection, txn_id, operator_id) {
     return await connection.execute(`
-      INSERT INTO tbl_daily_operator (TxnId_i, UserId_i, Selected_c)
-      VALUES (?, ?, '1')
+      INSERT INTO tbl_daily_operator (TxnId_i, UserId_i)
+      VALUES (?, ?)
     `, [txn_id, operator_id]);
   }
 
@@ -367,8 +370,8 @@ class DailyOutputModel {
   static async insertOutputItem(connection, txn_id, item_id, output_qty, reject_qty, extra_qty) {
     return await connection.execute(`
       INSERT INTO tbl_daily_item (
-        TxnId_i, RowId_i, ProductId_i, ItemType_c,
-        Qty_d, RejectQty_d, QtyExtra_d
+        TxnId_i, RowId_i, ItemId_i, InOut_c,
+        Qty_d, Reject_d, Extra_d
       ) VALUES (?, ?, ?, 'O', ?, ?, ?)
     `, [txn_id, 1, item_id, output_qty, reject_qty, extra_qty]);
   }
@@ -381,7 +384,7 @@ class DailyOutputModel {
    */
   static async deleteOutputItems(connection, txn_id) {
     return await connection.execute(`
-      DELETE FROM tbl_daily_item WHERE TxnId_i = ? AND ItemType_c = 'O'
+      DELETE FROM tbl_daily_item WHERE TxnId_i = ? AND InOut_c = 'O'
     `, [txn_id]);
   }
 
@@ -397,8 +400,8 @@ class DailyOutputModel {
   static async insertInputItem(connection, txn_id, item_id, demand_qty, lot_id) {
     return await connection.execute(`
       INSERT INTO tbl_daily_item (
-        TxnId_i, RowId_i, ProductId_i, ItemType_c,
-        Qty_d, StockId_i
+        TxnId_i, RowId_i, ItemId_i, InOut_c,
+        Qty_d, StkId_i
       ) VALUES (?, ?, ?, 'I', ?, ?)
     `, [txn_id, 1, item_id, demand_qty, lot_id]);
   }
@@ -411,7 +414,7 @@ class DailyOutputModel {
    */
   static async deleteInputItems(connection, txn_id) {
     return await connection.execute(`
-      DELETE FROM tbl_daily_item WHERE TxnId_i = ? AND ItemType_c = 'I'
+      DELETE FROM tbl_daily_item WHERE TxnId_i = ? AND InOut_c = 'I'
     `, [txn_id]);
   }
 
@@ -421,46 +424,77 @@ class DailyOutputModel {
    * @param {number} txn_id - Transaction ID (optional)
    * @returns {Promise<Array>} - Array of machines
    */
-  static async getMachines(connection, txn_id = 0) {
-    if (!connection) {
-      return this.getMachinesById(txn_id);
+  static async getMachines(txn_id = 0) {
+    const connection = await pool.getConnection();
+    try {
+      // Use a safe integer value for the transaction ID
+      const safeId = Number.isInteger(parseInt(txn_id)) ? parseInt(txn_id) : 0;
+      
+      const [rows] = await connection.query(`
+        SELECT m.MachineId_i as machine_id, 
+               m.MachineName_v as machine_name
+        FROM tbl_machine m
+        LEFT JOIN tbl_daily_machine dm ON dm.MachineId_i = m.MachineId_i AND dm.TxnId_i = ?
+        WHERE m.Status_i = 1
+        ORDER BY m.MachineName_v
+      `, [safeId]);
+      
+      // For each machine, check if it's selected by seeing if a join record exists
+      const [selectedMachines] = await connection.query(`
+        SELECT dm.MachineId_i
+        FROM tbl_daily_machine dm
+        WHERE dm.TxnId_i = ?
+      `, [safeId]);
+      
+      const selectedIds = selectedMachines.map(m => m.MachineId_i);
+      
+      // Add a selected property based on whether the machine is in the join table
+      return rows.map(row => ({
+        ...row,
+        selected: selectedIds.includes(row.machine_id) ? '1' : '0'
+      }));
+    } finally {
+      connection.release();
     }
-    
-    const [rows] = await connection.query(`
-      SELECT m.MachineId_i as id, 
-             m.MachineName_v as name,
-             dm.Selected_c as selected
-      FROM tbl_machine m
-      LEFT JOIN tbl_daily_machine dm ON dm.MachineId_i = m.MachineId_i AND dm.TxnId_i = ?
-      WHERE m.Status_i = 1
-      ORDER BY m.MachineName_v
-    `, [txn_id || 0]);
-    
-    return rows;
   }
 
   /**
-   * Get molds
-   * @param {Object|null} connection - Database connection (optional)
-   * @param {number} txn_id - Transaction ID (optional)
+   * Get molds for a transaction
+   * @param {number} txn_id - Transaction ID
    * @returns {Promise<Array>} - Array of molds
    */
-  static async getMolds(connection, txn_id = 0) {
-    if (!connection) {
-      return this.getMoldsById(txn_id);
+  static async getMolds(txn_id = 0) {
+    const connection = await pool.getConnection();
+    try {
+      // Use a safe integer value for the transaction ID
+      const safeId = Number.isInteger(parseInt(txn_id)) ? parseInt(txn_id) : 0;
+      
+      const [rows] = await connection.query(`
+        SELECT m.MoldId_i as mold_id, 
+               m.MoldDescr_v as mold_name
+        FROM tbl_mold m
+        LEFT JOIN tbl_daily_mold dm ON dm.MoldId_i = m.MoldId_i AND dm.TxnId_i = ?
+        WHERE m.Status_i = 1
+        ORDER BY m.MoldDescr_v
+      `, [safeId]);
+      
+      // For each mold, check if it's selected by seeing if a join record exists
+      const [selectedMolds] = await connection.query(`
+        SELECT dm.MoldId_i
+        FROM tbl_daily_mold dm
+        WHERE dm.TxnId_i = ?
+      `, [safeId]);
+      
+      const selectedIds = selectedMolds.map(m => m.MoldId_i);
+      
+      // Add a selected property based on whether the mold is in the join table
+      return rows.map(row => ({
+        ...row,
+        selected: selectedIds.includes(row.mold_id) ? '1' : '0'
+      }));
+    } finally {
+      connection.release();
     }
-    
-    const [rows] = await connection.query(`
-      SELECT m.MoldId_i as id, 
-             m.MoldName_v as name,
-             dm.Selected_c as selected
-      FROM tbl_comp_mold m
-      LEFT JOIN tbl_daily_mold dm ON dm.MoldId_i = m.MoldId_i AND dm.TxnId_i = ?
-      WHERE m.Status_c = 'A'
-      ORDER BY m.MoldName_v
-    `, [txn_id || 0]);
-    
-    return rows;
   }
 
   /**
@@ -469,22 +503,41 @@ class DailyOutputModel {
    * @param {number} txn_id - Transaction ID (optional)
    * @returns {Promise<Array>} - Array of operators
    */
-  static async getOperators(connection, txn_id = 0) {
-    if (!connection) {
-      return this.getOperatorsById(txn_id);
+  static async getOperators(txn_id = 0) {
+    const connection = await pool.getConnection();
+    try {
+      // Use a safe integer value for the transaction ID
+      const safeId = Number.isInteger(parseInt(txn_id)) ? parseInt(txn_id) : 0;
+      
+      const [rows] = await connection.query(`
+        SELECT u.UserId_i as operator_id, 
+               u.UserName_v as operator_name
+        FROM tbl_user u
+        LEFT JOIN tbl_daily_operator du ON du.OperatorId_i = u.UserId_i AND du.TxnId_i = ?
+        WHERE u.Status_i = 1 AND 
+              u.RoleCode_c IN ('58250F20', '925F50F0', '20E0566F', '09920F66', '90025F5E', '2500FC5F', 'E25F6C00',
+                          '8F060273', '86600F12', '706102F0', '6420F05F', '62601F05', 'F700E026', '7A20450F', '6320A0F6',
+                          '602C068F', 'CF2600C5', '2260F026', '35250A0F')
+        ORDER BY u.UserName_v
+      `, [safeId]);
+      
+      // For each operator, check if it's selected by seeing if a join record exists
+      const [selectedOperators] = await connection.query(`
+        SELECT du.OperatorId_i as UserId_i
+        FROM tbl_daily_operator du
+        WHERE du.TxnId_i = ?
+      `, [safeId]);
+      
+      const selectedIds = selectedOperators.map(o => o.UserId_i);
+      
+      // Add a selected property based on whether the operator is in the join table
+      return rows.map(row => ({
+        ...row,
+        selected: selectedIds.includes(row.operator_id) ? '1' : '0'
+      }));
+    } finally {
+      connection.release();
     }
-    
-    const [rows] = await connection.query(`
-      SELECT u.UserId_i as id, 
-             u.UserName_v as name,
-             du.Selected_c as selected
-      FROM tbl_user u
-      LEFT JOIN tbl_daily_operator du ON du.UserId_i = u.UserId_i AND du.TxnId_i = ?
-      WHERE u.Status_c = 'A' AND u.UserGroup_c = 'O'
-      ORDER BY u.UserName_v
-    `, [txn_id || 0]);
-    
-    return rows;
   }
 
   /**
@@ -535,7 +588,7 @@ class DailyOutputModel {
           m.Status_i = 1
         ORDER BY 
           m.MachineName_v
-      `, [txn_id || 0]);
+      `, [parseInt(txn_id || 0)]);
       
       return rows;
     } finally {
@@ -567,7 +620,7 @@ class DailyOutputModel {
           m.Status_i = 1
         ORDER BY 
           m.MoldDescr_v
-      `, [txn_id || 0]);
+      `, [parseInt(txn_id || 0)]);
       
       return rows;
     } finally {
@@ -599,7 +652,7 @@ class DailyOutputModel {
           u.Status_i = 1
         ORDER BY 
           u.UserName_v
-      `, [txn_id || 0]);
+      `, [parseInt(txn_id || 0)]);
       
       return rows;
     } finally {
@@ -631,7 +684,7 @@ class DailyOutputModel {
           t.Status_i = 1
         ORDER BY 
           t.ToolDescr_v
-      `, [txn_id || 0]);
+      `, [parseInt(txn_id || 0)]);
       
       return rows;
     } finally {
@@ -646,35 +699,38 @@ class DailyOutputModel {
    * @returns {Promise<Object>} - Object with input and output items
    */
   static async processItemsAndBatches(connection, txn_id) {
+    // Use a safe integer value for the transaction ID
+    const safeId = Number.isInteger(parseInt(txn_id)) ? parseInt(txn_id) : 0;
+    
     // Get output items
     const [outputRows] = await connection.query(`
       SELECT di.*, p.StkCode_v as ProductCode_v, p.ProdName_v as ProductName_v,
              CONCAT('(',p.StkCode_v,') ',p.ProdName_v) as product_description
       FROM tbl_daily_item di
-      LEFT JOIN tbl_product_code p ON p.ItemId_i = di.ProductId_i
-      WHERE di.TxnId_i = ? AND di.ItemType_c = 'O'
+      LEFT JOIN tbl_product_code p ON p.ItemId_i = di.ItemId_i
+      WHERE di.TxnId_i = ? AND di.InOut_c = 'O'
       ORDER BY di.RowId_i
-    `, [txn_id]);
+    `, [safeId]);
     
     // Get input items
     const [inputRows] = await connection.query(`
       SELECT di.*, p.StkCode_v as ProductCode_v, p.ProdName_v as ProductName_v,
              CONCAT('(',p.StkCode_v,') ',p.ProdName_v) as product_description
       FROM tbl_daily_item di
-      LEFT JOIN tbl_product_code p ON p.ItemId_i = di.ProductId_i
-      WHERE di.TxnId_i = ? AND di.ItemType_c = 'I'
+      LEFT JOIN tbl_product_code p ON p.ItemId_i = di.ItemId_i
+      WHERE di.TxnId_i = ? AND di.InOut_c = 'I'
       ORDER BY di.RowId_i
-    `, [txn_id]);
+    `, [safeId]);
     
     // Process output items
     const outputItems = outputRows.map(item => ({
       id: item.RowId_i,
-      product_id: item.ProductId_i,
+      product_id: item.ItemId_i,
       product_description: item.product_description,
       output_qty: item.Qty_d,
-      reject_qty: item.RejectQty_d || 0,
-      extra_qty: item.QtyExtra_d || 0,
-      total_qty: parseFloat(item.Qty_d) + parseFloat(item.RejectQty_d || 0) + parseFloat(item.QtyExtra_d || 0),
+      reject_qty: item.Reject_d || 0,
+      extra_qty: item.Extra_d || 0,
+      total_qty: parseFloat(item.Qty_d) + parseFloat(item.Reject_d || 0) + parseFloat(item.Extra_d || 0),
       outstanding: item.QtyBalance_d || 0,
       value: item.Amount_d || 0
     }));
@@ -683,21 +739,21 @@ class DailyOutputModel {
     const inputItems = [];
     for (const item of inputRows) {
       const [lotRows] = await connection.query(`
-        SELECT sb.StockId_i, sb.BatchCode_v, sb.QtyBalance_d
-        FROM tbl_stock_batch sb
-        WHERE sb.ProductId_i = ? AND sb.QtyBalance_d > 0
-        ORDER BY sb.CreateDate_dt
-      `, [item.ProductId_i]);
+        SELECT BatchId_i as StockId_i, Batch_v as BatchCode_v, Cost_d as QtyBalance_d
+        FROM tbl_product_batch
+        WHERE ItemId_i = ? AND Cost_d > 0
+        ORDER BY BatchId_i
+      `, [item.ItemId_i]);
       
       const lot_options = lotRows.map(lot => ({
         value: lot.StockId_i,
         text: `${lot.BatchCode_v} (${lot.QtyBalance_d})`,
-        selected: lot.StockId_i === item.StockId_i
+        selected: lot.StockId_i === item.StkId_i
       }));
       
       inputItems.push({
         id: item.RowId_i,
-        product_id: item.ProductId_i,
+        product_id: item.ItemId_i,
         product_description: item.product_description,
         prd_avail: item.QtyBalance_d || 0,
         demand_qty: item.Qty_d || 0,
@@ -806,78 +862,6 @@ class DailyOutputModel {
   }
   
   /**
-   * Get machines for a transaction
-   * @param {number} txn_id - Transaction ID
-   * @returns {Promise<Array>} - Array of machines
-   */
-  static async getMachines(txn_id = 0) {
-    const connection = await pool.getConnection();
-    try {
-      const [rows] = await connection.query(`
-        SELECT m.MachineId_i as machine_id, 
-               m.MachineName_v as machine_name,
-               dm.Selected_c as selected
-        FROM tbl_machine m
-        LEFT JOIN tbl_daily_machine dm ON dm.MachineId_i = m.MachineId_i AND dm.TxnId_i = ?
-        WHERE m.Status_i = 1
-        ORDER BY m.MachineName_v
-      `, [txn_id || 0]);
-      
-      return rows;
-    } finally {
-      connection.release();
-    }
-  }
-  
-  /**
-   * Get molds for a transaction
-   * @param {number} txn_id - Transaction ID
-   * @returns {Promise<Array>} - Array of molds
-   */
-  static async getMolds(txn_id = 0) {
-    const connection = await pool.getConnection();
-    try {
-      const [rows] = await connection.query(`
-        SELECT m.MoldId_i as mold_id, 
-               m.MoldName_v as mold_name,
-               dm.Selected_c as selected
-        FROM tbl_comp_mold m
-        LEFT JOIN tbl_daily_mold dm ON dm.MoldId_i = m.MoldId_i AND dm.TxnId_i = ?
-        WHERE m.Status_c = 'A'
-        ORDER BY m.MoldName_v
-      `, [txn_id || 0]);
-      
-      return rows;
-    } finally {
-      connection.release();
-    }
-  }
-  
-  /**
-   * Get operators for a transaction
-   * @param {number} txn_id - Transaction ID
-   * @returns {Promise<Array>} - Array of operators
-   */
-  static async getOperators(txn_id = 0) {
-    const connection = await pool.getConnection();
-    try {
-      const [rows] = await connection.query(`
-        SELECT u.UserId_i as operator_id, 
-               u.UserName_v as operator_name,
-               du.Selected_c as selected
-        FROM tbl_user u
-        LEFT JOIN tbl_daily_operator du ON du.UserId_i = u.UserId_i AND du.TxnId_i = ?
-        WHERE u.Status_c = 'A' AND u.UserGroup_c = 'O'
-        ORDER BY u.UserName_v
-      `, [txn_id || 0]);
-      
-      return rows;
-    } finally {
-      connection.release();
-    }
-  }
-  
-  /**
    * Get items for a transaction
    * @param {number} txn_id - Transaction ID
    * @returns {Promise<Object>} - Object with input and output items
@@ -890,8 +874,8 @@ class DailyOutputModel {
         SELECT di.*, p.StkCode_v as ProductCode_v, p.ProdName_v as ProductName_v,
                CONCAT('(',p.StkCode_v,') ',p.ProdName_v) as product_description
         FROM tbl_daily_item di
-        LEFT JOIN tbl_product_code p ON p.ItemId_i = di.ProductId_i
-        WHERE di.TxnId_i = ? AND di.ItemType_c = 'O'
+        LEFT JOIN tbl_product_code p ON p.ItemId_i = di.ItemId_i
+        WHERE di.TxnId_i = ? AND di.InOut_c = 'O'
         ORDER BY di.RowId_i
       `, [txn_id]);
       
@@ -900,8 +884,8 @@ class DailyOutputModel {
         SELECT di.*, p.StkCode_v as ProductCode_v, p.ProdName_v as ProductName_v,
                CONCAT('(',p.StkCode_v,') ',p.ProdName_v) as product_description
         FROM tbl_daily_item di
-        LEFT JOIN tbl_product_code p ON p.ItemId_i = di.ProductId_i
-        WHERE di.TxnId_i = ? AND di.ItemType_c = 'I'
+        LEFT JOIN tbl_product_code p ON p.ItemId_i = di.ItemId_i
+        WHERE di.TxnId_i = ? AND di.InOut_c = 'I'
         ORDER BY di.RowId_i
       `, [txn_id]);
       
@@ -923,32 +907,11 @@ class DailyOutputModel {
     const connection = await pool.getConnection();
     try {
       const [rows] = await connection.query(`
-        SELECT sb.StockId_i, sb.BatchCode_v, sb.QtyBalance_d
-        FROM tbl_stock_batch sb
-        WHERE sb.ProductId_i = ? AND sb.QtyBalance_d > 0
-        ORDER BY sb.CreateDate_dt
+        SELECT BatchId_i as StockId_i, Batch_v as BatchCode_v, Cost_d as QtyBalance_d
+        FROM tbl_product_batch
+        WHERE ItemId_i = ? AND Cost_d > 0
+        ORDER BY BatchId_i
       `, [product_id]);
-      
-      return rows;
-    } finally {
-      connection.release();
-    }
-  }
-  
-  /**
-   * Get available products
-   * @returns {Promise<Array>} - Array of products
-   */
-  static async getAvailableProducts() {
-    const connection = await pool.getConnection();
-    try {
-      const [rows] = await connection.query(`
-        SELECT p.ItemId_i as product_id, 
-               CONCAT('(',p.StkCode_v,') ',p.ProdName_v) as product_name
-        FROM tbl_product_code p
-        WHERE p.Deleted_c = '0'
-        ORDER BY p.ProdName_v
-      `);
       
       return rows;
     } finally {
@@ -1034,7 +997,7 @@ class DailyOutputModel {
         LEFT JOIN (
           SELECT TxnId_i, ItemId_i, Qty_d, RejectQty_d
           FROM tbl_daily_item
-          WHERE ItemType_c = 'O'
+          WHERE InOut_c = 'O'
           GROUP BY TxnId_i
         ) di ON d.TxnId_i = di.TxnId_i
         WHERE 1=1 
@@ -1245,6 +1208,7 @@ class DailyOutputModel {
           TIME_FORMAT(d.EndTime_tt, '%H:%i:%s') AS end_time,
           d.DocRef_v AS daily_no,
           j.DocRef_v AS jo_no,
+          j.TxnId_i AS jo_id,
           p.ProcessDescr_v AS process_description,
           IFNULL(
             (SELECT jp.StkCode_v AS ProductCode_v

@@ -94,9 +94,9 @@ const OPTION_DAILY_PURPOSE = {
 app.use('/', dailyOutputRoutes);
 app.use('/', apiRoutes);
 
-// Root route - redirect to daily inquiry page
+// Root route - redirect to manufacturing landing page
 app.get('/', (req, res) => {
-  res.redirect('/page/manufacture/daily_inquiry');
+  res.redirect('/page/manufacturing');
 });
 
 // Dashboard page

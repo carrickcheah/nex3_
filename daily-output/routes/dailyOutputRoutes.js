@@ -37,6 +37,14 @@ router.get('/page/manufacture/jo/view/:id', dailyOutputController.jobOrderView);
 router.get('/page/manufacture/new_job_order', dailyOutputController.jobOrderList);
 router.get('/page/manufacture/new_job_order/:id', dailyOutputController.jobOrderView);
 
+// Manufacturing landing page
+router.get('/page/manufacturing', (req, res) => {
+  res.render('manufacturing_landing', { 
+    title: 'Manufacturing', 
+    user: req.session.user || { name: 'Guest' } 
+  });
+});
+
 // POST routes for daily output
 router.post('/page/manufacture/daily_output/create', dailyOutputController.createDailyOutput);
 router.post('/page/manufacture/daily_output/update/:id', dailyOutputController.updateDailyOutput);

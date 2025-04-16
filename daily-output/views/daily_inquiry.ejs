@@ -424,8 +424,20 @@
               <td class="small" data-full-text="<%= item.doc_date %>"><%= item.doc_date %></td>
               <td class="small" data-full-text="<%= item.start_time %>"><%= item.start_time %></td>
               <td class="small" data-full-text="<%= item.end_time %>"><%= item.end_time %></td>
-              <td class="medium" data-full-text="<%= item.daily_no %>"><%= item.daily_no %></td>
-              <td class="medium" data-full-text="<%= item.jo_no %>"><%= item.jo_no %></td>
+              <td class="medium" data-full-text="<%= item.daily_no %>">
+                <a href="/page/manufacture/daily_output/view/<%= item.txn_id %>" class="w3-text-blue">
+                  <%= item.daily_no %>
+                </a>
+              </td>
+              <td class="medium" data-full-text="<%= item.jo_no %>">
+                <% if (item.jo_id) { %>
+                  <a href="/page/manufacture/new_job_order/<%= item.jo_id %>" class="w3-text-blue">
+                    <%= item.jo_no %>
+                  </a>
+                <% } else { %>
+                  <%= item.jo_no || 'N/A' %>
+                <% } %>
+              </td>
               <td class="medium" data-full-text="<%= item.process_description || 'N/A' %>"><%= item.process_description || 'N/A' %></td>
               <td class="medium" data-full-text="<%= item.master_code || 'N/A' %>"><%= item.master_code || 'N/A' %></td>
               <td class="medium" data-full-text="<%= item.output_item || 'N/A' %>"><%= item.output_item || 'N/A' %></td>

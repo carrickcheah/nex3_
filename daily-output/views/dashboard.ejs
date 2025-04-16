@@ -143,17 +143,7 @@
 </head>
 <body>
 
-<div class="w3-bar nav-bar">
-  <a href="/page/dashboard" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-  <a href="/page/manufacture/daily_inquiry" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-chart-line"></i> Sales</a>
-  <a href="/page/purchasing" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-shopping-cart"></i> Purchasing</a>
-  <a href="/page/warehouse" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-warehouse"></i> Warehouse</a>
-  <a href="/page/manufacturing" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-industry"></i> Manufacturing</a>
-  <a href="/page/engineering" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-cogs"></i> Engineering</a>
-  <a href="/page/administration" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-users-cog"></i> Administration</a>
-  <a href="/page/aichat" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-comment-dots"></i> AI Chat</a>
-  <a href="/page/settings" class="w3-bar-item w3-button w3-mobile"><i class="fas fa-cog"></i> Settings</a>
-</div>
+<%- include('./components/header', {title: title}) %>
 
 <div class="w3-container">
   <h2 class="page-title">Dashboard</h2>
@@ -217,8 +207,8 @@
           <ul class="w3-ul">
             <li><a href="/page/manufacture/daily_output/new"><i class="fas fa-plus-circle"></i> Create New Daily Output</a></li>
             <li><a href="/page/manufacture/daily_inquiry"><i class="fas fa-search"></i> View Daily Output Inquiry</a></li>
-            <li><a href="#"><i class="fas fa-cog"></i> Manage Settings</a></li>
-            <li><a href="#"><i class="fas fa-file-alt"></i> Generate Reports</a></li>
+            <li><a href="/page/manufacture/new_job_order"><i class="fas fa-clipboard-list"></i> Job Orders</a></li>
+            <li><a href="/page/administration"><i class="fas fa-cog"></i> Manage Settings</a></li>
           </ul>
         </div>
       </div>

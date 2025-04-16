@@ -1,29 +1,378 @@
 <%- include('./components/header', {title: title}) %>
 
-<div class="w3-container">
+<style>
+  /* Modern Professional Design */
+  :root {
+    --primary-color: #2c3e50;
+    --secondary-color: #3498db;
+    --accent-color: #e74c3c;
+    --light-gray: #f5f7fa;
+    --medium-gray: #e4e7ed;
+    --dark-gray: #718093;
+    --text-color: #2d3436;
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --danger-color: #c0392b;
+    --info-color: #3498db;
+    --card-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    --hover-shadow: 0 8px 16px rgba(0,0,0,0.15);
+  }
+
+  body {
+    background-color: #f8f9fa;
+    color: var(--text-color);
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+
+  .page-container {
+    max-width: 1800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  /* Card Styles */
+  .jo-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    transition: box-shadow 0.3s;
+    margin-bottom: 25px;
+    overflow: hidden;
+  }
+
+  .jo-card:hover {
+    box-shadow: var(--hover-shadow);
+  }
+
+  /* Header Styles */
+  .card-header {
+    padding: 20px 25px;
+    background: linear-gradient(135deg, var(--primary-color), #34495e);
+    color: white;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .card-header h2 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.5rem;
+  }
+
+  .status-tag {
+    padding: 6px 12px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .status-active { background-color: var(--success-color); }
+  .status-progress { background-color: var(--info-color); }
+  .status-completed { background-color: var(--dark-gray); }
+  .status-voided { background-color: var(--danger-color); }
+  .status-pending { background-color: var(--warning-color); color: #333; }
+
+  /* Content Styles */
+  .card-content {
+    padding: 25px;
+  }
+
+  .info-section {
+    margin-bottom: 30px;
+  }
+
+  .info-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -15px;
+  }
+
+  .info-col {
+    padding: 0 15px;
+    flex: 1;
+    min-width: 250px;
+    margin-bottom: 20px;
+  }
+
+  .info-field {
+    margin-bottom: 15px;
+  }
+
+  .info-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--dark-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .info-field .value {
+    font-size: 1.1rem;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--medium-gray);
+    line-height: 1.4;
+  }
+
+  .info-field .value.highlight {
+    font-weight: 600;
+    color: var(--secondary-color);
+  }
+
+  /* Table Styles */
+  .data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 20px;
+    box-shadow: var(--card-shadow);
+    border-radius: 8px;
+    overflow: hidden;
+    table-layout: fixed;
+  }
+
+  .data-table th {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    vertical-align: middle;
+  }
+
+  .data-table td {
+    padding: 15px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--medium-gray);
+    background-color: white;
+    word-wrap: break-word;
+  }
+
+  .data-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .data-table tr:hover td {
+    background-color: var(--light-gray);
+  }
+
+  /* Process Flow Table Columns */
+  .process-table th:nth-child(1), 
+  .process-table td:nth-child(1) { width: 3%; }
+  .process-table th:nth-child(2), 
+  .process-table td:nth-child(2) { width: 30%; }
+  .process-table th:nth-child(3), 
+  .process-table td:nth-child(3) { width: 30%; }
+  .process-table th:nth-child(4), 
+  .process-table td:nth-child(4) { width: 30%; }
+  .process-table th:nth-child(5), 
+  .process-table td:nth-child(5) { width: 7%; }
+
+  /* Job Orders Table Columns */
+  .job-orders-table th:nth-child(1), 
+  .job-orders-table td:nth-child(1) { width: 15%; }
+  .job-orders-table th:nth-child(2), 
+  .job-orders-table td:nth-child(2) { width: 30%; }
+  .job-orders-table th:nth-child(3), 
+  .job-orders-table td:nth-child(3) { width: 15%; }
+  .job-orders-table th:nth-child(4), 
+  .job-orders-table td:nth-child(4) { width: 15%; }
+  .job-orders-table th:nth-child(5), 
+  .job-orders-table td:nth-child(5) { width: 10%; }
+  .job-orders-table th:nth-child(6), 
+  .job-orders-table td:nth-child(6) { width: 15%; }
+  
+  .process-name {
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .detail-item {
+    margin-bottom: 5px;
+    font-size: 0.95rem;
+  }
+
+  .location-title {
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  /* Button Styles */
+  .action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+  }
+
+  .btn i {
+    margin-right: 6px;
+  }
+
+  .btn-primary {
+    background-color: var(--secondary-color);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+  }
+
+  .btn-secondary {
+    background-color: var(--medium-gray);
+    color: var(--text-color);
+  }
+
+  .btn-secondary:hover {
+    background-color: #d1d6e0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+  }
+
+  .btn-danger:hover {
+    background-color: #a82315;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(192, 57, 43, 0.3);
+  }
+
+  /* Utility Classes */
+  .text-link {
+    color: var(--secondary-color);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .text-link:hover {
+    text-decoration: underline;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-right: 5px;
+  }
+
+  .tag-black { background-color: #2d3436; color: white; }
+  .tag-pending { background-color: #f1c40f; color: #2d3436; }
+  
+  /* Resource Card Styles */
+  .resource-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 5px;
+  }
+
+  .resource-box {
+    padding: 8px 12px;
+    border-radius: 4px;
+    background-color: var(--light-gray);
+    border: 1px solid var(--medium-gray);
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .resource-box i {
+    margin-right: 6px;
+    color: var(--primary-color);
+  }
+  
+  /* Animation */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-out;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .info-col {
+      flex: 0 0 100%;
+    }
+    
+    .action-buttons {
+      flex-direction: column;
+    }
+    
+    .btn {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="page-container animate-fade-in">
   <% if (locals.isList) { %>
     <!-- Job Order List View -->
-    <div class="w3-card-4 w3-white w3-margin-top w3-margin-bottom">
-      <div class="w3-container w3-blue">
-        <h2>Job Order List</h2>
+    <div class="jo-card">
+      <div class="card-header">
+        <h2><i class="fas fa-clipboard-list"></i> Job Order List</h2>
+        <span><%= jobOrders ? jobOrders.length : 0 %> Record(s)</span>
       </div>
       
-      <div class="w3-container w3-padding">
+      <div class="card-content">
         <!-- Search Filter -->
-        <div class="w3-row w3-section">
-          <div class="w3-col m6">
-            <input type="text" id="filter-job-orders" class="w3-input w3-border" placeholder="Filter job orders..." style="margin-bottom: 10px;">
-          </div>
-          <div class="w3-col m6 w3-right-align">
-            <span class="w3-text-grey">Total: <%= jobOrders ? jobOrders.length : 0 %> record(s)</span>
+        <div class="info-section">
+          <div class="info-row">
+            <div class="info-col" style="flex: 2;">
+              <div class="input-group">
+                <input type="text" id="filter-job-orders" class="form-control" placeholder="Search job orders..." style="width: 100%; padding: 10px; border: 1px solid var(--medium-gray); border-radius: 4px;">
+              </div>
+            </div>
+            <div class="info-col" style="flex: 1; text-align: right;">
+              <a href="/page/manufacture/daily_output/new" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New Job Order
+              </a>
+            </div>
           </div>
         </div>
         
         <!-- Job Order Table -->
-        <div class="w3-responsive">
-          <table id="job-orders-table" class="w3-table-all">
+        <div class="table-responsive">
+          <table id="job-orders-table" class="data-table job-orders-table">
             <thead>
-              <tr class="w3-blue">
+              <tr>
                 <th>Reference</th>
                 <th>Output Item</th>
                 <th>Created</th>
@@ -36,32 +385,48 @@
               <% if (jobOrders && jobOrders.length > 0) { %>
                 <% jobOrders.forEach(jo => { %>
                   <tr>
-                    <td><%= jo.jo_reference %></td>
-                    <td><% if (jo.item_code) { %>[<%= jo.item_code %>]<% } %> <%= jo.item_name || 'N/A' %></td>
+                    <td><strong><%= jo.jo_reference %></strong></td>
+                    <td>
+                      <% if (jo.item_code) { %>
+                        <span class="item-code">[<%= jo.item_code %>]</span>
+                      <% } %>
+                      <%= jo.item_name || 'N/A' %>
+                    </td>
                     <td><%= jo.create_date %></td>
                     <td><%= jo.created_by || 'N/A' %></td>
                     <td>
                       <% if (jo.status === 'A') { %>
-                        <span class="w3-tag w3-green">Active</span>
+                        <span class="status-tag status-active">Active</span>
                       <% } else if (jo.status === 'P') { %>
-                        <span class="w3-tag w3-blue">IN-PROGRESS</span>
+                        <span class="status-tag status-progress">In-Progress</span>
                       <% } else if (jo.status === 'C') { %>
-                        <span class="w3-tag w3-grey">Completed</span>
+                        <span class="status-tag status-completed">Completed</span>
                       <% } else if (jo.status === 'V') { %>
-                        <span class="w3-tag w3-red">Voided</span>
+                        <span class="status-tag status-voided">Voided</span>
                       <% } else { %>
-                        <span class="w3-tag w3-grey"><%= jo.status %></span>
+                        <span class="status-tag"><%= jo.status %></span>
                       <% } %>
                     </td>
                     <td>
-                      <a href="/page/manufacture/new_job_order/<%= jo.jo_id %>" class="w3-button w3-small w3-blue">View</a>
-                      <a href="/page/manufacture/daily_output/new?jo=<%= jo.jo_id %>" class="w3-button w3-small w3-green">Create Output</a>
+                      <div class="action-buttons">
+                        <a href="/page/manufacture/new_job_order/<%= jo.jo_id %>" class="btn btn-primary" style="padding: 6px 12px;">
+                          <i class="fas fa-eye"></i> View
+                        </a>
+                        <a href="/page/manufacture/daily_output/new?jo=<%= jo.jo_id %>" class="btn btn-secondary" style="padding: 6px 12px;">
+                          <i class="fas fa-plus"></i> Output
+                        </a>
+                      </div>
                     </td>
                   </tr>
                 <% }); %>
               <% } else { %>
                 <tr>
-                  <td colspan="6" class="w3-center">No job orders found</td>
+                  <td colspan="6" style="text-align: center; padding: 30px;">
+                    <div style="color: var(--dark-gray);">
+                      <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                      <p>No job orders found</p>
+                    </div>
+                  </td>
                 </tr>
               <% } %>
             </tbody>
@@ -69,188 +434,236 @@
         </div>
         
         <!-- Action Buttons -->
-        <div class="w3-container w3-section">
-          <a href="/page/manufacture/daily_inquiry" class="w3-button w3-grey">Back to Daily Inquiry</a>
+        <div class="action-buttons">
+          <a href="/page/manufacture/daily_inquiry" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Daily Inquiry
+          </a>
         </div>
       </div>
     </div>
   <% } else { %>
-    <!-- Job Order Detail View - Formatted like PHP Version -->
-    <div class="w3-card-4 w3-white w3-margin-top w3-margin-bottom">
-      <div class="w3-container w3-green">
-        <h2>View Job Order <span class="w3-tag w3-round w3-white">IN-PROGRESS</span></h2>
+    <!-- Job Order Detail View -->
+    <div class="jo-card">
+      <div class="card-header">
+        <h2>
+          <i class="fas fa-clipboard-check"></i> 
+          Job Order #<%= joData.jo_reference %>
+        </h2>
+        <span class="status-tag status-progress">IN-PROGRESS</span>
       </div>
       
-      <div class="w3-container w3-padding">
+      <div class="card-content">
         <!-- Job Order Header Information -->
-        <div class="w3-row">
-          <div class="w3-col m4">
-            <p><strong>Product</strong><br>
-              <a href="#" class="w3-text-blue">[<%= joData.item_code %>]</a> <%= joData.item_name %>
-            </p>
-          </div>
-          <div class="w3-col m4">
-            <p><strong>Doc Date</strong><br>
-              <%= joData.create_date ? joData.create_date.split(' ')[0] : 'N/A' %>
-            </p>
-          </div>
-          <div class="w3-col m4">
-            <p><strong>JO No</strong><br>
-              <%= joData.jo_reference %>
-            </p>
+        <div class="info-section">
+          <div class="info-row">
+            <div class="info-col">
+              <div class="info-field">
+                <label>Product</label>
+                <div class="value highlight">
+                  <a href="#" class="text-link">[<%= joData.item_code %>]</a> <%= joData.item_name %>
+                </div>
+              </div>
+              
+              <div class="info-field">
+                <label>SO / PO No</label>
+                <div class="value">- NIL -</div>
+              </div>
+              
+              <div class="info-field">
+                <label>Process Routing</label>
+                <div class="value">
+                  <a href="#" class="text-link">[<%= joData.item_code %>]</a> <%= joData.item_name %>
+                </div>
+              </div>
+              
+              <div class="info-field">
+                <label>Desired Start Date</label>
+                <div class="value">
+                  <% if (typeof moment !== 'undefined' && joData.create_date) { %>
+                    <%= moment(joData.create_date.split(' ')[0], 'DD-MM-YYYY').add(7, 'days').format('DD-MM-YYYY') %>
+                  <% } else { %>
+                    N/A
+                  <% } %>
+                </div>
+              </div>
+            </div>
+            
+            <div class="info-col">
+              <div class="info-field">
+                <label>Doc Date</label>
+                <div class="value"><%= joData.create_date ? joData.create_date.split(' ')[0] : 'N/A' %></div>
+              </div>
+              
+              <div class="info-field">
+                <label>Customer</label>
+                <div class="value">- NIL -</div>
+              </div>
+              
+              <div class="info-field">
+                <label>Serial No.</label>
+                <div class="value">- NON APPLICABLE -</div>
+              </div>
+              
+              <div class="info-field">
+                <label>Latest Complete Date</label>
+                <div class="value">
+                  <% if (typeof moment !== 'undefined' && joData.create_date) { %>
+                    <%= moment(joData.create_date.split(' ')[0], 'DD-MM-YYYY').add(30, 'days').format('DD-MM-YYYY') %>
+                  <% } else { %>
+                    N/A
+                  <% } %>
+                </div>
+              </div>
+            </div>
+            
+            <div class="info-col">
+              <div class="info-field">
+                <label>JO No</label>
+                <div class="value highlight"><%= joData.jo_reference %></div>
+              </div>
+              
+              <div class="info-field">
+                <label>Workflow Locations</label>
+                <div class="value"><%= joData.item_code %>-LOCATION FLOW</div>
+              </div>
+              
+              <div class="info-field">
+                <label>JO Qty</label>
+                <div class="value highlight"><%= materials && materials.length > 0 ? materials[0].quantity : '0' %></div>
+              </div>
+              
+              <div class="info-field">
+                <label>Issued By</label>
+                <div class="value"><%= joData.created_by || 'N/A' %></div>
+              </div>
+            </div>
           </div>
         </div>
         
-        <div class="w3-row">
-          <div class="w3-col m4">
-            <p><strong>SO / PO No</strong><br>
-              - NIL -
-            </p>
+        <!-- Process Flow Table -->
+        <div class="info-section">
+          <div class="card-header" style="margin-bottom: 15px;">
+            <h2><i class="fas fa-project-diagram"></i> Process Flow</h2>
           </div>
-          <div class="w3-col m4">
-            <p><strong>Customer</strong><br>
-              - NIL -
-            </p>
-          </div>
-          <div class="w3-col m4">
-            <p><strong>Workflow Locations</strong><br>
-              <%= joData.item_code %>-LOCATION FLOW
-            </p>
-          </div>
-        </div>
-        
-        <div class="w3-row">
-          <div class="w3-col m4">
-            <p><strong>Process Routing</strong><br>
-              <a href="#" class="w3-text-blue">[<%= joData.item_code %>]</a> <%= joData.item_name %>
-            </p>
-          </div>
-          <div class="w3-col m4">
-            <p><strong>Serial No.</strong><br>
-              - NON APPLICABLE -
-            </p>
-          </div>
-          <div class="w3-col m4">
-            <p><strong>JO Qty</strong><br>
-              <strong><%= materials && materials.length > 0 ? materials[0].quantity : '0' %></strong>
-            </p>
-          </div>
-        </div>
-        
-        <div class="w3-row">
-          <div class="w3-col m4">
-            <p><strong>Desired Start Date</strong><br>
-              <% if (typeof moment !== 'undefined' && joData.create_date) { %>
-                <%= moment(joData.create_date.split(' ')[0], 'DD-MM-YYYY').add(7, 'days').format('DD-MM-YYYY') %>
-              <% } else { %>
-                N/A
-              <% } %>
-            </p>
-          </div>
-          <div class="w3-col m4">
-            <p><strong>Latest Complete Date</strong><br>
-              <% if (typeof moment !== 'undefined' && joData.create_date) { %>
-                <%= moment(joData.create_date.split(' ')[0], 'DD-MM-YYYY').add(30, 'days').format('DD-MM-YYYY') %>
-              <% } else { %>
-                N/A
-              <% } %>
-            </p>
-          </div>
-          <div class="w3-col m4">
-            <p><strong>Issued By</strong><br>
-              <%= joData.created_by || 'N/A' %>
-            </p>
-          </div>
-        </div>
-        
-        <!-- Process Flow Table - Format matching screenshot -->
-        <div class="w3-responsive" style="margin-top: 20px;">
-          <table class="w3-table-all" style="border-collapse: collapse; width: 100%;">
-            <thead>
-              <tr class="w3-light-grey">
-                <th style="width: 3%;">#</th>
-                <th style="width: 30%;">Process Description</th>
-                <th style="width: 30%;">Demand</th>
-                <th style="width: 30%;">Supply</th>
-                <th style="width: 7%;">&nbsp;</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% if (processes && processes.length > 0) { %>
-                <% processes.forEach((process, index) => { %>
-                  <tr style="border-bottom: 1px solid #ddd;">
-                    <td style="vertical-align: top; padding: 10px 5px;"><%= index + 1 %>.</td>
-                    <td style="vertical-align: top; padding: 10px 5px;">
-                      <strong class="w3-text-purple"><%= process.process_name %></strong>
-                      <% if (process.task) { %>
-                        <br>
-                        <small><%= process.task.split(",").join("<br>") %></small>
-                      <% } %>
-                      <% if (process.machine_info) { %>
-                        <br>Machine: <%= process.machine_info %>
-                      <% } %>
-                      <% if (process.mold_info) { %>
-                        <br>Mold: <%= process.mold_info %>
-                      <% } %>
-                      <% if (materials && materials.length > 0) { %>
-                        <br>Capacity: <%= materials[0].quantity || '0' %> unit / 1 min
-                        <br>Lead Time: 0 day(s)
-                        <br>Man Count: <%= Math.floor(Math.random() * 5) + 1 %>
-                      <% } %>
-                    </td>
-                    <td style="vertical-align: top; padding: 10px 5px;">
-                      <strong class="w3-text-purple">PRODUCTION DEPT</strong>
-                      <br>1. [<%= process.process_name.slice(0, 12) %>]
-                      <% if (materials && materials.length > 0) { %>
-                        <br>L<%= (Math.random() + 9).toString().substring(0, 5) %>-SHEET
-                        <br>M<%= Math.floor(100000 + Math.random() * 900000) %> | S<%= Math.floor(1000000 + Math.random() * 9000000) %>
-                      <% } %>
-                    </td>
-                    <td style="vertical-align: top; padding: 10px 5px;">
-                      <strong class="w3-text-purple">WAREHOUSE 1 (FG)</strong>
-                      <br><a href="#" class="w3-text-blue">[<%= joData.item_code %>]</a>
-                      <br>CABINET SIDE PLATE
-                      <br>Qty Done: <%= Math.floor(Math.random() * 500) + 100 %>, Outstanding: <%= Math.floor(Math.random() * 20) + 1 %>
-                      <br>M<%= Math.floor(1000000 + Math.random() * 9000000) %> | S<%= Math.floor(1000000 + Math.random() * 9000000) %>
-                    </td>
-                    <td style="vertical-align: top; padding: 10px 5px;">
-                      <% if (index % 2 === 0) { %>
-                        <span class="w3-tag w3-black">CLOSED</span>
-                      <% } else { %>
-                        <span class="w3-tag w3-yellow w3-text-black">PENDING</span>
-                      <% } %>
+          
+          <div class="table-responsive">
+            <table class="data-table process-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Process Description</th>
+                  <th>Demand</th>
+                  <th>Supply</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (processes && processes.length > 0) { %>
+                  <% processes.forEach((process, index) => { %>
+                    <tr>
+                      <td><%= index + 1 %>.</td>
+                      <td>
+                        <span class="process-name"><%= process.process_name %></span>
+                        <% if (process.task) { %>
+                          <div class="detail-item"><%= process.task.split(",").join(" • ") %></div>
+                        <% } %>
+                        <% if (process.machine_info) { %>
+                          <div class="detail-item"><strong>Machine:</strong> <%= process.machine_info %></div>
+                        <% } %>
+                        <% if (process.mold_info) { %>
+                          <div class="detail-item"><strong>Mold:</strong> <%= process.mold_info %></div>
+                        <% } %>
+                        <% if (materials && materials.length > 0) { %>
+                          <div class="detail-item"><strong>Capacity:</strong> <%= materials[0].quantity || '0' %> unit / 1 min</div>
+                          <div class="detail-item"><strong>Lead Time:</strong> 0 day(s)</div>
+                          <div class="detail-item"><strong>Man Count:</strong> <%= Math.floor(Math.random() * 5) + 1 %></div>
+                        <% } %>
+                      </td>
+                      <td>
+                        <span class="location-title">PRODUCTION DEPT</span>
+                        <div class="detail-item">1. [<%= process.process_name.slice(0, 12) %>]</div>
+                        <% if (materials && materials.length > 0) { %>
+                          <div class="detail-item">L<%= (Math.random() + 9).toString().substring(0, 5) %>-SHEET</div>
+                          <div class="detail-item">M<%= Math.floor(100000 + Math.random() * 900000) %> | S<%= Math.floor(1000000 + Math.random() * 9000000) %></div>
+                        <% } %>
+                      </td>
+                      <td>
+                        <span class="location-title">WAREHOUSE 1 (FG)</span>
+                        <div class="detail-item"><a href="#" class="text-link">[<%= joData.item_code %>]</a></div>
+                        <div class="detail-item">CABINET SIDE PLATE</div>
+                        <div class="detail-item"><strong>Qty Done:</strong> <%= Math.floor(Math.random() * 500) + 100 %>, <strong>Outstanding:</strong> <%= Math.floor(Math.random() * 20) + 1 %></div>
+                        <div class="detail-item">M<%= Math.floor(1000000 + Math.random() * 9000000) %> | S<%= Math.floor(1000000 + Math.random() * 9000000) %></div>
+                      </td>
+                      <td>
+                        <% if (index % 2 === 0) { %>
+                          <span class="status-tag status-completed">CLOSED</span>
+                        <% } else { %>
+                          <span class="status-tag status-pending">PENDING</span>
+                        <% } %>
+                      </td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="5" style="text-align: center; padding: 30px;">
+                      <div style="color: var(--dark-gray);">
+                        <i class="fas fa-cogs" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                        <p>No processes found</p>
+                      </div>
                     </td>
                   </tr>
-                <% }); %>
-              <% } else { %>
-                <tr>
-                  <td colspan="5" class="w3-center">No processes found</td>
-                </tr>
-              <% } %>
-            </tbody>
-          </table>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
         </div>
         
         <!-- Remark Section -->
-        <div class="w3-section">
-          <p><strong>Remark</strong><br>
-          <%= joData.remarks || 'No remarks' %></p>
+        <div class="jo-card">
+          <div class="card-header">
+            <h2><i class="fas fa-comment-alt"></i> Remark</h2>
+          </div>
+          
+          <div class="card-content">
+            <div class="info-field">
+              <div class="value" style="min-height: 50px; border-bottom: none;">
+                <%= joData.remarks || 'No remarks' %>
+              </div>
+            </div>
+          </div>
         </div>
         
         <!-- Action Buttons -->
-        <div class="w3-container w3-section">
-          <button class="w3-button w3-blue" id="jCard(P)">jCard(P)</button>
-          <button class="w3-button w3-blue" id="jCard(L)">jCard(L)</button>
-          <button class="w3-button w3-blue" id="SRList">SRList</button>
-          <button class="w3-button w3-blue" id="jLog">jLog</button>
-          <button class="w3-button w3-blue" id="New">New</button>
-          <button class="w3-button w3-blue" id="Edit">Edit</button>
-          <button class="w3-button w3-blue" id="Exit">Exit</button>
+        <div class="action-buttons">
+          <button class="btn btn-primary" id="jCard(P)">
+            <i class="fas fa-id-card"></i> jCard(P)
+          </button>
+          <button class="btn btn-primary" id="jCard(L)">
+            <i class="fas fa-id-card-alt"></i> jCard(L)
+          </button>
+          <button class="btn btn-primary" id="SRList">
+            <i class="fas fa-list"></i> SRList
+          </button>
+          <button class="btn btn-primary" id="jLog">
+            <i class="fas fa-history"></i> jLog
+          </button>
+          <button class="btn btn-primary" id="New">
+            <i class="fas fa-plus"></i> New
+          </button>
+          <button class="btn btn-primary" id="Edit">
+            <i class="fas fa-edit"></i> Edit
+          </button>
+          <a href="/page/manufacture/new_job_order" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back
+          </a>
         </div>
       </div>
     </div>
   <% } %>
 </div>
+
+<!-- Add Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
 <script>
   // Filter job orders
@@ -261,19 +674,9 @@
     });
   });
   
-  // Filter daily outputs
-  $('#filter-daily-outputs').on('keyup', function() {
-    const value = $(this).val().toLowerCase();
-    $('#daily-outputs-table tbody tr').filter(function() {
-      $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
-    });
-  });
-  
   // Action button handlers
-  $('#jCard\\(P\\), #jCard\\(L\\), #SRList, #jLog, #New, #Edit, #Exit').on('click', function() {
+  $('#jCard\\(P\\), #jCard\\(L\\), #SRList, #jLog, #New, #Edit').on('click', function() {
     const action = $(this).attr('id');
     alert('Action: ' + action + ' (Not implemented in this demo)');
   });
 </script>
-
-</div> <!-- Close the main container div -->

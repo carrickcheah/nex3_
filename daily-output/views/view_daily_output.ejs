@@ -1,0 +1,621 @@
+<%- include('./components/header', {title: title}) %>
+
+<style>
+  /* Modern Professional Design */
+  :root {
+    --primary-color: #2c3e50;
+    --secondary-color: #3498db;
+    --accent-color: #e74c3c;
+    --light-gray: #f5f7fa;
+    --medium-gray: #e4e7ed;
+    --dark-gray: #718093;
+    --text-color: #2d3436;
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --danger-color: #c0392b;
+    --info-color: #3498db;
+    --card-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    --hover-shadow: 0 8px 16px rgba(0,0,0,0.15);
+  }
+
+  body {
+    background-color: #f8f9fa;
+    color: var(--text-color);
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+
+  .page-container {
+    max-width: 1800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  /* Card Styles */
+  .jo-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    transition: box-shadow 0.3s;
+    margin-bottom: 25px;
+    overflow: hidden;
+  }
+
+  .jo-card:hover {
+    box-shadow: var(--hover-shadow);
+  }
+
+  /* Header Styles */
+  .card-header {
+    padding: 20px 25px;
+    background: linear-gradient(135deg, var(--primary-color), #34495e);
+    color: white;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .card-header h2 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.5rem;
+  }
+
+  .status-tag {
+    padding: 6px 12px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .status-active { background-color: var(--success-color); }
+  .status-progress { background-color: var(--info-color); }
+  .status-completed { background-color: var(--dark-gray); }
+  .status-voided { background-color: var(--danger-color); }
+  .status-pending { background-color: var(--warning-color); color: #333; }
+
+  /* Content Styles */
+  .card-content {
+    padding: 25px;
+  }
+
+  .info-section {
+    margin-bottom: 30px;
+  }
+
+  .info-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -15px;
+  }
+
+  .info-col {
+    padding: 0 15px;
+    flex: 1;
+    min-width: 250px;
+    margin-bottom: 20px;
+  }
+
+  .info-field {
+    margin-bottom: 15px;
+  }
+
+  .info-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--dark-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .info-field .value {
+    font-size: 1.1rem;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--medium-gray);
+    line-height: 1.4;
+  }
+
+  .info-field .value.highlight {
+    font-weight: 600;
+    color: var(--secondary-color);
+  }
+
+  /* Table Styles */
+  .data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 20px;
+    box-shadow: var(--card-shadow);
+    border-radius: 8px;
+    overflow: hidden;
+    table-layout: fixed;
+  }
+
+  .data-table th {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    vertical-align: middle;
+  }
+
+  .data-table td {
+    padding: 15px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--medium-gray);
+    background-color: white;
+    word-wrap: break-word;
+  }
+
+  .data-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  .data-table tr:hover td {
+    background-color: var(--light-gray);
+  }
+
+  .numeric-cell {
+    text-align: right;
+  }
+
+  .item-code {
+    font-weight: 600;
+    color: var(--secondary-color);
+    margin-right: 5px;
+  }
+
+  /* Resource Card Styles */
+  .resource-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 5px;
+  }
+
+  .resource-box {
+    padding: 8px 12px;
+    border-radius: 4px;
+    background-color: var(--light-gray);
+    border: 1px solid var(--medium-gray);
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .resource-box i {
+    margin-right: 6px;
+    color: var(--primary-color);
+  }
+
+  /* Button Styles */
+  .action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+  }
+
+  .btn i {
+    margin-right: 6px;
+  }
+
+  .btn-primary {
+    background-color: var(--secondary-color);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+  }
+
+  .btn-secondary {
+    background-color: var(--medium-gray);
+    color: var(--text-color);
+  }
+
+  .btn-secondary:hover {
+    background-color: #d1d6e0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+  }
+
+  .btn-danger:hover {
+    background-color: #a82315;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(192, 57, 43, 0.3);
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .info-col {
+      flex: 0 0 100%;
+    }
+    
+    .action-buttons {
+      flex-direction: column;
+    }
+    
+    .btn {
+      width: 100%;
+    }
+  }
+
+  /* Animation */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-out;
+  }
+
+  /* Output Items Table Columns */
+  .output-table th:nth-child(1), 
+  .output-table td:nth-child(1) { width: 3%; }
+  .output-table th:nth-child(2), 
+  .output-table td:nth-child(2) { width: 30%; }
+  .output-table th:nth-child(3), 
+  .output-table td:nth-child(3) { width: 10%; }
+  .output-table th:nth-child(4), 
+  .output-table td:nth-child(4) { width: 10%; }
+  .output-table th:nth-child(5), 
+  .output-table td:nth-child(5) { width: 10%; }
+  .output-table th:nth-child(6), 
+  .output-table td:nth-child(6) { width: 10%; }
+  .output-table th:nth-child(7), 
+  .output-table td:nth-child(7) { width: 12%; }
+  .output-table th:nth-child(8), 
+  .output-table td:nth-child(8) { width: 10%; }
+
+  /* Input Items Table Columns */
+  .input-table th:nth-child(1), 
+  .input-table td:nth-child(1) { width: 3%; }
+  .input-table th:nth-child(2), 
+  .input-table td:nth-child(2) { width: 42%; }
+  .input-table th:nth-child(3), 
+  .input-table td:nth-child(3) { width: 15%; }
+  .input-table th:nth-child(4), 
+  .input-table td:nth-child(4) { width: 15%; }
+  .input-table th:nth-child(5), 
+  .input-table td:nth-child(5) { width: 15%; }
+  .input-table th:nth-child(6), 
+  .input-table td:nth-child(6) { width: 10%; }
+</style>
+
+<div class="page-container animate-fade-in">
+  <!-- Basic Information Card -->
+  <div class="jo-card">
+    <div class="card-header">
+      <h2><i class="fas fa-file-alt"></i> Daily Output #<%= daily.doc_ref %></h2>
+      <% if (daily.status) { %>
+        <span class="status-tag status-<%= daily.status.toLowerCase() %>"><%= daily.status %></span>
+      <% } else { %>
+        <span class="status-tag status-progress">IN-PROGRESS</span>
+      <% } %>
+    </div>
+    
+    <div class="card-content">
+      <div class="info-section">
+        <div class="info-row">
+          <div class="info-col">
+            <div class="info-field">
+              <label>Document Number</label>
+              <div class="value highlight"><%= daily.doc_ref %></div>
+            </div>
+            <div class="info-field">
+              <label>Purpose</label>
+              <div class="value"><%= daily.purpose === 'S' ? 'STANDARD OUTPUT' : daily.purpose %></div>
+            </div>
+            <div class="info-field">
+              <label>JO No</label>
+              <div class="value">
+                <% if (daily.jo_id) { %>
+                  <a href="/page/manufacture/new_job_order/<%= daily.jo_id %>" class="text-link">
+                    <%= daily.jo_reference || 'N/A' %>
+                  </a>
+                <% } else { %>
+                  <%= daily.jo_reference || 'N/A' %>
+                <% } %>
+              </div>
+            </div>
+          </div>
+          
+          <div class="info-col">
+            <div class="info-field">
+              <label>Document Date</label>
+              <div class="value"><%= daily.txn_date %></div>
+            </div>
+            <div class="info-field">
+              <label>Process</label>
+              <div class="value"><%= daily.jo_process || 'N/A' %></div>
+            </div>
+            <div class="info-field">
+              <label>Issued By</label>
+              <div class="value"><%= daily.created_by || 'N/A' %></div>
+            </div>
+          </div>
+          
+          <div class="info-col">
+            <div class="info-field">
+              <label>Start Time</label>
+              <div class="value"><%= daily.start_time || 'N/A' %></div>
+            </div>
+            <div class="info-field">
+              <label>End Time</label>
+              <div class="value"><%= daily.end_time || 'N/A' %></div>
+            </div>
+            <div class="info-field">
+              <label>Break Time (Minutes)</label>
+              <div class="value"><%= daily.break_time || '0' %></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Resource Information Card -->
+  <div class="jo-card">
+    <div class="card-header">
+      <h2><i class="fas fa-cogs"></i> Resource Information</h2>
+    </div>
+    
+    <div class="card-content">
+      <div class="info-section">
+        <div class="info-row">
+          <div class="info-col">
+            <div class="info-field">
+              <label>Machines</label>
+              <div class="resource-container">
+                <% if (machine_options && machine_options.filter(m => m.selected).length > 0) { %>
+                  <% machine_options.filter(m => m.selected).forEach(machine => { %>
+                    <div class="resource-box"><i class="fas fa-cog"></i> <%= machine.text %></div>
+                  <% }); %>
+                <% } else { %>
+                  <div class="resource-box"><i class="fas fa-times-circle"></i> No machines assigned</div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+          
+          <div class="info-col">
+            <div class="info-field">
+              <label>Molds</label>
+              <div class="resource-container">
+                <% if (typeof mold_options !== 'undefined' && mold_options && mold_options.filter(m => m.selected).length > 0) { %>
+                  <% mold_options.filter(m => m.selected).forEach(mold => { %>
+                    <div class="resource-box"><i class="fas fa-cube"></i> <%= mold.text %></div>
+                  <% }); %>
+                <% } else { %>
+                  <div class="resource-box"><i class="fas fa-times-circle"></i> No molds assigned</div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+          
+          <div class="info-col">
+            <div class="info-field">
+              <label>Operators</label>
+              <div class="resource-container">
+                <% if (operator_options && operator_options.filter(op => op.selected).length > 0) { %>
+                  <% operator_options.filter(op => op.selected).forEach(operator => { %>
+                    <div class="resource-box"><i class="fas fa-user"></i> <%= operator.text %></div>
+                  <% }); %>
+                <% } else { %>
+                  <div class="resource-box"><i class="fas fa-times-circle"></i> No operators assigned</div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="info-row">
+          <div class="info-col">
+            <div class="info-field">
+              <label>Tools</label>
+              <div class="resource-container">
+                <% if (typeof tool_options !== 'undefined' && tool_options && tool_options.filter(t => t.selected).length > 0) { %>
+                  <% tool_options.filter(t => t.selected).forEach(tool => { %>
+                    <div class="resource-box"><i class="fas fa-tools"></i> <%= tool.text %></div>
+                  <% }); %>
+                <% } else { %>
+                  <div class="resource-box"><i class="fas fa-times-circle"></i> No tools assigned</div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Output Items Card -->
+  <div class="jo-card">
+    <div class="card-header">
+      <h2><i class="fas fa-boxes"></i> Output Items (PRD - PRODUCTION DEPT)</h2>
+    </div>
+    
+    <div class="card-content">
+      <div class="table-responsive">
+        <table class="data-table output-table">
+          <thead>
+            <tr>
+              <th style="width: 5%;">#.</th>
+              <th style="width: 25%;">Product Description</th>
+              <th style="width: 10%;">Output Qty</th>
+              <th style="width: 10%;">Reject Qty</th>
+              <th style="width: 10%;">Extra Qty</th>
+              <th style="width: 10%;">Total Stock-In</th>
+              <th style="width: 15%;">Lot</th>
+              <th style="width: 10%;">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (output_items && output_items.length > 0) { %>
+              <% output_items.forEach((item, index) => { %>
+                <tr>
+                  <td><%= index + 1 %>.</td>
+                  <td>
+                    <% if (item.item_code) { %>
+                      <span class="item-code">[<%= item.item_code %>]</span> 
+                    <% } %>
+                    <%= item.product_description %>
+                    <br>
+                    <small><%= item.master_code || '' %> | <%= item.batch_no || '' %></small>
+                  </td>
+                  <td class="numeric-cell"><%= item.output_qty %> <%= item.uom || 'PC' %></td>
+                  <td class="numeric-cell"><%= item.reject_qty || '0' %></td>
+                  <td class="numeric-cell"><%= item.extra_qty || '0' %></td>
+                  <td class="numeric-cell"><%= item.total_qty || item.output_qty %></td>
+                  <td><%= item.lot || 'N/A' %></td>
+                  <td class="numeric-cell">RM <%= parseFloat(item.value || 0).toFixed(2) %></td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="8" style="text-align: center; padding: 30px;">
+                  <div style="color: var(--dark-gray);">
+                    <i class="fas fa-dolly-flatbed" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                    <p>No output items found</p>
+                  </div>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Input Items Card -->
+  <div class="jo-card">
+    <div class="card-header">
+      <h2><i class="fas fa-dolly-flatbed"></i> Input Items (PRD - PRODUCTION DEPT)</h2>
+    </div>
+    
+    <div class="card-content">
+      <div class="table-responsive">
+        <table class="data-table input-table">
+          <thead>
+            <tr>
+              <th style="width: 5%;">#.</th>
+              <th style="width: 30%;">Product Description</th>
+              <th style="width: 15%;">'PRD' Avail</th>
+              <th style="width: 15%;">Demand Qty</th>
+              <th style="width: 20%;">Lot</th>
+              <th style="width: 15%;">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (input_items && input_items.length > 0) { %>
+              <% let totalValue = 0; %>
+              <% input_items.forEach((item, index) => { %>
+                <% const itemValue = parseFloat(item.value || 0); %>
+                <% totalValue += itemValue; %>
+                <tr>
+                  <td><%= index + 1 %>.</td>
+                  <td>
+                    <% if (item.item_code) { %>
+                      <span class="item-code">[<%= item.item_code %>]</span> 
+                    <% } %>
+                    <%= item.product_description %>
+                    <br>
+                    <small><%= item.master_code || '' %> | <%= item.batch_no || '' %></small>
+                  </td>
+                  <td class="numeric-cell"><%= item.available_qty || '0' %></td>
+                  <td class="numeric-cell"><%= item.qty %> <%= item.uom || 'PC' %></td>
+                  <td><%= item.lot || 'N/A' %></td>
+                  <td class="numeric-cell">RM <%= itemValue.toFixed(2) %></td>
+                </tr>
+              <% }); %>
+              <tr>
+                <td colspan="5" style="text-align: right; font-weight: bold; padding-right: 20px;">Total:</td>
+                <td class="numeric-cell" style="font-weight: bold; background-color: var(--light-gray);">RM <%= totalValue.toFixed(2) %></td>
+              </tr>
+            <% } else { %>
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 30px;">
+                  <div style="color: var(--dark-gray);">
+                    <i class="fas fa-boxes" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                    <p>No input items found</p>
+                  </div>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Remark Card -->
+  <div class="jo-card">
+    <div class="card-header">
+      <h2><i class="fas fa-comment-alt"></i> Remark</h2>
+    </div>
+    
+    <div class="card-content">
+      <div class="info-field">
+        <div class="value" style="min-height: 50px; border-bottom: none;">
+          <%= daily.remark || 'No remarks' %>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Action Buttons -->
+  <div class="action-buttons">
+    <a href="/page/manufacture/daily_output/void/<%= daily.txn_id %>" class="btn btn-danger" onclick="return confirm('Are you sure you want to void this daily output?');">
+      <i class="fas fa-ban"></i> Void Daily Output
+    </a>
+    <a href="/page/manufacture/daily_output/new" class="btn btn-primary">
+      <i class="fas fa-plus"></i> New
+    </a>
+    <a href="/page/manufacture/daily_inquiry" class="btn btn-secondary">
+      <i class="fas fa-times"></i> Exit
+    </a>
+  </div>
+</div>
+
+<!-- Link to Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<script>
+  $(document).ready(function() {
+    // Any initialization code
+  });
+</script>
