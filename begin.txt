@@ -3,7 +3,7 @@
 ########################
 
 git add .
-git commit -m "if u want to solve the Add new daily output, go yesterday repo "
+git commit -m "Restructure module "
 git push origin main
 
 

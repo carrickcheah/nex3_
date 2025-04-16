@@ -1,10 +1,12 @@
 const express = require('express');
-const mysql = require('mysql2/promise');
 const session = require('express-session');
 const path = require('path');
 const moment = require('moment');
 const bodyParser = require('body-parser');
 const ejs = require('ejs');
+
+// Import the central database pool
+const pool = require('./config/database');
 
 // Load environment variables with explicit path
 require('dotenv').config({ path: path.join(__dirname, '.env') });
@@ -20,17 +22,17 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Import route modules for modular approach
-const dailyOutputRoutes = require('./routes/dailyOutputRoutes');
-const apiRoutes = require('./routes/apiRoutes');
+const dailyOutputRoutes = require('./m_manufacturing/m_daily_output/routes/dailyOutputRoutes');
+const apiRoutes = require('./m_manufacturing/m_daily_output/routes/apiRoutes');
 
 // Middleware
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'm_manufacturing/m_daily_output/public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 // Set view engine
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', path.join(__dirname, 'm_manufacturing/m_daily_output/views'));
 
 // Session configuration
 app.use(session({
@@ -39,18 +41,6 @@ app.use(session({
   saveUninitialized: true,
   cookie: { secure: false } // Set to true in production with HTTPS
 }));
-
-// Database connection pool
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT || 3306,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-});
 
 // Helper functions
 const helpers = {
