@@ -32,6 +32,11 @@ router.get('/page/daily-output/inquiry/json', async (req, res) => {
   }
 });
 
+// Job Order routes
+router.get('/page/manufacture/jo/view/:id', dailyOutputController.jobOrderView);
+router.get('/page/manufacture/new_job_order', dailyOutputController.jobOrderList);
+router.get('/page/manufacture/new_job_order/:id', dailyOutputController.jobOrderView);
+
 // POST routes for daily output
 router.post('/page/manufacture/daily_output/create', dailyOutputController.createDailyOutput);
 router.post('/page/manufacture/daily_output/update/:id', dailyOutputController.updateDailyOutput);

@@ -56,6 +56,35 @@ exports.dailyOutputNew = async (req, res) => {
     dbData.doc_ref = await DailyOutputModel.generateDocReference(dbData);
     req.session[txn_mode].sql_date = sqlDate;
     
+    // Check if a JO ID was provided in the URL
+    const joId = req.query.jo;
+    if (joId) {
+      // Store it in the session so it can be pre-selected
+      req.session[txn_mode].jo_id = joId;
+      
+      // Get JO details
+      try {
+        const connection = await pool.getConnection();
+        
+        try {
+          const [joRows] = await connection.query(`
+            SELECT j.TxnId_i as jo_id, j.DocRef_v as jo_reference
+            FROM tbl_jo_txn j
+            WHERE j.TxnId_i = ?
+          `, [joId]);
+          
+          if (joRows.length > 0) {
+            dbData.jo_id = joRows[0].jo_id;
+            dbData.jo_reference = joRows[0].jo_reference;
+          }
+        } finally {
+          connection.release();
+        }
+      } catch (err) {
+        console.error('Error fetching JO details:', err);
+      }
+    }
+    
     // Get required data for dropdowns
     let products = [], machines = [], molds = [], tools = [], operators = [];
     
@@ -868,6 +897,178 @@ async function generateDocReference(dbData) {
   return rows;
 }
 
+/**
+ * View a job order
+ */
+exports.jobOrderView = async (req, res) => {
+  try {
+    const joId = req.params.id;
+    
+    if (!joId) {
+      return res.status(400).send('Job Order ID is required');
+    }
+    
+    // Get connection from pool
+    const connection = await pool.getConnection();
+    
+    try {
+      // Get basic job order details
+      const [joRows] = await connection.query(`
+        SELECT 
+          j.TxnId_i as jo_id, 
+          j.DocRef_v as jo_reference,
+          j.CreateDate_dt as create_date,
+          j.DocRemark_v as remarks,
+          j._Status_c as status,
+          j.ItemId_i as item_id,
+          p.StkCode_v as item_code,
+          p.ProdName_v as item_name,
+          u.UserName_v as created_by
+        FROM tbl_jo_txn j
+        LEFT JOIN tbl_product_code p ON p.ItemId_i = j.ItemId_i
+        LEFT JOIN tbl_user u ON u.UserId_i = j.CreateId_i
+        WHERE j.TxnId_i = ?
+      `, [joId]);
+      
+      if (joRows.length === 0) {
+        return res.status(404).send('Job Order not found');
+      }
+      
+      const joData = joRows[0];
+      
+      // Get processes for this job order
+      const [processRows] = await connection.query(`
+        SELECT 
+          jp.RowId_i as process_id,
+          jp.ProcessDescr_v as process_name,
+          jp.Task_v as task,
+          jp.Machine_v as machine_info,
+          jp.Mold_v as mold_info,
+          jp.QtyStatus_c as status
+        FROM tbl_jo_process jp
+        WHERE jp.TxnId_i = ?
+        ORDER BY jp.RowId_i
+      `, [joId]);
+      
+      // Get materials (BOM items) for this job order
+      const [bomRows] = await connection.query(`
+        SELECT 
+          ji.RowId_i as row_id,
+          ji.ItemId_i as item_id,
+          p.StkCode_v as item_code,
+          p.ProdName_v as item_name,
+          ji.Qty_d as quantity,
+          u.UomCode_v as uom,
+          ji.UnitPrice_d as unit_price
+        FROM tbl_jo_item ji
+        LEFT JOIN tbl_product_code p ON p.ItemId_i = ji.ItemId_i
+        LEFT JOIN tbl_uom u ON u.UomId_i = p.UomId_i
+        WHERE ji.TxnId_i = ?
+        ORDER BY ji.RowId_i
+      `, [joId]);
+      
+      // Get related daily outputs for this job order
+      const [dailyOutputRows] = await connection.query(`
+        SELECT 
+          d.TxnId_i as output_id,
+          d.DocRef_v as output_reference,
+          d.TxnDate_dd as output_date,
+          d.Status_c as status,
+          p.ProcessDescr_v as process,
+          u.UserName_v as created_by
+        FROM tbl_daily_txn d
+        LEFT JOIN tbl_jo_process p ON p.RowId_i = d.RowId_i AND p.TxnId_i = d.JoId_i
+        LEFT JOIN tbl_user u ON u.UserId_i = d.CreateId_i
+        WHERE d.JoId_i = ?
+        ORDER BY d.TxnDate_dd DESC, d.TxnId_i DESC
+      `, [joId]);
+      
+      // Format dates for display
+      if (joData.create_date) {
+        joData.create_date = moment(joData.create_date).format('DD-MM-YYYY HH:mm:ss');
+      }
+      
+      dailyOutputRows.forEach(row => {
+        if (row.output_date) {
+          row.output_date = moment(row.output_date).format('DD-MM-YYYY');
+        }
+      });
+      
+      // Render the job order view
+      res.render('new_job_order', {
+        title: `Job Order #${joData.jo_reference}`,
+        user: req.session.user || { name: 'Guest' },
+        joData: joData,
+        processes: processRows,
+        materials: bomRows,
+        dailyOutputs: dailyOutputRows,
+        moment: moment
+      });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Error in jobOrderView:', error);
+    res.status(500).send('Server error');
+  }
+};
+
+/**
+ * List job orders
+ */
+exports.jobOrderList = async (req, res) => {
+  try {
+    // Get connection from pool
+    const connection = await pool.getConnection();
+    
+    try {
+      // Set start date to January 1, 2023
+      const startOf2023 = new Date('2023-01-01');
+      const formatted2023Start = startOf2023.toISOString().split('T')[0];
+      
+      // Get job orders created since 2023
+      const [rows] = await connection.query(`
+        SELECT 
+          j.TxnId_i as jo_id, 
+          j.DocRef_v as jo_reference,
+          j.CreateDate_dt as create_date,
+          j.DocRemark_v as remarks,
+          j._Status_c as status,
+          j.ItemId_i as item_id,
+          p.StkCode_v as item_code,
+          p.ProdName_v as item_name,
+          u.UserName_v as created_by
+        FROM tbl_jo_txn j
+        LEFT JOIN tbl_product_code p ON p.ItemId_i = j.ItemId_i
+        LEFT JOIN tbl_user u ON u.UserId_i = j.CreateId_i
+        WHERE j.CreateDate_dt >= ?
+        ORDER BY j.CreateDate_dt DESC
+        LIMIT 100
+      `, [formatted2023Start]);
+      
+      // Format dates for display
+      rows.forEach(row => {
+        if (row.create_date) {
+          row.create_date = moment(row.create_date).format('DD-MM-YYYY HH:mm:ss');
+        }
+      });
+      
+      // Render the job order list
+      res.render('new_job_order', {
+        title: 'Job Order List',
+        user: req.session.user || { name: 'Guest' },
+        jobOrders: rows,
+        isList: true
+      });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Error in jobOrderList:', error);
+    res.status(500).send('Server error');
+  }
+};
+
 // Export both public and private functions
 module.exports = {
   dailyOutputNew: exports.dailyOutputNew,
@@ -877,5 +1078,7 @@ module.exports = {
   updateDailyOutput: exports.updateDailyOutput,
   dailyOutputInquiry: exports.dailyOutputInquiry,
   generateSampleData: exports.generateSampleData,
-  exportToCsv: exports.exportToCsv
+  exportToCsv: exports.exportToCsv,
+  jobOrderView: exports.jobOrderView,
+  jobOrderList: exports.jobOrderList
 };
