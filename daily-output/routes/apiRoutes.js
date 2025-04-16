@@ -470,7 +470,7 @@ router.get('/api/manufacture/jo-process-details', async (req, res) => {
           p.StkCode_v as product_code,
           p.ProdName_v as product_name,
           ji.TotalQty_d as planned_qty,
-          COALESCE(ji.OutstandQty_d, ji.TotalQty_d - COALESCE(ji.CompQty_d, 0), 0) as balance_qty
+          COALESCE(ji.TotalQty_d - COALESCE(ji.TotalqtyDone_d, 0), 0) as balance_qty
         FROM tbl_jo_txn j
         LEFT JOIN tbl_product_code p ON p.ItemId_i = j.ItemId_i
         LEFT JOIN tbl_jo_item ji ON ji.TxnId_i = j.TxnId_i AND ji.ItemId_i = j.ItemId_i
