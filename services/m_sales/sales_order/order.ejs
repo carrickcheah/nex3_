@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+        }
+        
+        /* Table font size settings */
+        #ordersTable {
+            font-size: 14px;
+        }
+        
+        #ordersTable thead th {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .badge {
+            font-size: 14px; /* Match table font size */
+            color: #212529; /* Regular text color */
+            background: transparent; /* Remove background */
+            font-weight: normal; /* Regular font weight */
+            padding: 0; /* Remove padding */
+            text-align: left; /* Left align like other text */
+            display: inline; /* Display as inline text */
+            border-radius: 0; /* Remove rounded corners */
+            font-family: inherit; /* Inherit font from table */
+        }
+        
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border: none;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #0669f4, #5441e9);
+            color: white;
+            border-radius: 8px 8px 0 0 !important;
+            font-weight: 600;
+            padding: 15px 20px;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background-color: #0669f4;
+            border-color: #0669f4;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0558d6;
+            border-color: #0558d6;
+        }
+        
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(6, 105, 244, 0.05);
+        }
+        
+        .action-buttons .btn {
+            margin-right: 5px;
+        }
+        
+        /* Status indicators with icons instead of colors */
+        .status-text {
+            display: inline-flex;
+            align-items: center;
+            font-weight: normal;
+        }
+        
+        .status-text i {
+            margin-right: 5px;
+        }
+        
+        /* Icon colors */
+        .fa-check-circle {
+            color: #28a745; /* Green */
+        }
+        
+        .fa-times-circle {
+            color: #dc3545; /* Red */
+        }
+        
+        .fa-clock {
+            color: #ffc107; /* Yellow/Warning */
+        }
+        
+        .fa-info-circle {
+            color: #17a2b8; /* Info blue */
+        }
+        
+        .fa-ban {
+            color: #6c757d; /* Gray/Secondary */
+        }
+        
+        /* Column widths for better alignment */
+        #ordersTable th:nth-child(1), #ordersTable td:nth-child(1) { width: 6%; }   /* TXN ID */
+        #ordersTable th:nth-child(2), #ordersTable td:nth-child(2) { width: 6%; }   /* IMPORT ID */
+        #ordersTable th:nth-child(3), #ordersTable td:nth-child(3) { width: 25%; }  /* CUSTOMER */
+        #ordersTable th:nth-child(4), #ordersTable td:nth-child(4) { width: 8%; }   /* DOC DATE */
+        #ordersTable th:nth-child(5), #ordersTable td:nth-child(5) { width: 7%; }   /* SO NO */
+        #ordersTable th:nth-child(6), #ordersTable td:nth-child(6) { width: 7%; }   /* PO NO */
+        #ordersTable th:nth-child(7), #ordersTable td:nth-child(7) { width: 10%; }  /* SHIPPING TERM */
+        #ordersTable th:nth-child(8), #ordersTable td:nth-child(8) { width: 5%; }   /* CURRENCY */
+        #ordersTable th:nth-child(9), #ordersTable td:nth-child(9) { width: 14%; }  /* SALES PERSON */
+        #ordersTable th:nth-child(10), #ordersTable td:nth-child(10) { width: 10%; } /* GRAND TOTAL */
+        #ordersTable th:nth-child(11), #ordersTable td:nth-child(11) { width: 14%; } /* STATUS */
+    </style>
+</head>
+<body>
+
+<%- include('../../shared/components/header') %>
+
+<div class="container-fluid mt-4 px-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-file-invoice-dollar me-2"></i>Sales Order Management</span>
+                    <a href="/page/sales/order/add" class="btn btn-light btn-sm">
+                        <i class="fas fa-plus me-1"></i>New Sales Order
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- Debug info -->
+                    <div id="debugInfo" class="alert alert-info mb-3">
+                        <p><strong>Debug information:</strong></p>
+                        <p id="apiStatus">Checking API connection...</p>
+                        <p id="loadingStatus">Waiting for data...</p>
+                    </div>
+                    
+                    <!-- Search and filter controls -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <input type="text" id="searchDocRef" class="form-control" placeholder="Search by Document Reference">
+                        </div>
+                        <div class="col-md-3">
+                            <input type="text" id="searchCustomer" class="form-control" placeholder="Search by Customer">
+                        </div>
+                        <div class="col-md-2">
+                            <select id="filterStatus" class="form-select">
+                                <option value="">All Status</option>
+                                <option value="P">Pending</option>
+                                <option value="DF">Confirm</option>
+                                <option value="CF">Confirmed</option>
+                                <option value="A">Approved</option>
+                                <option value="CP">Completed</option>
+                                <option value="V">Voided</option>
+                                <option value="X">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                <input type="text" id="dateRange" class="form-control" placeholder="Date Range">
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <button id="applyFilters" class="btn btn-primary w-100">
+                                <i class="fas fa-filter me-1"></i> Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Orders table -->
+                    <div class="table-responsive">
+                        <table id="ordersTable" class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th class="text-center">TXN ID</th>
+                                    <th class="text-center">IMPORT ID</th>
+                                    <th class="text-start">CUSTOMER</th>
+                                    <th class="text-center">DOC DATE</th>
+                                    <th class="text-center">SO NO</th>
+                                    <th class="text-center">PO NO</th>
+                                    <th class="text-center">SHIPPING TERM</th>
+                                    <th class="text-center">CURRENCY</th>
+                                    <th class="text-center">SALES PERSON</th>
+                                    <th class="text-end">TOTAL (RM)</th>
+                                    <th class="text-center">STATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Table body will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <nav aria-label="Order pagination" class="mt-3">
+                        <ul id="pagination" class="pagination justify-content-center">
+                            <!-- Pagination will be populated by JavaScript -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap and jQuery Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+<script src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        let currentPage = 1;
+        const limit = 100;
+        let fromDate = '';
+        let toDate = '';
+        
+        // Test API connection first
+        console.log('Testing API connection...');
+        $.ajax({
+            url: '/api/sales/test',
+            type: 'GET',
+            success: function(response) {
+                console.log('API Test Response:', response);
+                $('#apiStatus').text('API connection successful! ✅');
+                console.log('API connection successful, now loading orders...');
+                // Load orders after confirming API works
+                loadOrders();
+            },
+            error: function(xhr, status, error) {
+                console.error('API Test Failed!');
+                console.error('Status:', status);
+                console.error('Error:', error);
+                console.error('Response:', xhr.responseText);
+                $('#apiStatus').html('<span class="text-danger">❌ API connection failed! Check browser console for details.</span>');
+                alert('Failed to connect to API. Check browser console for details.');
+            }
+        });
+        
+        // Initialize date range picker
+        $('#dateRange').daterangepicker({
+            opens: 'left',
+            autoUpdateInput: false,
+            locale: {
+                cancelLabel: 'Clear',
+                format: 'DD-MM-YYYY'
+            }
+        });
+        
+        $('#dateRange').on('apply.daterangepicker', function(ev, picker) {
+            $(this).val(picker.startDate.format('DD-MM-YYYY') + ' - ' + picker.endDate.format('DD-MM-YYYY'));
+            fromDate = picker.startDate.format('DD-MM-YYYY');
+            toDate = picker.endDate.format('DD-MM-YYYY');
+        });
+        
+        $('#dateRange').on('cancel.daterangepicker', function(ev, picker) {
+            $(this).val('');
+            fromDate = '';
+            toDate = '';
+        });
+        
+        // Load orders
+        loadOrders();
+        
+        // Apply filters
+        $('#applyFilters').on('click', function() {
+            currentPage = 1;
+            loadOrders();
+        });
+        
+        // Handle Enter key in search fields
+        $('#searchDocRef, #searchCustomer').on('keypress', function(e) {
+            if (e.which === 13) {
+                currentPage = 1;
+                loadOrders();
+            }
+        });
+        
+        // Function to load orders with pagination and filters
+        function loadOrders() {
+            $('#loadingStatus').text('Loading orders...');
+            const docRef = $('#searchDocRef').val();
+            const customerName = $('#searchCustomer').val();
+            const status = $('#filterStatus').val();
+            
+            console.log('Loading orders with filters:', {
+                page: currentPage,
+                limit: limit,
+                docRef: docRef,
+                customerName: customerName,
+                status: status,
+                fromDate: fromDate,
+                toDate: toDate
+            });
+            
+            $.ajax({
+                url: '/api/sales/orders',
+                type: 'GET',
+                data: {
+                    page: currentPage,
+                    limit: limit,
+                    docRef: docRef,
+                    customerName: customerName,
+                    status: status,
+                    fromDate: fromDate,
+                    toDate: toDate
+                },
+                success: function(response) {
+                    console.log('API Response:', response);
+                    
+                    // Debug output to check if we're getting data
+                    if (!response.data || response.data.length === 0) {
+                        console.warn('API returned empty data array');
+                        console.log('Empty response details:', response);
+                        $('#loadingStatus').html('<span class="text-warning">⚠️ API returned empty data array</span>');
+                    } else {
+                        console.log('Data received, length:', response.data.length);
+                        console.log('First record:', response.data[0]);
+                        $('#loadingStatus').html(`<span class="text-success">✅ Loaded ${response.data.length} orders</span>`);
+                    }
+                    
+                    if (response.success) {
+                        console.log('Orders returned:', response.data ? response.data.length : 0);
+                        renderOrders(response.data);
+                        renderPagination(response.pagination);
+                    } else {
+                        console.error('Error in API response:', response.message);
+                        $('#loadingStatus').html(`<span class="text-danger">❌ API error: ${response.message}</span>`);
+                        alert('Error loading orders: ' + response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('API Error Status:', status);
+                    console.error('API Error Message:', error);
+                    console.error('API Error Details:', xhr);
+                    console.error('API Response Text:', xhr.responseText);
+                    $('#loadingStatus').html(`<span class="text-danger">❌ Failed to load orders: ${error}</span>`);
+                    alert('Error loading orders: ' + (xhr.responseJSON?.message || 'Unknown error'));
+                }
+            });
+        }
+        
+        // Function to render orders table
+        function renderOrders(orders) {
+            const tbody = $('#ordersTable tbody');
+            tbody.empty();
+            
+            if (orders.length === 0) {
+                tbody.append('<tr><td colspan="11" class="text-center">No orders found</td></tr>');
+                return;
+            }
+            
+            orders.forEach(function(order, index) {
+                const row = $('<tr>');
+                
+                row.append(`<td class="text-center">${order.id || ''}</td>`); // TXN ID
+                row.append(`<td class="text-center">${order.importId !== undefined && order.importId !== null ? order.importId : ''}</td>`); // IMPORT ID
+                row.append(`<td>${order.customerName || ''}</td>`); // CUSTOMER
+                row.append(`<td class="text-center">${order.txnDate || ''}</td>`); // DOC DATE
+                row.append(`<td class="text-center">${order.docRef || ''}</td>`); // SO NO
+                row.append(`<td class="text-center">${order.poNo || ''}</td>`); // PO NO
+                row.append(`<td class="text-center">${order.shippingTerm || ''}</td>`); // SHIPPING TERM
+                row.append(`<td class="text-center">${order.currencyCode || ''}</td>`); // CURRENCY
+                row.append(`<td class="text-center">${order.salesPerson || ''}</td>`); // SALES PERSON
+                
+                // Format grand total
+                const grandTotal = parseFloat(order.grandTotal || 0).toFixed(2);
+                row.append(`<td class="text-end">${grandTotal}</td>`); // GRAND TOTAL
+                
+                // Status column with icon instead of colored badge
+                let statusIcon = '';
+                let statusText = order.statusText || '';
+                
+                switch(order.status) {
+                    case 'P': 
+                        statusIcon = '<i class="fas fa-clock"></i>'; 
+                        statusText = statusText || 'Pending';
+                        break;
+                    case 'DF': 
+                        statusIcon = '<i class="fas fa-thumbs-up"></i>'; 
+                        statusText = statusText || 'Confirm';
+                        break;
+                    case 'CF': 
+                        statusIcon = '<i class="fas fa-check"></i>'; 
+                        statusText = statusText || 'Confirmed';
+                        break;
+                    case 'A': 
+                        statusIcon = '<i class="fas fa-info-circle"></i>'; 
+                        statusText = statusText || 'Approved';
+                        break;
+                    case 'CP': 
+                        statusIcon = '<i class="fas fa-check-circle"></i>'; 
+                        statusText = statusText || 'Completed';
+                        break;
+                    case 'V': 
+                        statusIcon = '<i class="fas fa-times-circle"></i>'; 
+                        statusText = statusText || 'Voided';
+                        break;
+                    case 'X': 
+                        statusIcon = '<i class="fas fa-ban"></i>'; 
+                        statusText = statusText || 'Cancelled';
+                        break;
+                    default: 
+                        statusIcon = '<i class="fas fa-question-circle"></i>';
+                        statusText = statusText || order.status;
+                        break;
+                }
+                
+                row.append(`<td>
+                    <span class="status-text">${statusIcon} ${statusText}</span>
+                    <div class="float-end">
+                        <button class="btn btn-sm btn-outline-primary view-btn" data-id="${order.id}" title="View"><i class="fas fa-eye"></i></button>
+                    </div>
+                </td>`); // STATUS with action buttons
+                
+                tbody.append(row);
+            });
+            
+            // Add action for view buttons
+            $('.view-btn').on('click', function(e) {
+                e.stopPropagation();
+                const orderId = $(this).data('id');
+                window.location.href = `/page/sales/order/view/${orderId}`;
+            });
+            
+            // Add hover effect for clickable rows
+            $('#ordersTable tbody tr').css('cursor', 'pointer');
+            
+            // Add click event for rows
+            $('#ordersTable tbody tr').on('click', function() {
+                const index = $(this).index();
+                if (index >= 0 && index < orders.length) {
+                    window.location.href = `/page/sales/order/view/${orders[index].id}`;
+                }
+            });
+        }
+        
+        // Function to render pagination
+        function renderPagination(pagination) {
+            const paginationEl = $('#pagination');
+            paginationEl.empty();
+            
+            // Previous button
+            const prevLi = $('<li class="page-item">');
+            if (pagination.page <= 1) {
+                prevLi.addClass('disabled');
+            }
+            
+            const prevLink = $('<a class="page-link" href="#">Previous</a>');
+            prevLink.on('click', function(e) {
+                e.preventDefault();
+                if (pagination.page > 1) {
+                    currentPage = pagination.page - 1;
+                    loadOrders();
+                }
+            });
+            
+            prevLi.append(prevLink);
+            paginationEl.append(prevLi);
+            
+            // Page numbers
+            for (let i = 1; i <= pagination.pages; i++) {
+                const pageLi = $('<li class="page-item">');
+                if (i === pagination.page) {
+                    pageLi.addClass('active');
+                }
+                
+                const pageLink = $(`<a class="page-link" href="#">${i}</a>`);
+                pageLink.on('click', function(e) {
+                    e.preventDefault();
+                    currentPage = i;
+                    loadOrders();
+                });
+                
+                pageLi.append(pageLink);
+                paginationEl.append(pageLi);
+            }
+            
+            // Next button
+            const nextLi = $('<li class="page-item">');
+            if (pagination.page >= pagination.pages) {
+                nextLi.addClass('disabled');
+            }
+            
+            const nextLink = $('<a class="page-link" href="#">Next</a>');
+            nextLink.on('click', function(e) {
+                e.preventDefault();
+                if (pagination.page < pagination.pages) {
+                    currentPage = pagination.page + 1;
+                    loadOrders();
+                }
+            });
+            
+            nextLi.append(nextLink);
+            paginationEl.append(nextLi);
+        }
+    });
+</script>
+
+</body>
+</html>

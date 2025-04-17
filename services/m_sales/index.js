@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const orderRoutes = require('./sales_order/routes/orderRoutes');
 
 // Sales landing page route
 router.get('/page/sales', (req, res) => {
@@ -7,6 +8,9 @@ router.get('/page/sales', (req, res) => {
     title: 'Sales'
   });
 });
+
+// Register order routes
+router.use('/', orderRoutes);
 
 module.exports = {
   salesRoutes: router
