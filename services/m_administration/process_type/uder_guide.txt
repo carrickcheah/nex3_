@@ -1,0 +1,59 @@
+Process Type Logic Overview
+Database Structure:
+Table: tbl_process_type
+ProcesstypeId_i: Small integer (primary key, auto-increment)
+ProcesstypeCode_v: VARCHAR(30) (Process Type Code)
+ProcesstypeDescr_v: VARCHAR(120) (Process Type Description)
+CreateId_i: Integer (User ID who created the record)
+UpdateId_i: Integer (User ID who last updated the record)
+Main Functionality:
+View Process Types (ebos_inquiry)
+Displays a list of all process types with filtering, sorting, and pagination
+Shows columns: ID, Code, Description
+Add New Process Type (ebos_new, ebos_create)
+Form to add a new process type with:
+Process Type Code (required, min 3 chars, max 30 chars)
+Process Type Description (required, min 3 chars, max 60 chars)
+Validation before saving
+Creates record in tbl_process_type and makes a copy in the history table (his_process_type)
+Edit Process Type (ebos_read, ebos_update)
+Form to edit an existing process type with:
+Process Type Code
+Process Type Description
+Validation before updating
+Updates record in tbl_process_type and makes a history record
+Delete Process Type (ebos_delete)
+Deletes a process type record (likely checks for dependencies first)
+Records deletion in history table
+Security:
+Access control with permission code 'GBDA1' for view/add/edit/delete
+View access control with permission code 'GBDC1'
+Transaction-based database operations (beginTransaction/commit)
+Audit logging of all operations
+Relationships:
+Process Types are likely related to Process Codes (tbl_process or similar table)
+Process Codes have a separate management interface with different permissions ('8EJA1')
+Node.js Refactoring Plan
+Based on this analysis, your Node.js refactoring should include:
+Database Models:
+ProcessTypeModel with CRUD operations
+Validation logic for process type data
+Controllers:
+ProcessTypeController with methods for:
+getProcessTypes (list with pagination)
+getProcessTypeById (single record)
+createProcessType
+updateProcessType
+deleteProcessType
+Routes:
+Web routes for rendering pages
+API routes for CRUD operations
+Views:
+List view (index/inquiry)
+Create new form
+Edit form
+Modals for delete confirmation
+Security:
+Authentication middleware
+Authorization checks for specific operations
+This should give you a solid foundation to start your Node.js refactoring of the process type functionality.

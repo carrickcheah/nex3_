@@ -24,7 +24,7 @@ const PORT = process.env.PORT || 3000;
 // Import route modules for modular approach
 const dailyOutputRoutes = require('./m_manufacturing/m_daily_output/routes/dailyOutputRoutes');
 const apiRoutes = require('./m_manufacturing/m_daily_output/routes/apiRoutes');
-const { userRoutes, administrationRoutes } = require('./m_administration');
+const { userRoutes, administrationRoutes, processRoutes } = require('./m_administration');
 const { salesRoutes } = require('./m_sales');
 const { warehouseRoutes } = require('./m_warehouse');
 const { purchasingRoutes } = require('./m_purchasing');
@@ -97,6 +97,7 @@ app.use('/', dailyOutputRoutes);
 app.use('/', apiRoutes);
 app.use('/', userRoutes);
 app.use('/', administrationRoutes);
+app.use('/', processRoutes);
 app.use('/', salesRoutes);
 app.use('/', warehouseRoutes);
 app.use('/', purchasingRoutes);
