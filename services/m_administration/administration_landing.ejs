@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> | NexERP</title>
+    <title>Administration</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- jQuery UI CSS -->
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <!-- Link to Poppins font -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
@@ -159,20 +157,14 @@
         
         .menu-card:nth-child(4n+2) .card-btn {
             background: linear-gradient(45deg, #00b0ff, #0091ea);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
         }
         
         .menu-card:nth-child(4n+3) .card-btn {
             background: linear-gradient(45deg, #651fff, #6200ea);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
         }
         
         .menu-card:nth-child(4n+4) .card-btn {
             background: linear-gradient(45deg, #2979ff, #2962ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
         }
         
         .card-btn:hover {
@@ -189,142 +181,114 @@
             box-shadow: 0 6px 13px rgba(0, 0, 0, 0.05);
             border: 1px solid rgba(0, 0, 255, 0.05);
         }
-        
-        .dashboard-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-            color: #1a237e;
-            text-align: center;
-        }
-        
-        .dashboard-label {
-            font-size: 1rem;
-            color: #455a64;
-            font-weight: 500;
-            text-align: center;
-        }
-        
-        .quick-link-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        
-        .quick-link-list li {
-            padding: 12px 0;
-            border-bottom: 1px solid #f0f0f0;
-            transition: all 0.2s ease;
-        }
-        
-        .quick-link-list li:last-child {
-            border-bottom: none;
-        }
-        
-        .quick-link-list li:hover {
-            background-color: #f8f9fa;
-        }
-        
-        .quick-link-list li a {
-            text-decoration: none;
-            color: #1a237e;
-            font-weight: 500;
-            display: block;
-        }
-        
-        .quick-link-list li a:hover {
-            color: #3d5afe;
-        }
     </style>
 </head>
 <body>
 
-<%- include('./components/header', {title: title}) %>
+<%- include('../shared/components/header') %>
 
 <div class="main-content">
     <div class="section-description">
-        <h1 class="page-title">Dashboard</h1>
-        <p>Welcome to the Manufacturing Daily Output Dashboard. Monitor production metrics and access key functionality.</p>
+        <h1 class="page-title">Administration</h1>
+        <p>Welcome to the Administration Module. Select one of the options below to manage system settings and user permissions.</p>
     </div>
     
     <div class="cards-container">
+        <!-- Top Row - 3 cards -->
         <div class="menu-card">
             <div class="card-body">
                 <div class="card-icon">
-                    <i class="fas fa-chart-line"></i>
+                    <i class="fas fa-users"></i>
                 </div>
-                <div class="dashboard-value"><%= locals.dashboardCounts ? dashboardCounts.todaysOutput : 0 %></div>
-                <div class="dashboard-label">Today's Daily Output</div>
+                <h3 class="card-title">User Management</h3>
+                <p class="card-text">Create, edit and manage user accounts, permissions and roles.</p>
+                <a href="/page/administration/user_setup_display" class="card-btn">Manage Users</a>
             </div>
         </div>
         
         <div class="menu-card">
             <div class="card-body">
                 <div class="card-icon">
-                    <i class="fas fa-tasks"></i>
+                    <i class="fas fa-shield-alt"></i>
                 </div>
-                <div class="dashboard-value"><%= locals.dashboardCounts ? dashboardCounts.pendingApprovals : 0 %></div>
-                <div class="dashboard-label">Pending Approvals</div>
+                <h3 class="card-title">Role Management</h3>
+                <p class="card-text">Manage access control and permissions for different user roles.</p>
+                <a href="/page/administration/roles" class="card-btn">Manage Roles</a>
             </div>
         </div>
         
         <div class="menu-card">
             <div class="card-body">
                 <div class="card-icon">
-                    <i class="fas fa-clipboard-list"></i>
+                    <i class="fas fa-cogs"></i>
                 </div>
-                <div class="dashboard-value"><%= locals.dashboardCounts ? dashboardCounts.activeWorkOrders : 0 %></div>
-                <div class="dashboard-label">Active Work Orders</div>
+                <h3 class="card-title">System Settings</h3>
+                <p class="card-text">Configure global system parameters and application settings.</p>
+                <a href="/page/administration/settings" class="card-btn">System Settings</a>
             </div>
         </div>
         
+        <!-- Bottom Row - 3 cards -->
         <div class="menu-card">
             <div class="card-body">
                 <div class="card-icon">
-                    <i class="fas fa-check-circle"></i>
+                    <i class="fas fa-database"></i>
                 </div>
-                <div class="dashboard-value"><%= locals.dashboardCounts ? dashboardCounts.completedThisMonth : 0 %></div>
-                <div class="dashboard-label">Completed This Month</div>
+                <h3 class="card-title">Data Management</h3>
+                <p class="card-text">Backup, restore, and manage system data and configurations.</p>
+                <a href="/page/administration/data" class="card-btn">Manage Data</a>
             </div>
         </div>
-    </div>
-    
-    <div class="cards-container" style="margin-top: 20px; grid-template-columns: repeat(2, 1fr);">
+        
         <div class="menu-card">
             <div class="card-body">
                 <div class="card-icon">
                     <i class="fas fa-history"></i>
                 </div>
-                <h3 class="card-title">Recent Activity</h3>
-                <p class="card-text">No recent activities to display.</p>
+                <h3 class="card-title">Audit Logs</h3>
+                <p class="card-text">View system audit trails and user activity logs for security monitoring.</p>
+                <a href="/page/administration/audit" class="card-btn">View Logs</a>
             </div>
         </div>
         
         <div class="menu-card">
             <div class="card-body">
                 <div class="card-icon">
-                    <i class="fas fa-link"></i>
+                    <i class="fas fa-bell"></i>
                 </div>
-                <h3 class="card-title">Quick Links</h3>
-                <ul class="quick-link-list">
-                    <li><a href="/page/manufacture/daily_output/new"><i class="fas fa-plus-circle"></i> Create New Daily Output</a></li>
-                    <li><a href="/page/manufacture/daily_inquiry"><i class="fas fa-search"></i> View Daily Output Inquiry</a></li>
-                    <li><a href="/page/manufacture/new_job_order"><i class="fas fa-clipboard-list"></i> Job Orders</a></li>
-                    <li><a href="/page/administration"><i class="fas fa-cog"></i> Manage Settings</a></li>
-                </ul>
+                <h3 class="card-title">Notifications</h3>
+                <p class="card-text">Configure system notifications and alerts for important events.</p>
+                <a href="/page/administration/notifications" class="card-btn">Manage Notifications</a>
+            </div>
+        </div>
+
+        <div class="menu-card">
+            <div class="card-body">
+                <div class="card-icon">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <h3 class="card-title">Process Type</h3>
+                <p class="card-text">Define and manage manufacturing process types and workflows.</p>
+                <a href="/page/administration/process_types" class="card-btn">Manage Processes</a>
+            </div>
+        </div>
+
+        <div class="menu-card">
+            <div class="card-body">
+                <div class="card-icon">
+                    <i class="fas fa-industry"></i>
+                </div>
+                <h3 class="card-title">Machinery</h3>
+                <p class="card-text">Configure and maintain machinery assets and maintenance schedules.</p>
+                <a href="/page/administration/machinery" class="card-btn">Manage Machinery</a>
             </div>
         </div>
     </div>
 </div>
 
-<!-- jQuery and Bootstrap Scripts -->
+<!-- Bootstrap Scripts -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-  $(document).ready(function() {
-    // Dashboard initialization code would go here
-  });
-</script>
+
 </body>
 </html>

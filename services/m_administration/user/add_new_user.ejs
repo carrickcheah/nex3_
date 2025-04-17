@@ -73,12 +73,12 @@
                             <h5 class="border-bottom pb-2">Basic Information</h5>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="userName" class="form-label required">User Name</label>
+                                    <label for="userName" class="form-label required">Full Name</label>
                                     <input type="text" class="form-control" id="userName" name="userName" required>
                                     <div class="form-text">Full name of the user</div>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="userAbbrev" class="form-label required">Abbreviation</label>
+                                    <label for="userAbbrev" class="form-label required">Short Name</label>
                                     <input type="text" class="form-control" id="userAbbrev" name="userAbbrev" required>
                                     <div class="form-text">Short name or initials</div>
                                 </div>
@@ -93,7 +93,7 @@
                                         <option value="">None</option>
                                         <% if (typeof managers !== 'undefined' && managers.length > 0) { %>
                                             <% managers.forEach(function(manager) { %>
-                                                <option value="<%= manager.id %>"><%= manager.userAbbrev %> - <%= manager.userName %></option>
+                                                <option value="<%= manager.userAbbrev %>"><%= manager.userAbbrev %> - <%= manager.userName %></option>
                                             <% }); %>
                                         <% } %>
                                     </select>

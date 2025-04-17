@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> | NexERP</title>
+    <title>Engineering</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- jQuery UI CSS -->
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <!-- Link to Poppins font -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
@@ -159,20 +157,14 @@
         
         .menu-card:nth-child(4n+2) .card-btn {
             background: linear-gradient(45deg, #00b0ff, #0091ea);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
         }
         
         .menu-card:nth-child(4n+3) .card-btn {
             background: linear-gradient(45deg, #651fff, #6200ea);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
         }
         
         .menu-card:nth-child(4n+4) .card-btn {
             background: linear-gradient(45deg, #2979ff, #2962ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
         }
         
         .card-btn:hover {
@@ -189,82 +181,27 @@
             box-shadow: 0 6px 13px rgba(0, 0, 0, 0.05);
             border: 1px solid rgba(0, 0, 255, 0.05);
         }
-        
-        .dashboard-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-            color: #1a237e;
-            text-align: center;
-        }
-        
-        .dashboard-label {
-            font-size: 1rem;
-            color: #455a64;
-            font-weight: 500;
-            text-align: center;
-        }
-        
-        .quick-link-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        
-        .quick-link-list li {
-            padding: 12px 0;
-            border-bottom: 1px solid #f0f0f0;
-            transition: all 0.2s ease;
-        }
-        
-        .quick-link-list li:last-child {
-            border-bottom: none;
-        }
-        
-        .quick-link-list li:hover {
-            background-color: #f8f9fa;
-        }
-        
-        .quick-link-list li a {
-            text-decoration: none;
-            color: #1a237e;
-            font-weight: 500;
-            display: block;
-        }
-        
-        .quick-link-list li a:hover {
-            color: #3d5afe;
-        }
     </style>
 </head>
 <body>
 
-<%- include('./components/header', {title: title}) %>
+<%- include('../shared/components/header') %>
 
 <div class="main-content">
     <div class="section-description">
-        <h1 class="page-title">Dashboard</h1>
-        <p>Welcome to the Manufacturing Daily Output Dashboard. Monitor production metrics and access key functionality.</p>
+        <h1 class="page-title">Engineering</h1>
+        <p>Welcome to the Engineering Module. Select one of the options below to manage product development, designs, and technical specifications.</p>
     </div>
     
     <div class="cards-container">
         <div class="menu-card">
             <div class="card-body">
                 <div class="card-icon">
-                    <i class="fas fa-chart-line"></i>
+                    <i class="fas fa-drafting-compass"></i>
                 </div>
-                <div class="dashboard-value"><%= locals.dashboardCounts ? dashboardCounts.todaysOutput : 0 %></div>
-                <div class="dashboard-label">Today's Daily Output</div>
-            </div>
-        </div>
-        
-        <div class="menu-card">
-            <div class="card-body">
-                <div class="card-icon">
-                    <i class="fas fa-tasks"></i>
-                </div>
-                <div class="dashboard-value"><%= locals.dashboardCounts ? dashboardCounts.pendingApprovals : 0 %></div>
-                <div class="dashboard-label">Pending Approvals</div>
+                <h3 class="card-title">Product Design</h3>
+                <p class="card-text">Create and manage product designs, technical drawings and 3D models.</p>
+                <a href="/page/engineering/designs" class="card-btn">Manage Designs</a>
             </div>
         </div>
         
@@ -273,58 +210,83 @@
                 <div class="card-icon">
                     <i class="fas fa-clipboard-list"></i>
                 </div>
-                <div class="dashboard-value"><%= locals.dashboardCounts ? dashboardCounts.activeWorkOrders : 0 %></div>
-                <div class="dashboard-label">Active Work Orders</div>
+                <h3 class="card-title">Bill of Materials</h3>
+                <p class="card-text">Manage product components, materials specifications and assembly structures.</p>
+                <a href="/page/engineering/bom" class="card-btn">Manage BOMs</a>
             </div>
         </div>
         
         <div class="menu-card">
             <div class="card-body">
                 <div class="card-icon">
-                    <i class="fas fa-check-circle"></i>
+                    <i class="fas fa-tasks"></i>
                 </div>
-                <div class="dashboard-value"><%= locals.dashboardCounts ? dashboardCounts.completedThisMonth : 0 %></div>
-                <div class="dashboard-label">Completed This Month</div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="cards-container" style="margin-top: 20px; grid-template-columns: repeat(2, 1fr);">
-        <div class="menu-card">
-            <div class="card-body">
-                <div class="card-icon">
-                    <i class="fas fa-history"></i>
-                </div>
-                <h3 class="card-title">Recent Activity</h3>
-                <p class="card-text">No recent activities to display.</p>
+                <h3 class="card-title">Work Instructions</h3>
+                <p class="card-text">Create and manage assembly instructions, manufacturing procedures and quality standards.</p>
+                <a href="/page/engineering/instructions" class="card-btn">Manage Instructions</a>
             </div>
         </div>
         
         <div class="menu-card">
             <div class="card-body">
                 <div class="card-icon">
-                    <i class="fas fa-link"></i>
+                    <i class="fas fa-file-alt"></i>
                 </div>
-                <h3 class="card-title">Quick Links</h3>
-                <ul class="quick-link-list">
-                    <li><a href="/page/manufacture/daily_output/new"><i class="fas fa-plus-circle"></i> Create New Daily Output</a></li>
-                    <li><a href="/page/manufacture/daily_inquiry"><i class="fas fa-search"></i> View Daily Output Inquiry</a></li>
-                    <li><a href="/page/manufacture/new_job_order"><i class="fas fa-clipboard-list"></i> Job Orders</a></li>
-                    <li><a href="/page/administration"><i class="fas fa-cog"></i> Manage Settings</a></li>
-                </ul>
+                <h3 class="card-title">Technical Documents</h3>
+                <p class="card-text">Manage technical specifications, certification documents and compliance records.</p>
+                <a href="/page/engineering/documents" class="card-btn">Manage Documents</a>
+            </div>
+        </div>
+        
+        <div class="menu-card">
+            <div class="card-body">
+                <div class="card-icon">
+                    <i class="fas fa-project-diagram"></i>
+                </div>
+                <h3 class="card-title">Engineering Change</h3>
+                <p class="card-text">Manage engineering change orders, track revisions and implement design modifications.</p>
+                <a href="/page/engineering/change-management" class="card-btn">Manage Changes</a>
+            </div>
+        </div>
+        
+        <div class="menu-card">
+            <div class="card-body">
+                <div class="card-icon">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <h3 class="card-title">Process Planning</h3>
+                <p class="card-text">Design and optimize manufacturing processes, create routing instructions and production workflows.</p>
+                <a href="/page/engineering/processes" class="card-btn">Manage Processes</a>
+            </div>
+        </div>
+        
+        <div class="menu-card">
+            <div class="card-body">
+                <div class="card-icon">
+                    <i class="fas fa-microscope"></i>
+                </div>
+                <h3 class="card-title">Quality Control</h3>
+                <p class="card-text">Define quality standards, inspection procedures and testing protocols.</p>
+                <a href="/page/engineering/quality" class="card-btn">Manage QC</a>
+            </div>
+        </div>
+        
+        <div class="menu-card">
+            <div class="card-body">
+                <div class="card-icon">
+                    <i class="fas fa-lightbulb"></i>
+                </div>
+                <h3 class="card-title">R&D Projects</h3>
+                <p class="card-text">Manage research projects, track development milestones and document innovations.</p>
+                <a href="/page/engineering/projects" class="card-btn">Manage Projects</a>
             </div>
         </div>
     </div>
 </div>
 
-<!-- jQuery and Bootstrap Scripts -->
+<!-- Bootstrap Scripts -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-  $(document).ready(function() {
-    // Dashboard initialization code would go here
-  });
-</script>
+
 </body>
 </html>

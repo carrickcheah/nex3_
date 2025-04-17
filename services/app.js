@@ -24,7 +24,11 @@ const PORT = process.env.PORT || 3000;
 // Import route modules for modular approach
 const dailyOutputRoutes = require('./m_manufacturing/m_daily_output/routes/dailyOutputRoutes');
 const apiRoutes = require('./m_manufacturing/m_daily_output/routes/apiRoutes');
-const { userRoutes } = require('./m_administration');
+const { userRoutes, administrationRoutes } = require('./m_administration');
+const { salesRoutes } = require('./m_sales');
+const { warehouseRoutes } = require('./m_warehouse');
+const { purchasingRoutes } = require('./m_purchasing');
+const { engineeringRoutes } = require('./m_engineering');
 
 // Middleware
 app.use(express.static(path.join(__dirname, 'm_manufacturing/m_daily_output/public')));
@@ -37,6 +41,7 @@ app.set('view engine', 'ejs');
 // Configure multiple view directories
 app.set('views', [
   path.join(__dirname, 'm_manufacturing/m_daily_output/views'),
+  path.join(__dirname, 'm_administration'),
   path.join(__dirname),
   path.join(__dirname, 'shared')
 ]);
@@ -87,10 +92,15 @@ const OPTION_DAILY_PURPOSE = {
   'S': 'STANDARD OUTPUT'
 };
 
-// Register modular routes for daily output functionality
+// Register modular routes
 app.use('/', dailyOutputRoutes);
 app.use('/', apiRoutes);
 app.use('/', userRoutes);
+app.use('/', administrationRoutes);
+app.use('/', salesRoutes);
+app.use('/', warehouseRoutes);
+app.use('/', purchasingRoutes);
+app.use('/', engineeringRoutes);
 
 // Root route - redirect to manufacturing landing page
 app.get('/', (req, res) => {
