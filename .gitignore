@@ -18,6 +18,7 @@ logs
 # IDE specific files
 .idea/
 .vscode/
+.trasj/
 *.swp
 *.swo
 

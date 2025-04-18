@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+        }
+        
+        /* Table font size settings */
+        #instructionsTable {
+            font-size: 14px;
+        }
+        
+        #instructionsTable thead th {
+            font-size: 15px;
+            font-weight: 600;
+        }
+        
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border: none;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #0669f4, #5441e9);
+            color: white;
+            border-radius: 8px 8px 0 0 !important;
+            font-weight: 600;
+            padding: 15px 20px;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background-color: #0669f4;
+            border-color: #0669f4;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0558d6;
+            border-color: #0558d6;
+        }
+        
+        .btn-teal {
+            background-color: #0669f4;
+            border-color: #0558d6;
+            color: white;
+        }
+        
+        .btn-teal:hover {
+            background-color: #0558d6;
+            border-color: #0446b8;
+            color: white;
+        }
+        
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(6, 105, 244, 0.05);
+        }
+        
+        .action-buttons .btn {
+            margin-right: 5px;
+        }
+        
+        /* Status indicators with icons */
+        .status-text {
+            display: inline-flex;
+            align-items: center;
+            font-weight: normal;
+        }
+        
+        .status-text i {
+            margin-right: 5px;
+        }
+        
+        /* Icon colors */
+        .fa-clock {
+            color: #ffc107; /* Warning/Pending */
+        }
+        
+        .fa-check-circle {
+            color: #28a745; /* Success/Completed */
+        }
+        
+        .fa-times-circle {
+            color: #dc3545; /* Danger/Voided */
+        }
+        
+        .fa-ban {
+            color: #6c757d; /* Secondary/Cancelled */
+        }
+        
+        /* Column widths for better alignment */
+        #instructionsTable th:nth-child(1), #instructionsTable td:nth-child(1) { width: 3%; }  /* # */
+        #instructionsTable th:nth-child(2), #instructionsTable td:nth-child(2) { width: 4%; }  /* IMPORT ID */
+        #instructionsTable th:nth-child(3), #instructionsTable td:nth-child(3) { width: 18%; } /* CUSTOMER */
+        #instructionsTable th:nth-child(4), #instructionsTable td:nth-child(4) { width: 6%; }  /* PO NO */
+        #instructionsTable th:nth-child(5), #instructionsTable td:nth-child(5) { width: 6%; }  /* STOCK CODE */
+        #instructionsTable th:nth-child(6), #instructionsTable td:nth-child(6) { width: 6%; }  /* DI NO */
+        #instructionsTable th:nth-child(7), #instructionsTable td:nth-child(7) { width: 3%; }  /* SHIFT */
+        #instructionsTable th:nth-child(8), #instructionsTable td:nth-child(8) { width: 3%; }  /* ZONE */
+        #instructionsTable th:nth-child(9), #instructionsTable td:nth-child(9) { width: 5%; }  /* LOCATION */
+        #instructionsTable th:nth-child(10), #instructionsTable td:nth-child(10) { width: 6%; } /* DEPT */
+        #instructionsTable th:nth-child(11), #instructionsTable td:nth-child(11) { width: 5%; } /* LINE */
+        #instructionsTable th:nth-child(12), #instructionsTable td:nth-child(12) { width: 3%; } /* DI QTY */
+        #instructionsTable th:nth-child(13), #instructionsTable td:nth-child(13) { width: 10%; } /* ETA DATE */
+        #instructionsTable th:nth-child(14), #instructionsTable td:nth-child(14) { width: 3%; } /* DO QTY */
+        #instructionsTable th:nth-child(15), #instructionsTable td:nth-child(15) { width: 7%; } /* REMARK */
+        #instructionsTable th:nth-child(16), #instructionsTable td:nth-child(16) { width: 12%; } /* STATUS */
+    </style>
+</head>
+<body>
+
+<%- include('../../shared/components/header') %>
+
+<div class="container-fluid mt-4 px-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-truck me-2"></i>Sales Delivery Instruction</span>
+                    <a href="/page/sales/delivery-instructions/add" class="btn btn-light btn-sm">
+                        <i class="fas fa-plus me-1"></i>New Delivery Instruction
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- Search and filter controls -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" id="searchDocRef" class="form-control" placeholder="Search by Document Reference">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" id="searchCustomer" class="form-control" placeholder="Search by Customer">
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <select id="page-size" class="form-select d-inline-block w-auto me-2">
+                                <option value="10">10 per page</option>
+                                <option value="25">25 per page</option>
+                                <option value="50">50 per page</option>
+                                <option value="100" selected>100 per page</option>
+                                <option value="250">250 per page</option>
+                                <option value="500">500 per page</option>
+                            </select>
+                            <button id="applyFilters" class="btn btn-primary">
+                                <i class="fas fa-filter me-1"></i> Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Instructions table -->
+                    <div class="table-responsive">
+                        <table id="instructionsTable" class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th class="text-start">#</th>
+                                    <th class="text-start">IMPORT ID</th>
+                                    <th class="text-start">CUSTOMER</th>
+                                    <th class="text-start">PO NO</th>
+                                    <th class="text-start">STOCK CODE</th>
+                                    <th class="text-start">DI NO</th>
+                                    <th class="text-start">SHIFT</th>
+                                    <th class="text-start">ZONE</th>
+                                    <th class="text-start">LOCATION</th>
+                                    <th class="text-start">DEPT</th>
+                                    <th class="text-start">LINE</th>
+                                    <th class="text-start">DI QTY</th>
+                                    <th class="text-start">ETA DATE</th>
+                                    <th class="text-start">DO QTY</th>
+                                    <th class="text-start">REMARK</th>
+                                    <th class="text-start">STATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Table body will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <nav aria-label="Instruction pagination" class="mt-3">
+                        <ul id="pagination" class="pagination justify-content-center">
+                            <!-- Pagination will be populated by JavaScript -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        let currentPage = 1;
+        let pageSize = 100;
+        let totalPages = 0;
+        let fromDate = '';
+        let toDate = '';
+        
+        // Initial data load
+        loadInstructions();
+        
+        // Apply filters
+        $('#applyFilters').on('click', function() {
+            currentPage = 1;
+            loadInstructions();
+        });
+        
+        // Handle Enter key in search fields
+        $('#searchDocRef, #searchCustomer').on('keypress', function(e) {
+            if (e.which === 13) {
+                currentPage = 1;
+                loadInstructions();
+            }
+        });
+        
+        // Page size change
+        $('#page-size').on('change', function() {
+            pageSize = $(this).val();
+            currentPage = 1;
+            loadInstructions();
+        });
+        
+        // Function to load instructions with pagination and filters
+        function loadInstructions() {
+            const docRef = $('#searchDocRef').val();
+            const customerName = $('#searchCustomer').val();
+            const status = $('#filterStatus').val();
+            
+            console.log('Loading instructions with filters:', {
+                page: currentPage,
+                limit: pageSize,
+                docRef: docRef,
+                customerName: customerName,
+                status: status,
+                fromDate: fromDate,
+                toDate: toDate
+            });
+            
+            $.ajax({
+                url: '/api/sales/sdi_instructions',
+                type: 'GET',
+                data: {
+                    page: currentPage,
+                    limit: pageSize,
+                    docRef: docRef,
+                    customerName: customerName,
+                    status: status,
+                    fromDate: fromDate,
+                    toDate: toDate
+                },
+                success: function(response) {
+                    console.log('API Response:', response);
+                    
+                    if (response.success) {
+                        console.log('Instructions returned:', response.data ? response.data.length : 0);
+                        renderInstructions(response.data);
+                        renderPagination(response.pagination);
+                    } else {
+                        console.error('Error in API response:', response.message);
+                        alert('Error loading instructions: ' + response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('API Error Status:', status);
+                    console.error('API Error Message:', error);
+                    console.error('API Error Details:', xhr);
+                    console.error('API Response Text:', xhr.responseText);
+                    alert('Error loading instructions: ' + (xhr.responseJSON?.message || 'Unknown error'));
+                }
+            });
+        }
+        
+        // Function to render instructions table
+        function renderInstructions(instructions) {
+            const tbody = $('#instructionsTable tbody');
+            tbody.empty();
+            
+            if (instructions.length === 0) {
+                tbody.append('<tr><td colspan="16" class="text-center">No delivery instructions found</td></tr>');
+                return;
+            }
+            
+            instructions.forEach(function(instruction, index) {
+                const row = $('<tr>');
+                
+                row.append(`<td class="text-start">${index + 1}</td>`); // #
+                row.append(`<td class="text-start">${instruction.import_id || instruction.importId || ''}</td>`); // IMPORT ID
+                row.append(`<td class="text-start">${instruction.customerName || ''}</td>`); // CUSTOMER
+                row.append(`<td class="text-start"><a href="#" class="po-link" data-po="${instruction.po_no || instruction.poNo || ''}">${instruction.po_no || instruction.poNo || ''}</a></td>`); // PO NO
+                row.append(`<td class="text-start">${instruction.stock_code || instruction.stockCode || ''}</td>`); // STOCK CODE
+                row.append(`<td class="text-start">${instruction.di_no || instruction.diNo || ''}</td>`); // DI NO
+                row.append(`<td class="text-start">${instruction.shift || ''}</td>`); // SHIFT
+                row.append(`<td class="text-start">${instruction.zone || ''}</td>`); // ZONE
+                row.append(`<td class="text-start">${instruction.location || ''}</td>`); // LOCATION
+                row.append(`<td class="text-start">${instruction.dept || instruction.department || ''}</td>`); // DEPT
+                row.append(`<td class="text-start">${instruction.line || ''}</td>`); // LINE
+                row.append(`<td class="text-start">${instruction.di_qty || instruction.diQty || '0'}</td>`); // DI QTY
+                row.append(`<td class="text-start">${instruction.eta_date || instruction.etaDate || ''}</td>`); // ETA DATE
+                row.append(`<td class="text-start">${instruction.do_qty || instruction.doQty || '0'}</td>`); // DO QTY
+                row.append(`<td class="text-start">${instruction.remark || ''}</td>`); // REMARK
+                
+                // Status column with icon
+                let statusIcon = '';
+                switch(instruction.status) {
+                    case 'P': statusIcon = '<i class="fas fa-clock"></i>'; break;
+                    case 'C': statusIcon = '<i class="fas fa-check-circle"></i>'; break;
+                    case 'V': statusIcon = '<i class="fas fa-times-circle"></i>'; break;
+                    case 'X': statusIcon = '<i class="fas fa-ban"></i>'; break;
+                    default: statusIcon = '<i class="fas fa-question-circle"></i>'; break;
+                }
+                
+                row.append(`<td class="text-start">
+                    <span class="status-text">${statusIcon} ${instruction.statusText || ''}</span>
+                    <div class="float-end">
+                        <a href="/page/sales/delivery-instructions/view/${instruction.id}" class="btn btn-sm btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
+                        <a href="/page/sales/delivery-instructions/edit/${instruction.id}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="fas fa-edit"></i></a>
+                    </div>
+                </td>`);
+                
+                tbody.append(row);
+            });
+            
+            // Add hover effect for better UX
+            $('#instructionsTable tbody tr').css('cursor', 'pointer');
+            
+            // Add click handler for PO NO links
+            $('.po-link').on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation(); // Prevent row click from triggering
+                const poNo = $(this).data('po');
+                $('#searchDocRef').val(poNo);
+                currentPage = 1;
+                loadInstructions();
+            });
+            
+            // Add click handler for row navigation
+            $('#instructionsTable tbody tr').on('click', function(e) {
+                // Don't navigate if clicked on a button
+                if ($(e.target).closest('.btn').length === 0 && !$(e.target).is('.btn')) {
+                    const id = $(this).find('td:eq(0)').text(); // Use index to get the first cell
+                    window.location.href = `/page/sales/delivery-instructions/view/${id}`;
+                }
+            });
+        }
+        
+        // Function to render pagination
+        function renderPagination(pagination) {
+            const paginationEl = $('#pagination');
+            paginationEl.empty();
+            
+            totalPages = pagination.pages;
+            
+            // Previous button
+            paginationEl.append(`
+                <li class="page-item ${pagination.page <= 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="${pagination.page - 1}">Previous</a>
+                </li>
+            `);
+            
+            // Page numbers
+            const startPage = Math.max(1, pagination.page - 2);
+            const endPage = Math.min(startPage + 4, pagination.pages);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                paginationEl.append(`
+                    <li class="page-item ${i === pagination.page ? 'active' : ''}">
+                        <a class="page-link" href="#" data-page="${i}">${i}</a>
+                    </li>
+                `);
+            }
+            
+            // Next button
+            paginationEl.append(`
+                <li class="page-item ${pagination.page >= pagination.pages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="${pagination.page + 1}">Next</a>
+                </li>
+            `);
+            
+            // Pagination click event
+            $('.page-link').on('click', function(e) {
+                e.preventDefault();
+                const page = $(this).data('page');
+                
+                if (page < 1 || page > totalPages || page === currentPage) {
+                    return;
+                }
+                
+                currentPage = page;
+                loadInstructions();
+            });
+        }
+    });
+</script>
+
+</body>
+</html>

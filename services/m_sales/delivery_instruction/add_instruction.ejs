@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+        }
+        
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border: none;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #0669f4, #5441e9);
+            color: white;
+            border-radius: 8px 8px 0 0 !important;
+            font-weight: 600;
+            padding: 15px 20px;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background-color: #0669f4;
+            border-color: #0669f4;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0558d6;
+            border-color: #0558d6;
+        }
+        
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .select2-container {
+            width: 100% !important;
+        }
+        
+        /* Status indicators with icons */
+        .status-text {
+            display: inline-flex;
+            align-items: center;
+            font-weight: normal;
+        }
+        
+        .status-text i {
+            margin-right: 5px;
+        }
+        
+        /* Icon colors */
+        .fa-clock {
+            color: #ffc107; /* Warning/Pending */
+        }
+        
+        .fa-check-circle {
+            color: #28a745; /* Success/Completed */
+        }
+        
+        .fa-times-circle {
+            color: #dc3545; /* Danger/Voided */
+        }
+        
+        .fa-ban {
+            color: #6c757d; /* Secondary/Cancelled */
+        }
+        
+        /* Required field indicator */
+        .required-field::after {
+            content: " *";
+            color: red;
+        }
+        
+        /* View-only mode styles */
+        .view-only-field {
+            background-color: #f8f9fa;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+<%- include('../../shared/components/header') %>
+
+<div class="container-fluid mt-4 px-4">
+    <!-- Header Card -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-truck me-2"></i><%= heading %></span>
+            <div>
+                <a href="/page/sales/delivery-instructions" class="btn btn-light btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i>Back to List
+                </a>
+                <% if (typeof viewOnly !== 'undefined' && viewOnly) { %>
+                    <a href="/page/sales/delivery-instructions/edit/<%= instruction.id %>" class="btn btn-primary btn-sm ms-2">
+                        <i class="fas fa-edit me-1"></i>Edit
+                    </a>
+                <% } else { %>
+                    <button type="button" id="saveButton" class="btn btn-primary btn-sm ms-2">
+                        <i class="fas fa-save me-1"></i>Save
+                    </button>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <form id="instructionForm">
+        <!-- Main Content Row -->
+        <div class="row">
+            <!-- Left Column: Header Info -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-info-circle me-1"></i>Delivery Instruction Details
+                    </div>
+                    <div class="card-body">
+                        <% if (typeof instruction !== 'undefined') { %>
+                            <input type="hidden" id="instructionId" name="id" value="<%= instruction.id %>">
+                        <% } %>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="docRef" class="form-label required-field">Purchase Order No</label>
+                                <input type="text" class="form-control <%= (typeof viewOnly !== 'undefined' && viewOnly) ? 'view-only-field' : '' %>" 
+                                    id="docRef" name="docRef" required 
+                                    value="<%= typeof instruction !== 'undefined' ? instruction.docRef : (typeof docRef !== 'undefined' ? docRef : '') %>"
+                                    <%= (typeof viewOnly !== 'undefined' && viewOnly) ? 'readonly' : '' %>>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="txnDate" class="form-label required-field">Transaction Date</label>
+                                <input type="text" class="form-control datepicker <%= (typeof viewOnly !== 'undefined' && viewOnly) ? 'view-only-field' : '' %>" 
+                                    id="txnDate" name="txnDate" required 
+                                    value="<%= typeof instruction !== 'undefined' ? instruction.txnDate : (typeof txnDate !== 'undefined' ? txnDate : '') %>"
+                                    <%= (typeof viewOnly !== 'undefined' && viewOnly) ? 'readonly' : '' %>>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="customerId" class="form-label required-field">Customer</label>
+                                <select class="form-select select2 <%= (typeof viewOnly !== 'undefined' && viewOnly) ? 'view-only-field' : '' %>" 
+                                    id="customerId" name="customerId" required
+                                    <%= (typeof viewOnly !== 'undefined' && viewOnly) ? 'disabled' : '' %>>
+                                    <option value="">Select Customer</option>
+                                    <% if (typeof customers !== 'undefined' && customers.length > 0) { %>
+                                        <% customers.forEach(function(customer) { %>
+                                            <option value="<%= customer.id %>" 
+                                                <%= (typeof instruction !== 'undefined' && instruction.customerId == customer.id) ? 'selected' : '' %>>
+                                                <%= customer.code ? `[${customer.code}] ` : '' %><%= customer.name %>
+                                            </option>
+                                        <% }); %>
+                                    <% } %>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="deliveryDate" class="form-label">Estimate Arrival Date</label>
+                                <input type="text" class="form-control datepicker <%= (typeof viewOnly !== 'undefined' && viewOnly) ? 'view-only-field' : '' %>" 
+                                    id="deliveryDate" name="deliveryDate" 
+                                    value="<%= typeof instruction !== 'undefined' ? instruction.deliveryDate : (typeof deliveryDate !== 'undefined' ? deliveryDate : '') %>"
+                                    <%= (typeof viewOnly !== 'undefined' && viewOnly) ? 'readonly' : '' %>>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="priorityId" class="form-label">Priority</label>
+                                <select class="form-select <%= (typeof viewOnly !== 'undefined' && viewOnly) ? 'view-only-field' : '' %>" 
+                                    id="priorityId" name="priorityId"
+                                    <%= (typeof viewOnly !== 'undefined' && viewOnly) ? 'disabled' : '' %>>
+                                    <option value="1" <%= (typeof instruction !== 'undefined' && instruction.priorityId == 1) ? 'selected' : '' %>>Normal</option>
+                                    <option value="2" <%= (typeof instruction !== 'undefined' && instruction.priorityId == 2) ? 'selected' : '' %>>High</option>
+                                    <option value="3" <%= (typeof instruction !== 'undefined' && instruction.priorityId == 3) ? 'selected' : '' %>>Urgent</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <% if (typeof instruction !== 'undefined') { %>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="status" class="form-label">Status</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <% if (instruction.status === 'P') { %>
+                                                <i class="fas fa-clock text-warning"></i>
+                                            <% } else if (instruction.status === 'C') { %>
+                                                <i class="fas fa-check-circle text-success"></i>
+                                            <% } else if (instruction.status === 'V') { %>
+                                                <i class="fas fa-times-circle text-danger"></i>
+                                            <% } else if (instruction.status === 'X') { %>
+                                                <i class="fas fa-ban text-secondary"></i>
+                                            <% } %>
+                                        </span>
+                                        <input type="text" class="form-control view-only-field" readonly value="<%= instruction.statusText %>">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="createdBy" class="form-label">Created By</label>
+                                    <input type="text" class="form-control view-only-field" id="createdBy" readonly 
+                                        value="<%= instruction.createdById || '' %>">
+                                </div>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column: Delivery Info -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-map-marker-alt me-1"></i>Delivery Information
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="deliveryAddress" class="form-label">Delivery Address</label>
+                                <textarea class="form-control <%= (typeof viewOnly !== 'undefined' && viewOnly) ? 'view-only-field' : '' %>" 
+                                    id="deliveryAddress" name="deliveryAddress" rows="3"
+                                    <%= (typeof viewOnly !== 'undefined' && viewOnly) ? 'readonly' : '' %>><%= typeof instruction !== 'undefined' ? instruction.deliveryAddress : '' %></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="contactPerson" class="form-label">Contact Person</label>
+                                <input type="text" class="form-control <%= (typeof viewOnly !== 'undefined' && viewOnly) ? 'view-only-field' : '' %>" 
+                                    id="contactPerson" name="contactPerson" 
+                                    value="<%= typeof instruction !== 'undefined' ? instruction.contactPerson : '' %>"
+                                    <%= (typeof viewOnly !== 'undefined' && viewOnly) ? 'readonly' : '' %>>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="contactPhone" class="form-label">Phone No</label>
+                                <input type="text" class="form-control <%= (typeof viewOnly !== 'undefined' && viewOnly) ? 'view-only-field' : '' %>" 
+                                    id="contactPhone" name="contactPhone" 
+                                    value="<%= typeof instruction !== 'undefined' ? instruction.contactPhone : '' %>"
+                                    <%= (typeof viewOnly !== 'undefined' && viewOnly) ? 'readonly' : '' %>>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="remark" class="form-label">Remarks</label>
+                                <textarea class="form-control <%= (typeof viewOnly !== 'undefined' && viewOnly) ? 'view-only-field' : '' %>" 
+                                    id="remark" name="remark" rows="3"
+                                    <%= (typeof viewOnly !== 'undefined' && viewOnly) ? 'readonly' : '' %>><%= typeof instruction !== 'undefined' ? instruction.remark : '' %></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Items Card -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-list me-1"></i>Item Details</span>
+                <% if (typeof viewOnly === 'undefined' || !viewOnly) { %>
+                    <button type="button" id="addItemButton" class="btn btn-light btn-sm">
+                        <i class="fas fa-plus me-1"></i>Add Item
+                    </button>
+                <% } %>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="itemsTable" class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th style="width: 15%;">Stock Code</th>
+                                <th style="width: 15%;">Line</th>
+                                <th style="width: 15%;">Dept</th>
+                                <th style="width: 10%;">Quantity</th>
+                                <th style="width: 15%;">ETA Date</th>
+                                <th style="width: 20%;">Remark</th>
+                                <% if (typeof viewOnly !== 'undefined' && viewOnly) { %>
+                                    <th style="width: 10%;">Status</th>
+                                <% } else { %>
+                                    <th style="width: 10%;">Actions</th>
+                                <% } %>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (typeof instruction !== 'undefined' && instruction.items && instruction.items.length > 0) { %>
+                                <% instruction.items.forEach(function(item, index) { %>
+                                    <tr data-row-id="<%= item.rowId %>" data-item-id="<%= item.itemId %>">
+                                        <td><%= item.rowId %></td>
+                                        <td><%= item.productCode %></td>
+                                        <td><%= item.productName %></td>
+                                        <td class="text-end">
+                                            <% if (typeof viewOnly !== 'undefined' && viewOnly) { %>
+                                                <%= item.quantity %> / <%= item.quantityDelivered %> 
+                                                <small class="text-muted">(Balance: <%= item.balance %>)</small>
+                                            <% } else { %>
+                                                <input type="number" class="form-control form-control-sm item-qty" 
+                                                    value="<%= item.quantity %>" min="0" step="0.01">
+                                            <% } %>
+                                        </td>
+                                        <td><%= item.uom %></td>
+                                        <td>
+                                            <% if (typeof viewOnly !== 'undefined' && viewOnly) { %>
+                                                <%= item.remark %>
+                                            <% } else { %>
+                                                <input type="text" class="form-control form-control-sm item-remark" 
+                                                    value="<%= item.remark %>">
+                                            <% } %>
+                                        </td>
+                                        <% if (typeof viewOnly !== 'undefined' && viewOnly) { %>
+                                            <td>
+                                                <span class="badge <%= item.status === 'C' ? 'bg-success' : 'bg-warning' %>">
+                                                    <%= item.statusText %>
+                                                </span>
+                                            </td>
+                                        <% } else { %>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-danger btn-sm remove-item">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        <% } %>
+                                    </tr>
+                                <% }); %>
+                            <% } else if (typeof viewOnly === 'undefined' || !viewOnly) { %>
+                                <tr class="no-items">
+                                    <td colspan="7" class="text-center">No items added yet.</td>
+                                </tr>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="text-center">No items found.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Add Item Modal -->
+<div class="modal fade" id="addItemModal" tabindex="-1" aria-labelledby="addItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0669f4, #5441e9); color: white;">
+                <h5 class="modal-title" id="addItemModalLabel">Add Item</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="itemForm">
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="itemId" class="form-label required-field">Product</label>
+                            <select class="form-select select2" id="itemId" name="itemId" required>
+                                <option value="">Select Product</option>
+                                <% if (typeof products !== 'undefined' && products.length > 0) { %>
+                                    <% products.forEach(function(product) { %>
+                                        <option value="<%= product.itemId %>" 
+                                            data-code="<%= product.code %>"
+                                            data-name="<%= product.name %>"
+                                            data-uom-id="<%= product.uomId %>"
+                                            data-uom="<%= product.uom %>">
+                                            <%= product.code %> - <%= product.name %>
+                                        </option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="quantity" class="form-label required-field">Quantity</label>
+                            <input type="number" class="form-control" id="quantity" name="quantity" value="1" min="0.01" step="0.01" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="uom" class="form-label">Unit of Measure</label>
+                            <input type="text" class="form-control" id="uom" name="uom" readonly>
+                            <input type="hidden" id="uomId" name="uomId">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="itemRemark" class="form-label">Remark</label>
+                            <textarea class="form-control" id="itemRemark" name="itemRemark" rows="2"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveItemBtn">Add Item</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap and jQuery Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pikaday/pikaday.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
+
+<script>
+    $(document).ready(function() {
+        // Initialize Select2
+        $('.select2').select2({
+            theme: 'bootstrap-5'
+        });
+        
+        // Initialize datepickers
+        function initDatepicker(field) {
+            return new Pikaday({
+                field: document.getElementById(field),
+                format: 'DD-MM-YYYY',
+                onSelect: function() {
+                    document.getElementById(field).dispatchEvent(new Event('change'));
+                }
+            });
+        }
+        
+        // Only initialize datepickers if not in view-only mode
+        /* EJS: Initialize view state */
+        const isViewOnly = /* <%= typeof viewOnly !== 'undefined' && viewOnly ? 'true' : 'false' %> */ false;
+        if (!isViewOnly) {
+            initDatepicker('txnDate');
+            initDatepicker('deliveryDate');
+        }
+        
+        // Variables for tracking items
+        let nextRowId = 1;
+        const items = [];
+        
+        // Initialize with existing items if available
+        /* EJS: Check if there are existing items */
+        const hasExistingItems = /* <%= typeof instruction !== 'undefined' && instruction.items && instruction.items.length > 0 ? 'true' : 'false' %> */ false;
+        
+        if (hasExistingItems) {
+            // Get items data from server-side rendered template
+            /* EJS: Get items data from server */
+            const itemsData = /* <%= typeof instruction !== 'undefined' && instruction.items ? JSON.stringify(instruction.items) : '[]' %> */ [];
+            
+            // Process each item
+            itemsData.forEach(function(item) {
+                items.push({
+                    rowId: item.rowId,
+                    itemId: item.itemId,
+                    productCode: item.productCode,
+                    productName: item.productName,
+                    quantity: item.quantity,
+                    uomId: item.uomId,
+                    uom: item.uom,
+                    remark: item.remark,
+                    quantityDelivered: item.quantityDelivered,
+                    status: item.status,
+                    statusText: item.statusText
+                });
+                
+                nextRowId = Math.max(nextRowId, item.rowId + 1);
+            });
+        }
+        
+        // Product change handler
+        $('#itemId').on('change', function() {
+            const selectedOption = $(this).find('option:selected');
+            $('#uom').val(selectedOption.data('uom'));
+            $('#uomId').val(selectedOption.data('uom-id'));
+        });
+        
+        // Show add item modal
+        $('#addItemButton').on('click', function() {
+            // Clear form
+            $('#itemForm')[0].reset();
+            $('#itemId').val('').trigger('change');
+            $('#quantity').val(1);
+            $('#itemRemark').val('');
+            
+            // Show modal
+            $('#addItemModal').modal('show');
+        });
+        
+        // Save item
+        $('#saveItemBtn').on('click', function() {
+            // Validate form
+            if (!$('#itemId').val()) {
+                alert('Please select a product.');
+                return;
+            }
+            
+            if (!$('#quantity').val() || parseFloat($('#quantity').val()) <= 0) {
+                alert('Please enter a valid quantity.');
+                return;
+            }
+            
+            // Get form values
+            const selectedOption = $('#itemId').find('option:selected');
+            const item = {
+                rowId: nextRowId++,
+                itemId: $('#itemId').val(),
+                productCode: selectedOption.data('code'),
+                productName: selectedOption.data('name'),
+                quantity: parseFloat($('#quantity').val()),
+                uomId: $('#uomId').val(),
+                uom: $('#uom').val(),
+                remark: $('#itemRemark').val()
+            };
+            
+            // Add to items array
+            items.push(item);
+            
+            // Update table
+            updateItemsTable();
+            
+            // Close modal
+            $('#addItemModal').modal('hide');
+        });
+        
+        // Remove item
+        $(document).on('click', '.remove-item', function() {
+            const rowId = $(this).closest('tr').data('row-id');
+            
+            // Remove from items array
+            const index = items.findIndex(item => item.rowId === rowId);
+            if (index !== -1) {
+                items.splice(index, 1);
+            }
+            
+            // Update table
+            updateItemsTable();
+        });
+        
+        // Update quantity on change
+        $(document).on('change', '.item-qty', function() {
+            const rowId = $(this).closest('tr').data('row-id');
+            const index = items.findIndex(item => item.rowId === rowId);
+            
+            if (index !== -1) {
+                items[index].quantity = parseFloat($(this).val());
+            }
+        });
+        
+        // Update remark on change
+        $(document).on('change', '.item-remark', function() {
+            const rowId = $(this).closest('tr').data('row-id');
+            const index = items.findIndex(item => item.rowId === rowId);
+            
+            if (index !== -1) {
+                items[index].remark = $(this).val();
+            }
+        });
+        
+        // Update items table
+        function updateItemsTable() {
+            const tbody = $('#itemsTable tbody');
+            tbody.empty();
+            
+            if (items.length === 0) {
+                tbody.append('<tr class="no-items"><td colspan="7" class="text-center">No items added yet.</td></tr>');
+                return;
+            }
+            
+            items.forEach(item => {
+                const row = $('<tr>').attr('data-row-id', item.rowId).attr('data-item-id', item.itemId);
+                
+                row.append(`<td>${item.rowId}</td>`);
+                row.append(`<td>${item.productCode}</td>`);
+                row.append(`<td>${item.productName}</td>`);
+                row.append(`<td><input type="number" class="form-control form-control-sm item-qty" value="${item.quantity}" min="0" step="0.01"></td>`);
+                row.append(`<td>${item.uom}</td>`);
+                row.append(`<td><input type="text" class="form-control form-control-sm item-remark" value="${item.remark || ''}"></td>`);
+                row.append(`<td class="text-center">
+                    <button type="button" class="btn btn-danger btn-sm remove-item">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>`);
+                
+                tbody.append(row);
+            });
+        }
+        
+        // Save instruction
+        $('#saveButton').on('click', function() {
+            // Validate form
+            if (!$('#docRef').val()) {
+                alert('Please enter a document reference.');
+                return;
+            }
+            
+            if (!$('#txnDate').val()) {
+                alert('Please enter a transaction date.');
+                return;
+            }
+            
+            if (!$('#customerId').val()) {
+                alert('Please select a customer.');
+                return;
+            }
+            
+            if (items.length === 0) {
+                alert('Please add at least one item.');
+                return;
+            }
+            
+            // Collect updated quantities and remarks from inputs
+            $('.item-qty').each(function() {
+                const rowId = $(this).closest('tr').data('row-id');
+                const index = items.findIndex(item => item.rowId === rowId);
+                
+                if (index !== -1) {
+                    items[index].quantity = parseFloat($(this).val());
+                }
+            });
+            
+            $('.item-remark').each(function() {
+                const rowId = $(this).closest('tr').data('row-id');
+                const index = items.findIndex(item => item.rowId === rowId);
+                
+                if (index !== -1) {
+                    items[index].remark = $(this).val();
+                }
+            });
+            
+            // Prepare form data
+            /* EJS: Get server-side values */
+            const siteId = /* <%= typeof instruction !== 'undefined' ? instruction.siteId || 1 : 1 %> */ 1;
+            const locId = /* <%= typeof instruction !== 'undefined' ? instruction.locId || 1 : 1 %> */ 1;
+            const instructionId = /* <%= typeof instruction !== 'undefined' ? instruction.id || 0 : 0 %> */ 0;
+            
+            const formData = {
+                docRef: $('#docRef').val(),
+                txnDate: $('#txnDate').val(),
+                customerId: $('#customerId').val(),
+                deliveryDate: $('#deliveryDate').val(),
+                priorityId: $('#priorityId').val(),
+                siteId: siteId,
+                locId: locId,
+                deliveryAddress: $('#deliveryAddress').val(),
+                contactPerson: $('#contactPerson').val(),
+                contactPhone: $('#contactPhone').val(),
+                remark: $('#remark').val(),
+                items: items
+            };
+            
+            // AJAX call
+            const isEdit = instructionId > 0;
+            const apiUrl = isEdit ? `/api/sales/sdi_instructions/${instructionId}` : "/api/sales/sdi_instructions";
+            const apiMethod = isEdit ? "PUT" : "POST";
+            
+            $.ajax({
+                url: apiUrl,
+                type: apiMethod,
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function(response) {
+                    if (response.success) {
+                        alert('Delivery instruction saved successfully.');
+                        window.location.href = '/page/sales/delivery-instructions';
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function(xhr) {
+                    alert('Error: ' + (xhr.responseJSON?.message || 'Unable to save delivery instruction.'));
+                }
+            });
+        });
+    });
+</script>
+
+</body>
+</html>
