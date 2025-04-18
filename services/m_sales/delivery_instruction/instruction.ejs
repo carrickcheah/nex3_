@@ -323,7 +323,7 @@
                 row.append(`<td class="text-start">${index + 1}</td>`); // #
                 row.append(`<td class="text-start">${instruction.import_id || instruction.importId || ''}</td>`); // IMPORT ID
                 row.append(`<td class="text-start">${instruction.customerName || ''}</td>`); // CUSTOMER
-                row.append(`<td class="text-start"><a href="#" class="po-link" data-po="${instruction.po_no || instruction.poNo || ''}">${instruction.po_no || instruction.poNo || ''}</a></td>`); // PO NO
+                row.append(`<td class="text-start">${instruction.po_no || instruction.poNo || ''}</td>`); // PO NO
                 row.append(`<td class="text-start">${instruction.stock_code || instruction.stockCode || ''}</td>`); // STOCK CODE
                 row.append(`<td class="text-start">${instruction.di_no || instruction.diNo || ''}</td>`); // DI NO
                 row.append(`<td class="text-start">${instruction.shift || ''}</td>`); // SHIFT
@@ -357,27 +357,10 @@
                 tbody.append(row);
             });
             
-            // Add hover effect for better UX
-            $('#instructionsTable tbody tr').css('cursor', 'pointer');
+            // Remove pointer cursor as rows are not clickable
+            $('#instructionsTable tbody tr').css('cursor', 'default');
             
-            // Add click handler for PO NO links
-            $('.po-link').on('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation(); // Prevent row click from triggering
-                const poNo = $(this).data('po');
-                $('#searchDocRef').val(poNo);
-                currentPage = 1;
-                loadInstructions();
-            });
-            
-            // Add click handler for row navigation
-            $('#instructionsTable tbody tr').on('click', function(e) {
-                // Don't navigate if clicked on a button
-                if ($(e.target).closest('.btn').length === 0 && !$(e.target).is('.btn')) {
-                    const id = $(this).find('td:eq(0)').text(); // Use index to get the first cell
-                    window.location.href = `/page/sales/delivery-instructions/view/${id}`;
-                }
-            });
+            // No click handler for row navigation - users must use the View button
         }
         
         // Function to render pagination

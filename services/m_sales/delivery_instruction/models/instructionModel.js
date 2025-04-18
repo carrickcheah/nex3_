@@ -130,39 +130,73 @@ class InstructionModel {
   static async getDeliveryInstructionById(id) {
     const connection = await pool.getConnection();
     try {
-      // Get delivery instruction header
-      const [instructionRows] = await connection.execute(
+      // Get delivery instruction with customer and address information
+      const [rows] = await connection.execute(
         `SELECT 
-          s.*, c.CustName_v as customerName
-        FROM tbl_sdi_item s 
+          s.SdiId_i as id,
+          s.ImportId_i as import_id,
+          s.Reference_v as purchase_order_no,
+          s.CreateDate_dt as transaction_date,
+          c.CustName_v as customerName,
+          c.CustId_i as customerId,
+          s.EtaDate_dd as eta_date,
+          s.CreateId_i as create_by,
+          
+          CONCAT(ccc.CbaAddr1_v, ' ', ccc.CbaAddr2_v, ' ', ccc.CbaCity_v, ' ', ccc.CbaPostcode_v) as delivery_address,
+          
+          s.Remark_v as remark,
+          
+          s.RefStkcode_v as stock_code,
+          s.Line_v as line,
+          s.Dept_v as dept,
+          s.Qty_d as do_qty,
+          s.QtyDone_d as qty_done,
+          s.Status_c as status
+        FROM tbl_sdi_item s
         LEFT JOIN tbl_customer c ON c.CustId_i = s.CustId_i
+        LEFT JOIN tbl_cust_billaddr ccc ON ccc.CustId_i = s.CustId_i
         WHERE s.SdiId_i = ?`,
         [id]
       );
       
-      if (instructionRows.length === 0) {
+      if (rows.length === 0) {
         return null;
       }
       
+      const row = rows[0];
+      
       const instruction = {
-        id: instructionRows[0].SdiId_i,
-        importId: instructionRows[0].ImportId_i,
-        customerId: instructionRows[0].CustId_i,
-        customerName: instructionRows[0].customerName,
-        poNo: instructionRows[0].Reference_v,
-        stockCode: instructionRows[0].RefStkcode_v,
-        diNo: instructionRows[0].DiNo_v,
-        shift: instructionRows[0].Shift_v,
-        zone: instructionRows[0].Zone_v,
-        location: instructionRows[0].Location_v,
-        department: instructionRows[0].Dept_v,
-        line: instructionRows[0].Line_v,
-        diQty: instructionRows[0].Qty_d,
-        etaDate: instructionRows[0].EtaDate_dd ? moment(instructionRows[0].EtaDate_dd).format('DD-MM-YYYY') : '',
-        doQty: instructionRows[0].QtyDone_d,
-        remark: instructionRows[0].Remark_v,
-        status: instructionRows[0].Status_c,
-        statusText: this.getStatusText(instructionRows[0].Status_c)
+        id: id,
+        docRef: row.purchase_order_no,
+        txnDate: row.transaction_date ? moment(row.transaction_date).format('DD-MM-YYYY') : '',
+        customerId: row.customerId,
+        customerName: row.customerName,
+        deliveryDate: row.eta_date ? moment(row.eta_date).format('DD-MM-YYYY') : '',
+        importId: row.import_id || '',
+        createdById: row.create_by,
+        deliveryAddress: row.delivery_address,
+        remark: row.remark,
+        stockCode: row.stock_code,
+        line: row.line,
+        department: row.dept,
+        diQty: parseFloat(row.do_qty || 0),
+        doQty: parseFloat(row.qty_done || 0),
+        status: row.status,
+        statusText: this.getStatusText(row.status),
+        // Add a basic item structure for display in the items table
+        items: [{
+          rowId: 1,
+          itemId: id,
+          productCode: row.stock_code,
+          productName: row.stock_code, // Use stock_code as product name if not available
+          quantity: parseFloat(row.do_qty || 0),
+          uom: '',
+          etaDate: row.eta_date ? moment(row.eta_date).format('DD-MM-YYYY') : '',
+          remark: row.remark,
+          balance: parseFloat(row.do_qty || 0) - parseFloat(row.qty_done || 0),
+          quantityDelivered: parseFloat(row.qty_done || 0),
+          status: row.status
+        }]
       };
       
       return instruction;
