@@ -197,6 +197,17 @@
         <div class="menu-card">
             <div class="card-body">
                 <div class="card-icon">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <h3 class="card-title">Sales Quotation</h3>
+                <p class="card-text">Create and manage price quotations for potential customers and track their status.</p>
+                <a href="/page/sales/quotations" class="card-btn">Manage Quotations</a>
+            </div>
+        </div>
+        
+        <div class="menu-card">
+            <div class="card-body">
+                <div class="card-icon">
                     <i class="fas fa-chart-line"></i>
                 </div>
                 <h3 class="card-title">Sales Forecast Order</h3>

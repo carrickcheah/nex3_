@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= mode === 'add' ? 'Add Sales Invoice' : 'Edit Sales Invoice' %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+        }
+        
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border: none;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #0669f4, #5441e9);
+            color: white;
+            border-radius: 8px 8px 0 0 !important;
+            font-weight: 600;
+            padding: 15px 20px;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background-color: #0669f4;
+            border-color: #0669f4;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0558d6;
+            border-color: #0558d6;
+        }
+        
+        .btn-teal {
+            background-color: #0669f4;
+            border-color: #0558d6;
+            color: white;
+        }
+        
+        .btn-teal:hover {
+            background-color: #0558d6;
+            border-color: #0446b8;
+            color: white;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #495057;
+        }
+        
+        #itemsTable th:nth-child(1) { width: 30%; } /* Product */
+        #itemsTable th:nth-child(2) { width: 10%; } /* Quantity */
+        #itemsTable th:nth-child(3) { width: 15%; } /* Unit Price */
+        #itemsTable th:nth-child(4) { width: 10%; } /* Discount */
+        #itemsTable th:nth-child(5) { width: 10%; } /* Tax */
+        #itemsTable th:nth-child(6) { width: 15%; } /* Total */
+        #itemsTable th:nth-child(7) { width: 10%; } /* Actions */
+        
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            white-space: nowrap;
+            font-size: 14px;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(6, 105, 244, 0.05);
+        }
+        
+        /* Modern Navigation Bar Styles */
+        .nex-header {
+            width: 100%;
+            background: linear-gradient(135deg, #0669f4, #5441e9);
+            color: white;
+            box-shadow: 0 2px 8px rgba(18, 18, 18, 0.3);
+            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .page-title-container {
+            padding: 18px;
+            background-color: rgb(0,0,255);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,255,0.2);
+            margin-bottom: 20px;
+        }
+        
+        .main-nav {
+            display: flex;
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .nav-item {
+            padding: 15px 20px;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: background-color 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(255,255,255,0.1);
+            border-bottom: 3px solid white;
+            transform: translateY(-2px);
+        }
+        
+        .nav-item.active {
+            background-color: rgba(255,255,255,0.15);
+            border-bottom: 3px solid white;
+            font-weight: 600;
+        }
+        
+        .nav-item i {
+            margin-right: 8px;
+            font-size: 1rem;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .main-nav {
+                flex-wrap: wrap;
+            }
+            
+            .nav-item {
+                padding: 12px 15px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Main Navigation -->
+<div class="nex-header">
+  <div class="main-nav">
+    <a href="/page/dashboard" class="nav-item <%= title === 'Dashboard' ? 'active' : '' %>">
+      <i class="fas fa-tachometer-alt"></i> Dashboard
+    </a>
+    <a href="/page/sales" class="nav-item <%= title === 'Sales' ? 'active' : '' %>">
+      <i class="fas fa-chart-line"></i> Sales
+    </a>
+    <a href="/page/purchasing" class="nav-item <%= title === 'Purchasing' ? 'active' : '' %>">
+      <i class="fas fa-shopping-cart"></i> Purchasing
+    </a>
+    <a href="/page/warehouse" class="nav-item <%= title === 'Warehouse' ? 'active' : '' %>">
+      <i class="fas fa-warehouse"></i> Warehouse
+    </a>
+    <a href="/page/manufacturing" class="nav-item <%= title === 'Manufacturing' ? 'active' : '' %>">
+      <i class="fas fa-industry"></i> Manufacturing
+    </a>
+    <a href="/page/engineering" class="nav-item <%= title === 'Engineering' ? 'active' : '' %>">
+      <i class="fas fa-cogs"></i> Engineering
+    </a>
+    <a href="/page/administration" class="nav-item <%= title === 'Administration' ? 'active' : '' %>">
+      <i class="fas fa-users-cog"></i> Administration
+    </a>
+    <a href="/page/aichat" class="nav-item <%= title === 'AI Chat' ? 'active' : '' %>">
+      <i class="fas fa-comment-dots"></i> AI Chat
+    </a>
+    <a href="/page/production_planning" class="nav-item <%= title === 'Production Planning' ? 'active' : '' %>">
+      <i class="fas fa-cog"></i> Production Planning
+    </a>
+  </div>
+</div>
+
+<div class="container-fluid mt-4 px-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>
+                        <i class="fas fa-file-invoice-dollar me-2"></i>
+                        <%= mode === 'add' ? 'Add Sales Invoice' : 'Edit Sales Invoice' %>
+                    </span>
+                    <a href="/page/sales/invoices" class="btn btn-light btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Back to List
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form id="invoiceForm">
+                        <input type="hidden" id="invoiceId" value="<%= locals.invoice ? invoice.id : '' %>">
+                        <input type="hidden" id="version" value="<%= locals.invoice ? invoice.version : 0 %>">
+                        
+                        <div class="row">
+                            <!-- Customer Information -->
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <i class="fas fa-user me-2"></i>Customer Information
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label for="customer">Customer</label>
+                                            <select class="form-select" id="customer" required>
+                                                <option value="">Select Customer</option>
+                                                <% if (locals.customers) { %>
+                                                    <% customers.forEach(function(customer) { %>
+                                                        <option value="<%= customer.id %>" 
+                                                            <%= locals.invoice && invoice.customer_id == customer.id ? 'selected' : '' %>>
+                                                            <%= customer.customer_name %> (<%= customer.customer_code %>)
+                                                        </option>
+                                                    <% }); %>
+                                                <% } %>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="billingAddress">Billing Address</label>
+                                            <textarea class="form-control" id="billingAddress" rows="3"><%= locals.invoice ? invoice.billing_address : '' %></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="shippingAddress">Shipping Address</label>
+                                            <textarea class="form-control" id="shippingAddress" rows="3"><%= locals.invoice ? invoice.shipping_address : '' %></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Invoice Information -->
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <i class="fas fa-info-circle me-2"></i>Invoice Information
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <label for="invoiceNumber">Invoice Number</label>
+                                            <input type="text" class="form-control" id="invoiceNumber" 
+                                                value="<%= locals.invoice ? invoice.invoice_number || invoice.invoice_no : locals.invoiceNumber || '' %>" 
+                                                <%= mode === 'add' ? 'readonly' : 'readonly' %>>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="invoiceDate">Invoice Date</label>
+                                            <input type="date" class="form-control" id="invoiceDate" 
+                                                value="<%= locals.invoice ? new Date(invoice.invoice_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0] %>" 
+                                                required>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="currency">Currency</label>
+                                                    <select class="form-select" id="currency">
+                                                        <option value="USD" <%= locals.invoice && invoice.currency === 'USD' ? 'selected' : '' %>>USD - US Dollar</option>
+                                                        <option value="EUR" <%= locals.invoice && invoice.currency === 'EUR' ? 'selected' : '' %>>EUR - Euro</option>
+                                                        <option value="GBP" <%= locals.invoice && invoice.currency === 'GBP' ? 'selected' : '' %>>GBP - British Pound</option>
+                                                        <option value="JPY" <%= locals.invoice && invoice.currency === 'JPY' ? 'selected' : '' %>>JPY - Japanese Yen</option>
+                                                        <option value="CNY" <%= locals.invoice && invoice.currency === 'CNY' ? 'selected' : '' %>>CNY - Chinese Yuan</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="currencyRate">Currency Rate</label>
+                                                    <input type="number" step="0.0001" class="form-control" id="currencyRate" 
+                                                        value="<%= locals.invoice ? invoice.currency_rate : '1.0000' %>">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="dueDate">Due Date</label>
+                                            <input type="date" class="form-control" id="dueDate" 
+                                                value="<%= locals.invoice ? new Date(invoice.due_date).toISOString().split('T')[0] : new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0] %>" 
+                                                required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="salesPerson">Sales Person</label>
+                                            <input type="text" class="form-control" id="salesPerson" 
+                                                value="<%= locals.invoice ? invoice.sales_person : 'Carrick' %>">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Invoice Items -->
+                        <div class="card mt-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-list me-2"></i>Invoice Items</span>
+                                <button type="button" class="btn btn-light btn-sm" id="addItemBtn">
+                                    <i class="fas fa-plus me-1"></i>Add Item
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="itemsTable">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-start">Product</th>
+                                                <th class="text-center">Quantity</th>
+                                                <th class="text-end">Unit Price</th>
+                                                <th class="text-end">Discount</th>
+                                                <th class="text-center">Tax %</th>
+                                                <th class="text-end">Total</th>
+                                                <th class="text-center">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="itemsList">
+                                            <!-- Items will be dynamically loaded here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div id="noItemsMessage" class="text-center py-3 d-none">
+                                    <p>No items added yet. Click "Add Item" to add products to this invoice.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Totals and Notes -->
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <i class="fas fa-sticky-note me-2"></i>Notes
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group">
+                                            <textarea class="form-control" id="notes" rows="5" placeholder="Add notes or special instructions for this invoice"><%= locals.invoice ? invoice.notes || invoice.remark : '' %></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <i class="fas fa-calculator me-2"></i>Totals
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-2">
+                                            <div class="col-6">Subtotal:</div>
+                                            <div class="col-6 text-end" id="subtotal">$0.00</div>
+                                        </div>
+                                        <div class="row mb-2">
+                                            <div class="col-6">Tax:</div>
+                                            <div class="col-6 text-end" id="taxAmount">$0.00</div>
+                                        </div>
+                                        <div class="row mb-2">
+                                            <div class="col-6">
+                                                <label for="shippingAmount">Shipping:</label>
+                                            </div>
+                                            <div class="col-6">
+                                                <input type="number" step="0.01" class="form-control text-end" id="shippingAmount" 
+                                                    value="<%= locals.invoice ? invoice.shipping_amount : '0.00' %>">
+                                            </div>
+                                        </div>
+                                        <div class="row mb-2">
+                                            <div class="col-6">
+                                                <label for="discountAmount">Discount:</label>
+                                            </div>
+                                            <div class="col-6">
+                                                <input type="number" step="0.01" class="form-control text-end" id="discountAmount" 
+                                                    value="<%= locals.invoice ? invoice.discount_amount : '0.00' %>">
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <div class="row">
+                                            <div class="col-6 fw-bold">Total:</div>
+                                            <div class="col-6 text-end fw-bold fs-5" id="grandTotal">$0.00</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Buttons -->
+                        <div class="mt-4 mb-5 text-center">
+                            <button type="button" class="btn btn-secondary me-2" id="cancelBtn">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </button>
+                            <button type="button" class="btn btn-primary" id="saveBtn">
+                                <i class="fas fa-save me-1"></i>Save
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product Modal -->
+<div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0669f4, #5441e9); color: white;">
+                <h5 class="modal-title" id="productModalLabel">Add Item</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group mb-3">
+                    <label for="modalProduct">Product</label>
+                    <select class="form-select" id="modalProduct">
+                        <option value="">Select Product</option>
+                        <% if (locals.products) { %>
+                            <% products.forEach(function(product) { %>
+                                <option value="<%= product.id %>" 
+                                    data-price="<%= product.unit_price %>" 
+                                    data-name="<%= product.product_name %>" 
+                                    data-code="<%= product.product_code %>"
+                                    data-tax="<%= product.tax_rate || 0 %>">
+                                    <%= product.product_name %> (<%= product.product_code %>)
+                                </option>
+                            <% }); %>
+                        <% } %>
+                    </select>
+                </div>
+                <div class="form-group mb-3">
+                    <label for="modalDescription">Description</label>
+                    <textarea class="form-control" id="modalDescription" rows="2"></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 form-group mb-3">
+                        <label for="modalQuantity">Quantity</label>
+                        <input type="number" class="form-control" id="modalQuantity" value="1" min="1">
+                    </div>
+                    <div class="col-md-6 form-group mb-3">
+                        <label for="modalPrice">Unit Price</label>
+                        <input type="number" step="0.01" class="form-control" id="modalPrice" value="0.00">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 form-group mb-3">
+                        <label for="modalDiscount">Discount</label>
+                        <input type="number" step="0.01" class="form-control" id="modalDiscount" value="0.00">
+                    </div>
+                    <div class="col-md-6 form-group mb-3">
+                        <label for="modalTax">Tax %</label>
+                        <input type="number" step="0.01" class="form-control" id="modalTax" value="0.00">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="modalTotal">Total</label>
+                    <input type="number" step="0.01" class="form-control" id="modalTotal" value="0.00" readonly>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveItemBtn">Add Item</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Global variables
+        let items = JSON.parse('<%- locals.invoice && invoice.items ? JSON.stringify(invoice.items).replace(/\'/g, "\\\'") : "[]" %>');
+        let editingItemIndex = -1;
+        
+        // Initialize the form
+        init();
+        
+        function init() {
+            // Set up event listeners
+            $('#addItemBtn').on('click', openAddItemModal);
+            $('#saveItemBtn').on('click', saveItem);
+            $('#saveBtn').on('click', saveInvoice);
+            $('#cancelBtn').on('click', function() {
+                window.location.href = '/page/sales/invoices';
+            });
+            
+            // Calculate item total when inputs change
+            $('#modalQuantity, #modalPrice, #modalDiscount, #modalTax').on('input', calculateItemTotal);
+            
+            // When product is selected, update price and description
+            $('#modalProduct').on('change', function() {
+                const select = this;
+                const option = select.options[select.selectedIndex];
+                
+                if (option.value) {
+                    const price = option.getAttribute('data-price');
+                    const taxRate = option.getAttribute('data-tax');
+                    const name = option.getAttribute('data-name');
+                    
+                    $('#modalPrice').val(price);
+                    $('#modalTax').val(taxRate);
+                    $('#modalDescription').val(name);
+                    
+                    calculateItemTotal();
+                }
+            });
+            
+            // Update totals when shipping or discount changes
+            $('#shippingAmount, #discountAmount').on('input', calculateTotals);
+            
+            // Render existing items if editing
+            if (items.length > 0) {
+                renderItems();
+                calculateTotals();
+            } else {
+                $('#noItemsMessage').removeClass('d-none');
+            }
+        }
+        
+        // Open the modal to add a new item
+        function openAddItemModal() {
+            editingItemIndex = -1;
+            
+            // Clear the form
+            $('#modalProduct').val('');
+            $('#modalDescription').val('');
+            $('#modalQuantity').val('1');
+            $('#modalPrice').val('0.00');
+            $('#modalDiscount').val('0.00');
+            $('#modalTax').val('0.00');
+            $('#modalTotal').val('0.00');
+            
+            // Update the modal title
+            $('#productModalLabel').text('Add Item');
+            $('#saveItemBtn').text('Add Item');
+            
+            // Show the modal
+            $('#productModal').modal('show');
+        }
+        
+        // Open the modal to edit an existing item
+        function editItem(index) {
+            editingItemIndex = index;
+            const item = items[index];
+            
+            // Fill the form with item data
+            $('#modalProduct').val(item.product_id);
+            $('#modalDescription').val(item.description);
+            $('#modalQuantity').val(item.quantity);
+            $('#modalPrice').val(item.unit_price);
+            $('#modalDiscount').val(item.discount_amount || '0.00');
+            $('#modalTax').val(item.tax_rate || '0.00');
+            $('#modalTotal').val(item.line_total);
+            
+            // Update the modal title
+            $('#productModalLabel').text('Edit Item');
+            $('#saveItemBtn').text('Update Item');
+            
+            // Show the modal
+            $('#productModal').modal('show');
+        }
+        
+        // Calculate the total for an item
+        function calculateItemTotal() {
+            const quantity = parseFloat($('#modalQuantity').val()) || 0;
+            const price = parseFloat($('#modalPrice').val()) || 0;
+            const discount = parseFloat($('#modalDiscount').val()) || 0;
+            const taxRate = parseFloat($('#modalTax').val()) || 0;
+            
+            const subtotal = quantity * price;
+            const discountedSubtotal = subtotal - discount;
+            const taxAmount = discountedSubtotal * (taxRate / 100);
+            const total = discountedSubtotal + taxAmount;
+            
+            $('#modalTotal').val(total.toFixed(2));
+        }
+        
+        // Save the current item from the modal
+        function saveItem() {
+            const productId = $('#modalProduct').val();
+            if (!productId) {
+                alert('Please select a product.');
+                return;
+            }
+            
+            const quantity = parseFloat($('#modalQuantity').val()) || 0;
+            if (quantity <= 0) {
+                alert('Quantity must be greater than 0.');
+                return;
+            }
+            
+            // Get the product details
+            const select = document.getElementById('modalProduct');
+            const option = select.options[select.selectedIndex];
+            
+            const productName = option.getAttribute('data-name');
+            const productCode = option.getAttribute('data-code');
+            
+            // Create the item object
+            const item = {
+                product_id: productId,
+                product_name: productName,
+                product_code: productCode,
+                description: $('#modalDescription').val(),
+                quantity: quantity,
+                unit_price: parseFloat($('#modalPrice').val()) || 0,
+                discount_amount: parseFloat($('#modalDiscount').val()) || 0,
+                tax_rate: parseFloat($('#modalTax').val()) || 0,
+                line_total: parseFloat($('#modalTotal').val()) || 0
+            };
+            
+            // Add or update the item
+            if (editingItemIndex === -1) {
+                items.push(item);
+            } else {
+                items[editingItemIndex] = item;
+            }
+            
+            // Render the items and close the modal
+            renderItems();
+            calculateTotals();
+            $('#productModal').modal('hide');
+        }
+        
+        // Render all items in the table
+        function renderItems() {
+            const itemsList = $('#itemsList');
+            itemsList.empty();
+            
+            if (items.length === 0) {
+                $('#noItemsMessage').removeClass('d-none');
+                return;
+            }
+            
+            $('#noItemsMessage').addClass('d-none');
+            
+            items.forEach((item, index) => {
+                const row = `
+                    <tr>
+                        <td>
+                            <strong>${item.product_name}</strong> (${item.product_code})
+                            <br><small class="text-muted">${item.description}</small>
+                        </td>
+                        <td class="text-center">${item.quantity}</td>
+                        <td class="text-end">${formatCurrency(item.unit_price)}</td>
+                        <td class="text-end">${formatCurrency(item.discount_amount)}</td>
+                        <td class="text-center">${item.tax_rate}%</td>
+                        <td class="text-end">${formatCurrency(item.line_total)}</td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-outline-secondary edit-btn me-1" data-index="${index}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger delete-btn" data-index="${index}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                
+                itemsList.append(row);
+            });
+            
+            // Add event listeners to edit and delete buttons
+            $('.edit-btn').on('click', function() {
+                editItem(parseInt($(this).data('index')));
+            });
+            
+            $('.delete-btn').on('click', function() {
+                if (confirm('Are you sure you want to remove this item?')) {
+                    items.splice(parseInt($(this).data('index')), 1);
+                    renderItems();
+                    calculateTotals();
+                }
+            });
+        }
+        
+        // Calculate subtotal, tax, and grand total
+        function calculateTotals() {
+            let subtotal = 0;
+            let totalTax = 0;
+            
+            items.forEach(item => {
+                subtotal += parseFloat(item.line_total);
+            });
+            
+            const shipping = parseFloat($('#shippingAmount').val()) || 0;
+            const discount = parseFloat($('#discountAmount').val()) || 0;
+            
+            // Calculate tax (placeholder - we would normally calculate this based on item taxes)
+            totalTax = items.reduce((sum, item) => {
+                const itemSubtotal = item.quantity * item.unit_price - item.discount_amount;
+                return sum + (itemSubtotal * (item.tax_rate / 100));
+            }, 0);
+            
+            const grandTotal = subtotal + shipping - discount;
+            
+            // Update the display
+            $('#subtotal').text(formatCurrency(subtotal));
+            $('#taxAmount').text(formatCurrency(totalTax));
+            $('#grandTotal').text(formatCurrency(grandTotal));
+        }
+        
+        // Format a number as currency
+        function formatCurrency(value) {
+            return '$' + parseFloat(value).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+        }
+        
+        // Save the invoice
+        function saveInvoice() {
+            // Validate required fields
+            const customerId = $('#customer').val();
+            if (!customerId) {
+                alert('Please select a customer.');
+                return;
+            }
+            
+            if (items.length === 0) {
+                alert('Please add at least one item.');
+                return;
+            }
+            
+            // Create the invoice data
+            const invoiceId = $('#invoiceId').val();
+            const isNew = !invoiceId;
+            
+            const customerInfo = {
+                customer_id: customerId,
+                billing_address: $('#billingAddress').val(),
+                shipping_address: $('#shippingAddress').val()
+            };
+            
+            const subtotal = parseFloat($('#subtotal').text().replace(/[$,]/g, '')) || 0;
+            const taxAmount = parseFloat($('#taxAmount').text().replace(/[$,]/g, '')) || 0;
+            const shippingAmount = parseFloat($('#shippingAmount').val()) || 0;
+            const discountAmount = parseFloat($('#discountAmount').val()) || 0;
+            const totalAmount = parseFloat($('#grandTotal').text().replace(/[$,]/g, '')) || 0;
+            
+            const invoiceInfo = {
+                invoice_number: $('#invoiceNumber').val(),
+                invoice_no: $('#invoiceNumber').val(),
+                invoice_date: $('#invoiceDate').val(),
+                due_date: $('#dueDate').val(),
+                currency: $('#currency').val(),
+                currency_rate: $('#currencyRate').val(),
+                sales_person: $('#salesPerson').val(),
+                notes: $('#notes').val(),
+                remark: $('#notes').val(),
+                subtotal: subtotal,
+                tax_amount: taxAmount,
+                shipping_amount: shippingAmount,
+                discount_amount: discountAmount,
+                total_amount: totalAmount,
+                version: $('#version').val()
+            };
+            
+            const data = {
+                customerInfo,
+                invoiceInfo,
+                invoiceItems: items
+            };
+            
+            // Send the data to the server
+            const url = isNew ? '/api/sales/invoices' : `/api/sales/invoices/${invoiceId}`;
+            const method = isNew ? 'POST' : 'PUT';
+            
+            $.ajax({
+                url: url,
+                type: method,
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(result) {
+                    if (result.success) {
+                        alert(isNew ? 'Invoice created successfully.' : 'Invoice updated successfully.');
+                        window.location.href = '/page/sales/invoices';
+                    } else {
+                        alert(result.message || 'An error occurred.');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error saving invoice:', error);
+                    alert('An error occurred while saving the invoice.');
+                }
+            });
+        }
+    });
+</script>
+
+</body>
+</html>
