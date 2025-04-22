@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Flatpickr for date picker -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <!-- Select2 for enhanced dropdowns -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+        }
+        
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border: none;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #0669f4, #5441e9);
+            color: white;
+            border-radius: 8px 8px 0 0 !important;
+            font-weight: 600;
+            padding: 15px 20px;
+            font-size: 14px;
+        }
+        
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 0.375rem;
+            font-size: 14px;
+            border: 1px solid #ced4da;
+            padding: 0.5rem 0.75rem;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #0669f4;
+            box-shadow: 0 0 0 0.25rem rgba(6, 105, 244, 0.25);
+        }
+        
+        .btn-primary {
+            background-color: #0669f4;
+            border-color: #0669f4;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0558d6;
+            border-color: #0558d6;
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+        
+        .btn-outline-secondary {
+            color: #6c757d;
+            border-color: #6c757d;
+        }
+        
+        .btn-outline-secondary:hover {
+            color: #fff;
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .required:after {
+            content: " *";
+            color: red;
+        }
+        
+        /* Line item table formatting */
+        #items-table th {
+            white-space: nowrap;
+            font-size: 14px;
+        }
+        
+        #items-table td {
+            vertical-align: middle;
+        }
+        
+        .delete-item {
+            color: #dc3545;
+            cursor: pointer;
+        }
+        
+        .delete-item:hover {
+            color: #bd2130;
+        }
+        
+        /* Modern Navigation Bar Styles */
+        .nex-header {
+            width: 100%;
+            background: linear-gradient(135deg, #0669f4, #5441e9);
+            color: white;
+            box-shadow: 0 2px 8px rgba(18, 18, 18, 0.3);
+            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .main-nav {
+            display: flex;
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .nav-item {
+            padding: 15px 20px;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: background-color 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(255,255,255,0.1);
+            border-bottom: 3px solid white;
+            transform: translateY(-2px);
+        }
+        
+        .nav-item.active {
+            background-color: rgba(255,255,255,0.15);
+            border-bottom: 3px solid white;
+            font-weight: 600;
+        }
+        
+        .nav-item i {
+            margin-right: 8px;
+            font-size: 1rem;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .main-nav {
+                flex-wrap: wrap;
+            }
+            
+            .nav-item {
+                padding: 12px 15px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Main Navigation -->
+<div class="nex-header">
+  <div class="main-nav">
+    <a href="/page/dashboard" class="nav-item <%= title === 'Dashboard' ? 'active' : '' %>">
+      <i class="fas fa-tachometer-alt"></i> Dashboard
+    </a>
+    <a href="/page/sales" class="nav-item <%= title.includes('Sales') ? 'active' : '' %>">
+      <i class="fas fa-chart-line"></i> Sales
+    </a>
+    <a href="/page/purchasing" class="nav-item <%= title === 'Purchasing' ? 'active' : '' %>">
+      <i class="fas fa-shopping-cart"></i> Purchasing
+    </a>
+    <a href="/page/warehouse" class="nav-item <%= title === 'Warehouse' ? 'active' : '' %>">
+      <i class="fas fa-warehouse"></i> Warehouse
+    </a>
+    <a href="/page/manufacturing" class="nav-item <%= title === 'Manufacturing' ? 'active' : '' %>">
+      <i class="fas fa-industry"></i> Manufacturing
+    </a>
+    <a href="/page/engineering" class="nav-item <%= title === 'Engineering' ? 'active' : '' %>">
+      <i class="fas fa-cogs"></i> Engineering
+    </a>
+    <a href="/page/administration" class="nav-item <%= title === 'Administration' ? 'active' : '' %>">
+      <i class="fas fa-users-cog"></i> Administration
+    </a>
+    <a href="/page/aichat" class="nav-item <%= title === 'AI Chat' ? 'active' : '' %>">
+      <i class="fas fa-comment-dots"></i> AI Chat
+    </a>
+  </div>
+</div>
+
+<div class="container-fluid mt-4 px-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>
+                        <i class="fas fa-exchange-alt me-2"></i><%= locals.salesReturn ? 'Edit Sales Return' : 'Create New Sales Return' %>
+                    </span>
+                    <a href="/page/sales/sreturn_inquiry" class="btn btn-light btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Back to List
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form id="returnForm" action="<%= locals.salesReturn ? '/api/sales/returns/' + salesReturn.id : '/api/sales/returns' %>" method="POST">
+                        <input type="hidden" name="_method" value="<%= locals.salesReturn ? 'PUT' : 'POST' %>">
+                        <input type="hidden" name="id" value="<%= locals.salesReturn ? salesReturn.id : '' %>">
+                        
+                        <!-- Header Info -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <i class="fas fa-info-circle me-2"></i>Document Information
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row g-3">
+                                            <!-- Return Number -->
+                                            <div class="col-md-6">
+                                                <label for="returnNo" class="form-label required">Return No.</label>
+                                                <input type="text" class="form-control" id="returnNo" name="returnNo" 
+                                                    value="<%= locals.salesReturn ? salesReturn.returnNo : '' %>" 
+                                                    <%= !locals.salesReturn ? 'readonly' : '' %> required>
+                                                <% if (!locals.salesReturn) { %>
+                                                    <div class="form-text">Return number will be generated automatically</div>
+                                                <% } %>
+                                            </div>
+                                            
+                                            <!-- Return Date -->
+                                            <div class="col-md-6">
+                                                <label for="returnDate" class="form-label required">Return Date</label>
+                                                <input type="text" class="form-control datepicker" id="returnDate" name="returnDate" 
+                                                    value="<%= locals.salesReturn ? salesReturn.returnDate : new Date().toISOString().substring(0, 10) %>" required>
+                                            </div>
+                                            
+                                            <!-- Status -->
+                                            <div class="col-md-6">
+                                                <label for="status" class="form-label required">Status</label>
+                                                <select class="form-select" id="status" name="status" required>
+                                                    <option value="A" <%= locals.salesReturn && salesReturn.status === 'A' ? 'selected' : '' %>>Active</option>
+                                                    <option value="D" <%= locals.salesReturn && salesReturn.status === 'D' ? 'selected' : '' %>>Draft</option>
+                                                    <option value="C" <%= locals.salesReturn && salesReturn.status === 'C' ? 'selected' : '' %>>Completed</option>
+                                                    <option value="V" <%= locals.salesReturn && salesReturn.status === 'V' ? 'selected' : '' %>>Void</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <!-- Currency -->
+                                            <div class="col-md-6">
+                                                <label for="currencyId" class="form-label required">Currency</label>
+                                                <select class="form-select" id="currencyId" name="currencyId" required>
+                                                    <option value="1" <%= !locals.salesReturn || salesReturn.currencyId === 1 ? 'selected' : '' %>>MYR</option>
+                                                    <option value="2" <%= locals.salesReturn && salesReturn.currencyId === 2 ? 'selected' : '' %>>USD</option>
+                                                    <option value="3" <%= locals.salesReturn && salesReturn.currencyId === 3 ? 'selected' : '' %>>SGD</option>
+                                                    <option value="4" <%= locals.salesReturn && salesReturn.currencyId === 4 ? 'selected' : '' %>>EUR</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <!-- Currency Rate -->
+                                            <div class="col-md-6">
+                                                <label for="currencyRate" class="form-label required">Exchange Rate</label>
+                                                <input type="number" class="form-control" id="currencyRate" name="currencyRate" 
+                                                    value="<%= locals.salesReturn ? salesReturn.currencyRate : '1.0000' %>" step="0.0001" min="0.0001" required>
+                                            </div>
+                                            
+                                            <!-- Tax Registration -->
+                                            <div class="col-md-6">
+                                                <label for="taxReg" class="form-label">Tax Registration</label>
+                                                <select class="form-select" id="taxReg" name="taxReg">
+                                                    <option value="1" <%= !locals.salesReturn || salesReturn.taxReg === 1 ? 'selected' : '' %>>Yes</option>
+                                                    <option value="0" <%= locals.salesReturn && salesReturn.taxReg === 0 ? 'selected' : '' %>>No</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <i class="fas fa-building me-2"></i>Customer Information
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row g-3">
+                                            <!-- Customer -->
+                                            <div class="col-md-12">
+                                                <label for="customerId" class="form-label required">Customer</label>
+                                                <select class="form-select select2" id="customerId" name="customerId" required>
+                                                    <option value="">Select Customer</option>
+                                                    <% if (locals.customers && customers.length > 0) { %>
+                                                        <% customers.forEach(function(customer) { %>
+                                                            <option value="<%= customer.id %>" 
+                                                                <%= locals.salesReturn && salesReturn.customerId === customer.id ? 'selected' : '' %>>
+                                                                <%= customer.name %>
+                                                            </option>
+                                                        <% }); %>
+                                                    <% } %>
+                                                </select>
+                                            </div>
+                                            
+                                            <!-- Billing Address -->
+                                            <div class="col-md-12">
+                                                <label for="billingAddressId" class="form-label">Billing Address</label>
+                                                <select class="form-select" id="billingAddressId" name="billingAddressId">
+                                                    <option value="">Select Billing Address</option>
+                                                    <!-- Will be populated via AJAX based on selected customer -->
+                                                </select>
+                                            </div>
+                                            
+                                            <!-- Contact -->
+                                            <div class="col-md-12">
+                                                <label for="contactId" class="form-label">Contact Person</label>
+                                                <select class="form-select" id="contactId" name="contactId">
+                                                    <option value="">Select Contact</option>
+                                                    <!-- Will be populated via AJAX based on selected customer -->
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Reference Documents -->
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-paperclip me-2"></i>Reference Documents</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="invoiceId" class="form-label">Sales Invoice Reference</label>
+                                        <select class="form-select select2" id="invoiceId" name="invoiceId">
+                                            <option value="">Select Invoice</option>
+                                            <!-- Will be populated via AJAX based on selected customer -->
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="deliveryId" class="form-label">Delivery Order Reference</label>
+                                        <select class="form-select select2" id="deliveryId" name="deliveryId">
+                                            <option value="">Select Delivery Order</option>
+                                            <!-- Will be populated via AJAX based on selected customer -->
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Return Items -->
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-list me-2"></i>Return Items</span>
+                                <button type="button" class="btn btn-light btn-sm" id="add-item">
+                                    <i class="fas fa-plus me-1"></i>Add Item
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table id="items-table" class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 5%">#</th>
+                                                <th style="width: 15%">Item Code</th>
+                                                <th style="width: 20%">Description</th>
+                                                <th style="width: 8%">Quantity</th>
+                                                <th style="width: 7%">UOM</th>
+                                                <th style="width: 10%">Unit Price</th>
+                                                <th style="width: 10%">Discount %</th>
+                                                <th style="width: 10%">Tax %</th>
+                                                <th style="width: 10%">Subtotal</th>
+                                                <th style="width: 5%">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="items-body">
+                                            <!-- Items will be added dynamically -->
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="8" class="text-end fw-bold">Subtotal:</td>
+                                                <td class="text-end">
+                                                    <span id="subtotal">0.00</span>
+                                                    <input type="hidden" name="subTotal" id="subtotal-input">
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="8" class="text-end fw-bold">Tax Amount:</td>
+                                                <td class="text-end">
+                                                    <span id="tax-amount">0.00</span>
+                                                    <input type="hidden" name="taxTotal" id="tax-amount-input">
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="8" class="text-end fw-bold">Rounding:</td>
+                                                <td class="text-end">
+                                                    <input type="number" class="form-control form-control-sm text-end" id="rounding" name="rounding" 
+                                                        value="<%= locals.salesReturn ? salesReturn.rounding : '0.00' %>" step="0.01">
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="8" class="text-end fw-bold">Grand Total:</td>
+                                                <td class="text-end fw-bold">
+                                                    <span id="grand-total">0.00</span>
+                                                    <input type="hidden" name="grandTotal" id="grand-total-input">
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Additional Information -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <i class="fas fa-sticky-note me-2"></i>Additional Information
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <label for="remark" class="form-label">Remark</label>
+                                        <textarea class="form-control" id="remark" name="remark" rows="3"><%= locals.salesReturn ? salesReturn.remark : '' %></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Buttons -->
+                        <div class="row">
+                            <div class="col-12 text-end">
+                                <a href="/page/sales/sreturn_inquiry" class="btn btn-outline-secondary me-2">
+                                    <i class="fas fa-times me-1"></i>Cancel
+                                </a>
+                                <button type="button" id="save-draft" class="btn btn-primary me-2">
+                                    <i class="fas fa-save me-1"></i>Save as Draft
+                                </button>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-check-circle me-1"></i><%= locals.salesReturn ? 'Update Return' : 'Create Return' %>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Item Template (hidden, will be cloned for new items) -->
+<template id="item-template">
+    <tr class="item-row">
+        <td class="item-no"></td>
+        <td>
+            <select class="form-select form-select-sm item-id" name="items[{index}][itemId]" required>
+                <option value="">Select Item</option>
+                <!-- Will be populated via AJAX -->
+            </select>
+            <input type="hidden" class="item-stk-id" name="items[{index}][stkId]">
+        </td>
+        <td>
+            <input type="text" class="form-control form-control-sm item-description" name="items[{index}][description]" readonly>
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm item-quantity" name="items[{index}][qty]" value="1" min="0.01" step="0.01" required>
+        </td>
+        <td>
+            <input type="text" class="form-control form-control-sm item-uom" name="items[{index}][uomCode]" readonly>
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm item-price" name="items[{index}][price]" value="0.00" min="0" step="0.01" required>
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm item-discount" name="items[{index}][discount]" value="0" min="0" max="100" step="0.01">
+            <input type="hidden" class="item-discount-amount" name="items[{index}][discountAmount]" value="0">
+            <input type="hidden" class="item-actual-price" name="items[{index}][actualPrice]" value="0">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm item-tax-rate" name="items[{index}][taxRate]" value="0" min="0" step="0.01">
+            <input type="hidden" class="item-tax-amount" name="items[{index}][taxAmount]" value="0">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm item-subtotal" name="items[{index}][lineTotal]" value="0.00" readonly>
+            <input type="hidden" class="item-home-subtotal" name="items[{index}][homeLineTotal]" value="0">
+            <input type="hidden" class="item-total-tax" name="items[{index}][totalTaxAmount]" value="0">
+        </td>
+        <td>
+            <button type="button" class="btn btn-sm btn-danger delete-item">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    </tr>
+</template>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize date pickers
+        flatpickr(".datepicker", {
+            dateFormat: "Y-m-d",
+            allowInput: true
+        });
+        
+        // Initialize select2
+        $('.select2').select2({
+            theme: 'bootstrap-5'
+        });
+        
+        // Initialize items if editing
+        let items = JSON.parse('<%= locals.salesReturn && salesReturn.items ? JSON.stringify(salesReturn.items).replace(/\'/g, "\\\'") : "[]" %>');
+        if (items.length > 0) {
+            items.forEach(function(item, index) {
+                addItemRow(item, index);
+            });
+        } else {
+            // Add an empty row for new returns
+            addItemRow();
+        }
+        
+        // Get reference number if creating new return
+        if (!$('#returnNo').val()) {
+            $.ajax({
+                url: '/api/sales/returns/docref/generate',
+                type: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        $('#returnNo').val(response.data.docRef);
+                    }
+                }
+            });
+        }
+        
+        // Customer change - load addresses, contacts, invoices, deliveries
+        $('#customerId').on('change', function() {
+            const customerId = $(this).val();
+            
+            if (customerId) {
+                // Load billing addresses
+                $.ajax({
+                    url: '/api/customers/' + customerId + '/addresses',
+                    type: 'GET',
+                    success: function(response) {
+                        const addressSelect = $('#billingAddressId');
+                        addressSelect.empty().append('<option value="">Select Billing Address</option>');
+                        
+                        if (response.success && response.data && response.data.length > 0) {
+                            response.data.forEach(function(address) {
+                                addressSelect.append(`<option value="${address.id}">${address.name}</option>`);
+                            });
+                        }
+                    }
+                });
+                
+                // Load contacts
+                $.ajax({
+                    url: '/api/customers/' + customerId + '/contacts',
+                    type: 'GET',
+                    success: function(response) {
+                        const contactSelect = $('#contactId');
+                        contactSelect.empty().append('<option value="">Select Contact</option>');
+                        
+                        if (response.success && response.data && response.data.length > 0) {
+                            response.data.forEach(function(contact) {
+                                contactSelect.append(`<option value="${contact.id}">${contact.name}</option>`);
+                            });
+                        }
+                    }
+                });
+                
+                // Load invoices for reference
+                $.ajax({
+                    url: '/api/sales/returns/invoices',
+                    type: 'GET',
+                    data: { customerId: customerId },
+                    success: function(response) {
+                        const invoiceSelect = $('#invoiceId');
+                        invoiceSelect.empty().append('<option value="">Select Invoice</option>');
+                        
+                        if (response.success && response.data && response.data.length > 0) {
+                            response.data.forEach(function(invoice) {
+                                invoiceSelect.append(`<option value="${invoice.id}">${invoice.invoiceNo} (${invoice.invoiceDate})</option>`);
+                            });
+                        }
+                    }
+                });
+                
+                // Load deliveries for reference
+                $.ajax({
+                    url: '/api/sales/returns/deliveries',
+                    type: 'GET',
+                    data: { customerId: customerId },
+                    success: function(response) {
+                        const deliverySelect = $('#deliveryId');
+                        deliverySelect.empty().append('<option value="">Select Delivery Order</option>');
+                        
+                        if (response.success && response.data && response.data.length > 0) {
+                            response.data.forEach(function(delivery) {
+                                deliverySelect.append(`<option value="${delivery.id}">${delivery.deliveryNo} (${delivery.deliveryDate})</option>`);
+                            });
+                        }
+                    }
+                });
+            }
+        });
+        
+        // Trigger customer change if editing
+        if ($('#customerId').val()) {
+            $('#customerId').trigger('change');
+        }
+        
+        // Add item button click
+        $('#add-item').on('click', function() {
+            addItemRow();
+        });
+        
+        // Delete item click (delegated event for dynamically added elements)
+        $(document).on('click', '.delete-item', function() {
+            if ($('.item-row').length > 1) {
+                $(this).closest('tr').remove();
+                updateItemNumbers();
+                calculateTotals();
+            } else {
+                alert('At least one item is required.');
+            }
+        });
+        
+        // Load products when item dropdown is clicked
+        $(document).on('focus', '.item-id', function() {
+            const select = $(this);
+            
+            if (select.find('option').length <= 1) {
+                $.ajax({
+                    url: '/api/sales/returns/products',
+                    type: 'GET',
+                    success: function(response) {
+                        if (response.success && response.data && response.data.length > 0) {
+                            response.data.forEach(function(product) {
+                                select.append(`<option value="${product.id}" data-stk-id="${product.stk_id}" data-code="${product.code}" data-name="${product.name}" data-uom="${product.uom}" data-price="${product.price}">${product.code} - ${product.name}</option>`);
+                            });
+                        }
+                    }
+                });
+            }
+        });
+        
+        // Product selection change
+        $(document).on('change', '.item-id', function() {
+            const row = $(this).closest('tr');
+            const selectedOption = $(this).find('option:selected');
+            
+            if (selectedOption.val()) {
+                row.find('.item-stk-id').val(selectedOption.data('stk-id'));
+                row.find('.item-description').val(selectedOption.data('name'));
+                row.find('.item-uom').val(selectedOption.data('uom'));
+                row.find('.item-price').val(parseFloat(selectedOption.data('price')).toFixed(2));
+                
+                calculateRowTotal(row);
+                calculateTotals();
+            } else {
+                row.find('.item-stk-id').val('');
+                row.find('.item-description').val('');
+                row.find('.item-uom').val('');
+                row.find('.item-price').val('0.00');
+            }
+        });
+        
+        // Calculate subtotal when quantity, price, discount, or tax changes
+        $(document).on('input', '.item-quantity, .item-price, .item-discount, .item-tax-rate', function() {
+            const row = $(this).closest('tr');
+            calculateRowTotal(row);
+            calculateTotals();
+        });
+        
+        // Recalculate when rounding changes
+        $('#rounding').on('input', function() {
+            calculateTotals();
+        });
+        
+        // Save as draft
+        $('#save-draft').on('click', function() {
+            $('#status').val('D');
+            $('#returnForm').submit();
+        });
+        
+        // Form submit
+        $('#returnForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            if (!validateForm()) {
+                return false;
+            }
+            
+            // Ajax submit
+            $.ajax({
+                url: $(this).attr('action'),
+                type: 'POST',
+                data: $(this).serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        window.location.href = '/page/sales/sreturn_inquiry';
+                    } else {
+                        alert(response.message || 'Failed to save sales return');
+                    }
+                },
+                error: function(error) {
+                    console.error('Error saving sales return:', error);
+                    alert('Error saving sales return. Please try again.');
+                }
+            });
+        });
+        
+        // Add a new item row
+        function addItemRow(item, index) {
+            let itemIndex = index !== undefined ? index : $('.item-row').length;
+            let template = document.getElementById('item-template').innerHTML;
+            let row = template.replace(/{index}/g, itemIndex);
+            
+            $('#items-body').append(row);
+            updateItemNumbers();
+            
+            // If updating with existing item data
+            if (item) {
+                let newRow = $('.item-row').last();
+                
+                // Add product data as options
+                let select = newRow.find('.item-id');
+                select.append(`<option value="${item.itemId}" data-stk-id="${item.stkId}" data-code="${item.stkCode}" data-name="${item.productName}" data-uom="${item.uomCode}" data-price="${item.price}" selected>${item.stkCode} - ${item.productName}</option>`);
+                
+                // Set values
+                newRow.find('.item-stk-id').val(item.stkId);
+                newRow.find('.item-description').val(item.productName);
+                newRow.find('.item-quantity').val(item.qty);
+                newRow.find('.item-uom').val(item.uomCode);
+                newRow.find('.item-price').val(parseFloat(item.price).toFixed(2));
+                newRow.find('.item-discount').val(parseFloat(item.discount).toFixed(2));
+                newRow.find('.item-discount-amount').val(parseFloat(item.discountAmount).toFixed(2));
+                newRow.find('.item-actual-price').val(parseFloat(item.actualPrice).toFixed(2));
+                newRow.find('.item-tax-rate').val(parseFloat(item.taxRate).toFixed(2));
+                newRow.find('.item-tax-amount').val(parseFloat(item.taxAmount).toFixed(2));
+                newRow.find('.item-subtotal').val(parseFloat(item.lineTotal).toFixed(2));
+                newRow.find('.item-home-subtotal').val(parseFloat(item.homeLineTotal).toFixed(2));
+                newRow.find('.item-total-tax').val(parseFloat(item.totalTaxAmount).toFixed(2));
+            }
+            
+            calculateTotals();
+        }
+        
+        // Update item numbers in the first column
+        function updateItemNumbers() {
+            $('.item-row').each(function(index) {
+                $(this).find('.item-no').text(index + 1);
+                
+                // Update the name attributes with the new index
+                $(this).find('input, select').each(function() {
+                    let name = $(this).attr('name');
+                    if (name) {
+                        $(this).attr('name', name.replace(/items\[\d+\]/, 'items[' + index + ']'));
+                    }
+                });
+            });
+        }
+        
+        // Calculate a row's total
+        function calculateRowTotal(row) {
+            let quantity = parseFloat(row.find('.item-quantity').val()) || 0;
+            let price = parseFloat(row.find('.item-price').val()) || 0;
+            let discount = parseFloat(row.find('.item-discount').val()) || 0;
+            let taxRate = parseFloat(row.find('.item-tax-rate').val()) || 0;
+            
+            let discountAmount = (price * discount / 100);
+            let actualPrice = price - discountAmount;
+            let lineTotal = quantity * actualPrice;
+            let taxAmount = (lineTotal * taxRate / 100);
+            let totalWithTax = lineTotal + taxAmount;
+            
+            row.find('.item-discount-amount').val(discountAmount.toFixed(2));
+            row.find('.item-actual-price').val(actualPrice.toFixed(2));
+            row.find('.item-tax-amount').val(taxAmount.toFixed(2));
+            row.find('.item-subtotal').val(lineTotal.toFixed(2));
+            row.find('.item-home-subtotal').val(lineTotal.toFixed(2)); // Same as lineTotal if in home currency
+            row.find('.item-total-tax').val(taxAmount.toFixed(2));
+        }
+        
+        // Calculate all totals
+        function calculateTotals() {
+            let subtotal = 0;
+            let totalTax = 0;
+            
+            $('.item-row').each(function() {
+                subtotal += parseFloat($(this).find('.item-subtotal').val()) || 0;
+                totalTax += parseFloat($(this).find('.item-tax-amount').val()) || 0;
+            });
+            
+            let rounding = parseFloat($('#rounding').val()) || 0;
+            let grandTotal = subtotal + totalTax + rounding;
+            
+            // Update displayed values
+            $('#subtotal').text(subtotal.toFixed(2));
+            $('#tax-amount').text(totalTax.toFixed(2));
+            $('#grand-total').text(grandTotal.toFixed(2));
+            
+            // Update hidden inputs for form submission
+            $('#subtotal-input').val(subtotal.toFixed(2));
+            $('#tax-amount-input').val(totalTax.toFixed(2));
+            $('#grand-total-input').val(grandTotal.toFixed(2));
+        }
+        
+        // Form validation
+        function validateForm() {
+            let isValid = true;
+            
+            // Check required fields
+            $('#returnForm [required]').each(function() {
+                if (!$(this).val()) {
+                    $(this).addClass('is-invalid');
+                    isValid = false;
+                } else {
+                    $(this).removeClass('is-invalid');
+                }
+            });
+            
+            // Check if customer is selected
+            if (!$('#customerId').val()) {
+                $('#customerId').addClass('is-invalid');
+                isValid = false;
+            }
+            
+            // Check if at least one item exists
+            if ($('.item-row').length === 0) {
+                alert('Please add at least one item.');
+                isValid = false;
+            }
+            
+            // Check if all items have a product selected
+            $('.item-id').each(function() {
+                if (!$(this).val()) {
+                    $(this).addClass('is-invalid');
+                    isValid = false;
+                }
+            });
+            
+            if (!isValid) {
+                alert('Please fill in all required fields.');
+            }
+            
+            return isValid;
+        }
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+        }
+        
+        /* Table font size settings */
+        #replacementsTable {
+            font-size: 14px;
+        }
+        
+        #replacementsTable thead th {
+            font-size: 15px;
+            font-weight: 600;
+        }
+        
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border: none;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #0669f4, #5441e9);
+            color: white;
+            border-radius: 8px 8px 0 0 !important;
+            font-weight: 600;
+            padding: 15px 20px;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background-color: #0669f4;
+            border-color: #0669f4;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0558d6;
+            border-color: #0558d6;
+        }
+        
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(6, 105, 244, 0.05);
+        }
+        
+        .action-buttons .btn {
+            margin-right: 5px;
+        }
+        
+        /* Column widths for better alignment */
+        #replacementsTable th:nth-child(1), #replacementsTable td:nth-child(1) { width: 5%; text-align: center; }  /* NO */
+        #replacementsTable th:nth-child(2), #replacementsTable td:nth-child(2) { width: 10%; text-align: center; }  /* ID */
+        #replacementsTable th:nth-child(3), #replacementsTable td:nth-child(3) { width: 20%; text-align: left; }  /* CUSTOMER */
+        #replacementsTable th:nth-child(4), #replacementsTable td:nth-child(4) { width: 10%; text-align: center; }  /* DATE */
+        #replacementsTable th:nth-child(5), #replacementsTable td:nth-child(5) { width: 12%; text-align: left; }  /* REF NO */
+        #replacementsTable th:nth-child(6), #replacementsTable td:nth-child(6) { width: 15%; text-align: left; }  /* REMARKS */
+        #replacementsTable th:nth-child(7), #replacementsTable td:nth-child(7) { width: 8%; text-align: center; }  /* STATUS */
+        #replacementsTable th:nth-child(8), #replacementsTable td:nth-child(8) { width: 10%; text-align: center; }  /* ACTIONS */
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .pagination a {
+            margin: 0 5px;
+        }
+        
+        /* Status indicators with icons */
+        .status-text {
+            display: inline-flex;
+            align-items: center;
+            font-weight: normal;
+            background-color: #28a745;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .status-text:hover {
+            background-color: #218838;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .status-text i {
+            margin-right: 5px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<%- include('../../shared/components/header.ejs') %>
+
+<div class="container-fluid mt-4 px-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-exchange-alt me-2"></i>Sales Replacements Management</span>
+                    <a href="/page/sales/sales_replacement/add" class="btn btn-light btn-sm">
+                        <i class="fas fa-plus me-1"></i>New Sales Replacement
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- Debug info -->
+                    <div id="debugInfo" class="alert alert-info mb-3">
+                        <p><strong>Debug information:</strong></p>
+                        <p id="apiStatus">Checking API connection...</p>
+                        <p id="loadingStatus">Waiting for data...</p>
+                        <p id="dataStatus">No data received yet</p>
+                    </div>
+                    
+                    <!-- Search and filter controls -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" id="searchReplacement" class="form-control" placeholder="Search by Reference Number">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" id="searchCustomer" class="form-control" placeholder="Search by Customer">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                <select id="dateFilter" class="form-select">
+                                    <option value="3" selected>Last 3 Months</option>
+                                    <option value="6">Last 6 Months</option>
+                                    <option value="12">Last 12 Months</option>
+                                    <option value="0">All Time</option>
+                                    <option value="custom">Custom Range</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-filter"></i></span>
+                                <select id="statusFilter" class="form-select">
+                                    <option value="" selected>All Status</option>
+                                    <option value="PENDING">Pending</option>
+                                    <option value="COMPLETED">Completed</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Custom date range (initially hidden) -->
+                    <div class="row mb-3" id="customDateRange" style="display: none;">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                <input type="date" id="fromDate" class="form-control" placeholder="From Date">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                <input type="date" id="toDate" class="form-control" placeholder="To Date">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-9">
+                            <div class="form-text text-muted">
+                                <span id="resultCount">Showing all sales replacements from the last 3 months</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <select id="page-size" class="form-select d-inline-block w-auto me-2">
+                                <option value="10">10 per page</option>
+                                <option value="25">25 per page</option>
+                                <option value="50" selected>50 per page</option>
+                                <option value="100">100 per page</option>
+                            </select>
+                            <button type="button" id="searchButton" class="btn btn-primary">
+                                <i class="fas fa-filter me-1"></i> Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Data Table -->
+                    <div class="table-responsive">
+                        <table id="replacementsTable" class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th class="text-center">NO</th>
+                                    <th class="text-center">ID</th>
+                                    <th class="text-start">CUSTOMER</th>
+                                    <th class="text-center">DATE</th>
+                                    <th class="text-start">REF NO</th>
+                                    <th class="text-start">REMARKS</th>
+                                    <th class="text-center">STATUS</th>
+                                    <th class="text-center">ACTIONS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="replacementList">
+                                <!-- Sales replacements will be dynamically loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div id="noReplacementsMessage" class="text-center py-3 d-none">
+                        <p>No sales replacements found.</p>
+                    </div>
+                    <div id="loadingIndicator" class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <nav aria-label="Sales replacements pagination" class="mt-3">
+                        <ul id="pagination" class="pagination justify-content-center">
+                            <!-- Pagination will be populated by JavaScript -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this sales replacement?</p>
+                <p class="text-danger"><strong>This action cannot be undone.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="confirm-delete" class="btn btn-danger">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        let currentPage = 1;
+        let limit = parseInt($('#page-size').val()) || 50;
+        let fromDate = '';
+        let toDate = '';
+        let dateFilter = $('#dateFilter').val();
+        
+        // Test API connection first
+        console.log('Testing API connection...');
+        $('#apiStatus').text('Testing API connection...');
+        $.ajax({
+            url: '/api/sales/replacements/test/connection',
+            type: 'GET',
+            success: function(response) {
+                console.log('API Test Response:', response);
+                $('#apiStatus').html('<span class="text-success">✅ API connection successful!</span>');
+                console.log('API connection successful, now loading replacements...');
+                // Load replacements after confirming API works
+                loadReplacements();
+            },
+            error: function(xhr, status, error) {
+                console.error('API Test Failed!');
+                console.error('Status:', status);
+                console.error('Error:', error);
+                console.error('Response:', xhr.responseText);
+                $('#apiStatus').html('<span class="text-danger">❌ API connection failed! Check browser console for details.</span>');
+                alert('Failed to connect to API. Check browser console for details.');
+            }
+        });
+
+        // Date filter change
+        $('#dateFilter').on('change', function() {
+            dateFilter = $(this).val();
+            if (dateFilter === 'custom') {
+                $('#customDateRange').show();
+            } else {
+                $('#customDateRange').hide();
+            }
+        });
+        
+        // Search button click
+        $('#searchButton').on('click', function() {
+            currentPage = 1;
+            loadReplacements();
+        });
+        
+        // Page size change
+        $('#page-size').on('change', function() {
+            limit = parseInt($(this).val());
+            currentPage = 1;
+            loadReplacements();
+        });
+        
+        // Function to load replacements with pagination and filters
+        function loadReplacements() {
+            $('#loadingStatus').text('Loading replacements...');
+            $('#loadingIndicator').removeClass('d-none');
+            $('#noReplacementsMessage').addClass('d-none');
+            
+            const replacementNumber = $('#searchReplacement').val();
+            const customerName = $('#searchCustomer').val();
+            const status = $('#statusFilter').val();
+            
+            // Handle custom date range
+            if (dateFilter === 'custom') {
+                fromDate = $('#fromDate').val();
+                toDate = $('#toDate').val();
+            } else {
+                fromDate = '';
+                toDate = '';
+            }
+            
+            console.log('Loading replacements with filters:', {
+                page: currentPage,
+                limit: limit,
+                replacementNumber: replacementNumber,
+                customerName: customerName,
+                status: status,
+                dateFilter: dateFilter,
+                fromDate: fromDate,
+                toDate: toDate
+            });
+            
+            $.ajax({
+                url: '/api/sales/replacements',
+                type: 'GET',
+                data: {
+                    page: currentPage,
+                    limit: limit,
+                    replacementNumber: replacementNumber,
+                    customerName: customerName,
+                    status: status,
+                    dateFilter: dateFilter,
+                    fromDate: fromDate,
+                    toDate: toDate
+                },
+                success: function(response) {
+                    console.log('API Response:', response);
+                    $('#loadingIndicator').addClass('d-none');
+                    
+                    // Debug output to check if we're getting data
+                    if (!response.data || response.data.length === 0) {
+                        console.warn('API returned empty data array');
+                        console.log('Empty response details:', response);
+                        $('#loadingStatus').html('<span class="text-warning">⚠️ API returned empty data array</span>');
+                        $('#dataStatus').html('<span class="text-warning">No replacements found matching your criteria</span>');
+                    } else {
+                        console.log('Data received, length:', response.data.length);
+                        console.log('First record:', response.data[0]);
+                        $('#loadingStatus').html(`<span class="text-success">✅ Loaded ${response.data.length} replacements</span>`);
+                        $('#dataStatus').html(`<span class="text-success">Found ${response.pagination.total} total replacements, showing page ${response.pagination.page} of ${response.pagination.pages}</span>`);
+                    }
+                    
+                    if (response.success) {
+                        renderReplacements(response.data);
+                        renderPagination(response.pagination);
+                        updateResultCount(response.pagination.total);
+                    } else {
+                        console.error('Error in API response:', response.message);
+                        $('#loadingStatus').html(`<span class="text-danger">❌ API error: ${response.message}</span>`);
+                        $('#dataStatus').html('<span class="text-danger">Failed to fetch replacements</span>');
+                        alert('Error loading replacements: ' + response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $('#loadingIndicator').addClass('d-none');
+                    console.error('API Error Status:', status);
+                    console.error('API Error Message:', error);
+                    console.error('API Error Details:', xhr);
+                    console.error('API Response Text:', xhr.responseText);
+                    $('#loadingStatus').html(`<span class="text-danger">❌ Failed to load replacements: ${error}</span>`);
+                    $('#dataStatus').html('<span class="text-danger">API request failed</span>');
+                    alert('Error loading replacements: ' + (xhr.responseJSON?.message || 'Unknown error'));
+                }
+            });
+        }
+        
+        // Function to render replacements table
+        function renderReplacements(replacements) {
+            const tbody = $('#replacementList');
+            tbody.empty();
+            
+            if (replacements.length === 0) {
+                $('#noReplacementsMessage').removeClass('d-none');
+                return;
+            }
+            
+            replacements.forEach(function(replacement, index) {
+                const row = $('<tr>');
+                
+                // Calculate row number based on pagination
+                const rowNumber = (currentPage - 1) * limit + index + 1;
+                
+                row.append(`<td class="text-center">${rowNumber}</td>`);
+                row.append(`<td class="text-center">${replacement.id || ''}</td>`);
+                row.append(`<td class="text-start">${replacement.customer || ''}</td>`);
+                row.append(`<td class="text-center">${replacement.doc_date || ''}</td>`);
+                row.append(`<td class="text-start">${replacement.reference_no || ''}</td>`);
+                row.append(`<td class="text-start">${replacement.remarks || ''}</td>`);
+                
+                // Status column with icon
+                let statusIcon = '';
+                let statusText = '';
+                
+                switch(replacement.status) {
+                    case 'A': 
+                        statusIcon = '<i class="fas fa-check-circle"></i>';
+                        statusText = 'Active';
+                        break;
+                    case 'P': 
+                        statusIcon = '<i class="fas fa-clock"></i>'; 
+                        statusText = 'Pending';
+                        break;
+                    case 'C': 
+                        statusIcon = '<i class="fas fa-check"></i>'; 
+                        statusText = 'Completed';
+                        break;
+                    case 'V': 
+                        statusIcon = '<i class="fas fa-times-circle"></i>'; 
+                        statusText = 'Void';
+                        break;
+                    case 'D': 
+                        statusIcon = '<i class="fas fa-file"></i>'; 
+                        statusText = 'Draft';
+                        break;
+                    default: 
+                        statusIcon = '<i class="fas fa-question-circle"></i>';
+                        statusText = replacement.status;
+                        break;
+                }
+                
+                row.append(`<td class="text-center">
+                    <span class="status-text">
+                        ${statusIcon} ${statusText}
+                    </span>
+                </td>`);
+                
+                // Actions column
+                row.append(`<td class="text-center">
+                    <div class="btn-group action-buttons">
+                        <a href="/page/sales/sales_replacement/view/${replacement.id}" class="btn btn-sm btn-info" title="View">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="/page/sales/sales_replacement/edit/${replacement.id}" class="btn btn-sm btn-primary" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <button class="btn btn-sm btn-danger delete-btn" data-id="${replacement.id}" data-bs-toggle="modal" data-bs-target="#deleteModal" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>`);
+                
+                tbody.append(row);
+            });
+            
+            // Set up delete button handlers
+            $('.delete-btn').on('click', function() {
+                const id = $(this).data('id');
+                $('#confirm-delete').data('id', id);
+            });
+            
+            // Make rows clickable
+            $('#replacementsTable tbody tr').css('cursor', 'pointer');
+            $('#replacementsTable tbody tr').on('click', function(e) {
+                // Only navigate if the click wasn't on a button
+                if (!$(e.target).closest('button, a').length) {
+                    const id = $(this).find('.delete-btn').data('id');
+                    window.location.href = `/page/sales/sales_replacement/view/${id}`;
+                }
+            });
+        }
+        
+        // Function to render pagination
+        function renderPagination(pagination) {
+            const paginationEl = $('#pagination');
+            paginationEl.empty();
+            
+            // Previous button
+            const prevLi = $('<li class="page-item">');
+            if (pagination.page <= 1) {
+                prevLi.addClass('disabled');
+            }
+            
+            const prevLink = $('<a class="page-link" href="#">Previous</a>');
+            prevLink.on('click', function(e) {
+                e.preventDefault();
+                if (pagination.page > 1) {
+                    currentPage = pagination.page - 1;
+                    loadReplacements();
+                }
+            });
+            
+            prevLi.append(prevLink);
+            paginationEl.append(prevLi);
+            
+            // Page numbers
+            for (let i = 1; i <= pagination.pages; i++) {
+                const pageLi = $('<li class="page-item">');
+                if (i === pagination.page) {
+                    pageLi.addClass('active');
+                }
+                
+                const pageLink = $(`<a class="page-link" href="#">${i}</a>`);
+                pageLink.on('click', function(e) {
+                    e.preventDefault();
+                    currentPage = i;
+                    loadReplacements();
+                });
+                
+                pageLi.append(pageLink);
+                paginationEl.append(pageLi);
+            }
+            
+            // Next button
+            const nextLi = $('<li class="page-item">');
+            if (pagination.page >= pagination.pages) {
+                nextLi.addClass('disabled');
+            }
+            
+            const nextLink = $('<a class="page-link" href="#">Next</a>');
+            nextLink.on('click', function(e) {
+                e.preventDefault();
+                if (pagination.page < pagination.pages) {
+                    currentPage = pagination.page + 1;
+                    loadReplacements();
+                }
+            });
+            
+            nextLi.append(nextLink);
+            paginationEl.append(nextLi);
+        }
+        
+        // Function to update result count text
+        function updateResultCount(total) {
+            let message = `Showing ${total} sales replacement`;
+            if (total !== 1) message += 's';
+            
+            if (dateFilter === 'custom' && fromDate && toDate) {
+                message += ` from ${fromDate} to ${toDate}`;
+            } else if (dateFilter !== '0') {
+                message += ` from the last ${dateFilter} months`;
+            } else {
+                message += ' (all time)';
+            }
+            
+            $('#resultCount').text(message);
+        }
+        
+        // Handle delete confirmation
+        $('#confirm-delete').on('click', function() {
+            const id = $(this).data('id');
+            
+            $.ajax({
+                url: `/api/sales/replacements/${id}`,
+                type: 'DELETE',
+                success: function(response) {
+                    if (response.success) {
+                        $('#deleteModal').modal('hide');
+                        console.log('Replacement deleted successfully');
+                        loadReplacements(); // Reload the data
+                    } else {
+                        console.error('Error deleting replacement:', response.message);
+                        alert('Error deleting replacement: ' + response.message);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Delete API Error:', error);
+                    alert('Error deleting replacement: ' + (xhr.responseJSON?.message || 'Unknown error'));
+                }
+            });
+        });
+    });
+</script>
+
+</body>
+</html>

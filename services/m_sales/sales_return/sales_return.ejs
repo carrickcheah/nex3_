@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+        }
+        
+        /* Table font size settings */
+        #returnsTable {
+            font-size: 14px;
+        }
+        
+        #returnsTable thead th {
+            font-size: 15px;
+            font-weight: 600;
+        }
+        
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border: none;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #0669f4, #5441e9);
+            color: white;
+            border-radius: 8px 8px 0 0 !important;
+            font-weight: 600;
+            padding: 15px 20px;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background-color: #0669f4;
+            border-color: #0669f4;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0558d6;
+            border-color: #0558d6;
+        }
+        
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(6, 105, 244, 0.05);
+        }
+        
+        .action-buttons .btn {
+            margin-right: 5px;
+        }
+        
+        /* Column widths for better alignment */
+        #returnsTable th:nth-child(1), #returnsTable td:nth-child(1) { width: 5%; text-align: center; }  /* NO */
+        #returnsTable th:nth-child(2), #returnsTable td:nth-child(2) { width: 10%; text-align: center; }  /* TXN ID */
+        #returnsTable th:nth-child(3), #returnsTable td:nth-child(3) { width: 20%; text-align: left; }  /* CUSTOMER */
+        #returnsTable th:nth-child(4), #returnsTable td:nth-child(4) { width: 10%; text-align: center; }  /* DOC DATE */
+        #returnsTable th:nth-child(5), #returnsTable td:nth-child(5) { width: 12%; text-align: left; }  /* RETURN NO */
+        #returnsTable th:nth-child(6), #returnsTable td:nth-child(6) { width: 10%; text-align: left; }  /* CUSTOMER REF */
+        #returnsTable th:nth-child(7), #returnsTable td:nth-child(7) { width: 8%; text-align: center; }  /* BRANCH */
+        #returnsTable th:nth-child(8), #returnsTable td:nth-child(8) { width: 10%; text-align: left; }  /* ISSUED BY */
+        #returnsTable th:nth-child(9), #returnsTable td:nth-child(9) { width: 10%; text-align: left; }  /* REMARKS */
+        #returnsTable th:nth-child(10), #returnsTable td:nth-child(10) { width: 5%; text-align: center; }  /* STATUS */
+        
+        /* Group styling */
+        .customer-group {
+            background-color: #f0f4f8;
+            cursor: pointer;
+        }
+        
+        .customer-group:hover {
+            background-color: #e6edf5;
+        }
+        
+        .customer-detail {
+            background-color: #fcfcfc;
+            border-left: 3px solid #0669f4;
+        }
+        
+        .customer-detail:hover {
+            background-color: #f5f7fa;
+        }
+        
+        .toggle-group {
+            cursor: pointer;
+            color: #0669f4;
+            transition: transform 0.2s;
+        }
+        
+        .toggle-group:hover {
+            transform: scale(1.2);
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .pagination a {
+            margin: 0 5px;
+        }
+        
+        /* Status indicators with icons */
+        .status-text {
+            display: inline-flex;
+            align-items: center;
+            font-weight: normal;
+            background-color: #28a745;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .status-text:hover {
+            background-color: #218838;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .status-text i {
+            margin-right: 5px;
+            color: white;
+        }
+        
+        /* Modern Navigation Bar Styles */
+        .nex-header {
+            width: 100%;
+            background: linear-gradient(135deg, #0669f4, #5441e9);
+            color: white;
+            box-shadow: 0 2px 8px rgba(18, 18, 18, 0.3);
+            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .main-nav {
+            display: flex;
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .nav-item {
+            padding: 15px 20px;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: background-color 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .nav-item:hover {
+            background-color: rgba(255,255,255,0.1);
+            border-bottom: 3px solid white;
+            transform: translateY(-2px);
+        }
+        
+        .nav-item.active {
+            background-color: rgba(255,255,255,0.15);
+            border-bottom: 3px solid white;
+            font-weight: 600;
+        }
+        
+        .nav-item i {
+            margin-right: 8px;
+            font-size: 1rem;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .main-nav {
+                flex-wrap: wrap;
+            }
+            
+            .nav-item {
+                padding: 12px 15px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Main Navigation -->
+<div class="nex-header">
+  <div class="main-nav">
+    <a href="/page/dashboard" class="nav-item <%= title === 'Dashboard' ? 'active' : '' %>">
+      <i class="fas fa-tachometer-alt"></i> Dashboard
+    </a>
+    <a href="/page/sales" class="nav-item <%= title.includes('Sales') ? 'active' : '' %>">
+      <i class="fas fa-chart-line"></i> Sales
+    </a>
+    <a href="/page/purchasing" class="nav-item <%= title === 'Purchasing' ? 'active' : '' %>">
+      <i class="fas fa-shopping-cart"></i> Purchasing
+    </a>
+    <a href="/page/warehouse" class="nav-item <%= title === 'Warehouse' ? 'active' : '' %>">
+      <i class="fas fa-warehouse"></i> Warehouse
+    </a>
+    <a href="/page/manufacturing" class="nav-item <%= title === 'Manufacturing' ? 'active' : '' %>">
+      <i class="fas fa-industry"></i> Manufacturing
+    </a>
+    <a href="/page/engineering" class="nav-item <%= title === 'Engineering' ? 'active' : '' %>">
+      <i class="fas fa-cogs"></i> Engineering
+    </a>
+    <a href="/page/administration" class="nav-item <%= title === 'Administration' ? 'active' : '' %>">
+      <i class="fas fa-users-cog"></i> Administration
+    </a>
+    <a href="/page/aichat" class="nav-item <%= title === 'AI Chat' ? 'active' : '' %>">
+      <i class="fas fa-comment-dots"></i> AI Chat
+    </a>
+  </div>
+</div>
+
+<div class="container-fluid mt-4 px-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-exchange-alt me-2"></i>Sales Returns Management</span>
+                    <a href="/page/sales/sreturn_inquiry/add" class="btn btn-light btn-sm">
+                        <i class="fas fa-plus me-1"></i>New Sales Return
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- Search and filter controls -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" id="searchReturn" class="form-control" placeholder="Search by Return Number">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" id="searchCustomer" class="form-control" placeholder="Search by Customer">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                <select id="dateFilter" class="form-select">
+                                    <option value="3" selected>Last 3 Months</option>
+                                    <option value="6">Last 6 Months</option>
+                                    <option value="12">Last 12 Months</option>
+                                    <option value="0">All Time</option>
+                                    <option value="custom">Custom Range</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-filter"></i></span>
+                                <select id="statusFilter" class="form-select">
+                                    <option value="" selected>All Status</option>
+                                    <option value="PENDING">Pending</option>
+                                    <option value="COMPLETED">Completed</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Custom date range (initially hidden) -->
+                    <div class="row mb-3" id="customDateRange" style="display: none;">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                <input type="date" id="fromDate" class="form-control" placeholder="From Date">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                <input type="date" id="toDate" class="form-control" placeholder="To Date">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-9">
+                            <div class="form-text text-muted">
+                                <span id="resultCount">Showing all sales returns from the last 3 months</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <select id="page-size" class="form-select d-inline-block w-auto me-2">
+                                <option value="10">10 per page</option>
+                                <option value="25">25 per page</option>
+                                <option value="50" selected>50 per page</option>
+                                <option value="100">100 per page</option>
+                            </select>
+                            <button type="button" id="searchButton" class="btn btn-primary">
+                                <i class="fas fa-filter me-1"></i> Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Data Table -->
+                    <div class="table-responsive">
+                        <table id="returnsTable" class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th class="text-center">NO</th>
+                                    <th class="text-center">TXN ID</th>
+                                    <th class="text-start">CUSTOMER</th>
+                                    <th class="text-center">DOC DATE</th>
+                                    <th class="text-start">RETURN NO</th>
+                                    <th class="text-start">CUSTOMER REF</th>
+                                    <th class="text-center">BRANCH</th>
+                                    <th class="text-start">ISSUED BY</th>
+                                    <th class="text-start">REMARKS</th>
+                                    <th class="text-center">STATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="returnsList">
+                                <!-- Sales returns will be dynamically loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div id="noReturnsMessage" class="text-center py-3 d-none">
+                        <p>No sales returns found.</p>
+                    </div>
+                    <div id="loadingIndicator" class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <nav aria-label="Sales returns pagination" class="mt-3">
+                        <ul id="pagination" class="pagination justify-content-center">
+                            <!-- Pagination will be populated by JavaScript -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this sales return?</p>
+                <p class="text-danger"><strong>This action cannot be undone.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="confirm-delete" class="btn btn-danger">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        let currentPage = 1;
+        let limit = 50;
+        let totalPages = 1;
+        let deleteId = null;
+        
+        // Initial data load
+        loadReturns(1);
+        
+        // Date filter change
+        $('#dateFilter').on('change', function() {
+            if ($(this).val() === 'custom') {
+                $('#customDateRange').show();
+            } else {
+                $('#customDateRange').hide();
+            }
+        });
+        
+        // Search button click
+        $('#searchButton').on('click', function() {
+            currentPage = 1;
+            loadReturns(currentPage);
+        });
+        
+        // Enter key in search fields
+        $('#searchReturn, #searchCustomer').on('keypress', function(e) {
+            if (e.which === 13) {
+                currentPage = 1;
+                loadReturns(currentPage);
+            }
+        });
+        
+        // Page size change
+        $('#page-size').on('change', function() {
+            limit = $(this).val();
+            currentPage = 1;
+            loadReturns(currentPage);
+        });
+        
+        // Delete return
+        $(document).on('click', '.delete-btn', function(e) {
+            e.stopPropagation();
+            deleteId = $(this).data('id');
+            $('#deleteModal').modal('show');
+        });
+        
+        // Confirm delete
+        $('#confirm-delete').on('click', function() {
+            if (deleteId) {
+                $.ajax({
+                    url: `/api/sales/returns/${deleteId}`,
+                    type: 'DELETE',
+                    success: function(data) {
+                        if (data.success) {
+                            $('#deleteModal').modal('hide');
+                            loadReturns(currentPage);
+                        } else {
+                            alert(data.message || 'Failed to delete sales return');
+                        }
+                    },
+                    error: function(error) {
+                        console.error('Error deleting sales return:', error);
+                        alert('Error deleting sales return. Please try again.');
+                    }
+                });
+            }
+        });
+        
+        // Load sales returns with pagination and filtering
+        function loadReturns(page = 1) {
+            // Set loading state
+            $('#loadingIndicator').show();
+            $('#noReturnsMessage').addClass('d-none');
+            $('#returnsList').empty();
+            $('#pagination').empty();
+            
+            // Get filter values
+            const returnNumber = $('#searchReturn').val();
+            const customerName = $('#searchCustomer').val();
+            const dateFilter = $('#dateFilter').val();
+            const fromDate = $('#fromDate').val();
+            const toDate = $('#toDate').val();
+            const status = $('#statusFilter').val();
+            const limit = $('#page-size').val();
+            
+            // Build query parameters
+            let params = { 
+                page, 
+                limit,
+                returnNumber,
+                customerName,
+                status
+            };
+            
+            // Add date filter parameters
+            if (dateFilter === 'custom') {
+                if (fromDate && toDate) {
+                    params.fromDate = fromDate;
+                    params.toDate = toDate;
+                }
+            } else {
+                params.dateFilter = dateFilter;
+            }
+            
+            // Make API request
+            $.ajax({
+                url: '/api/sales/returns',
+                type: 'GET',
+                data: params,
+                success: function(data) {
+                    if (data.success) {
+                        // Handle empty result
+                        if (!data.data || data.data.length === 0) {
+                            $('#loadingIndicator').hide();
+                            $('#noReturnsMessage').removeClass('d-none');
+                            return;
+                        }
+                        
+                        // Update result count
+                        $('#resultCount').text(`Showing ${data.data.length} of ${data.pagination.total} sales returns`);
+                        
+                        // Display returns
+                        displayReturns(data.data);
+                        
+                        // Set up pagination
+                        setupPagination(data.pagination);
+                        
+                        // Hide loading indicator
+                        $('#loadingIndicator').hide();
+                    } else {
+                        // Handle API error
+                        $('#loadingIndicator').hide();
+                        $('#noReturnsMessage').removeClass('d-none').text(`Error: ${data.message}`);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    // Handle AJAX error
+                    $('#loadingIndicator').hide();
+                    $('#noReturnsMessage').removeClass('d-none').text('Error loading sales returns. Please try again.');
+                }
+            });
+        }
+        
+        // Test API connection first
+        function testConnection() {
+            $.ajax({
+                url: '/api/sales/returns/test/connection',
+                type: 'GET',
+                success: function(data) {
+                    // Load returns after successful connection test
+                    loadReturns();
+                },
+                error: function(xhr, status, error) {
+                    $('#loadingIndicator').hide();
+                    $('#noReturnsMessage').removeClass('d-none').text('Database connection error. Please contact support.');
+                }
+            });
+        }
+        
+        // Display returns in table
+        function displayReturns(returns) {
+            if (!returns || returns.length === 0) {
+                $('#noReturnsMessage').removeClass('d-none');
+                return;
+            }
+            
+            const tbody = $('#returnsList');
+            
+            // Group returns by customer
+            const groupedReturns = {};
+            returns.forEach(salesReturn => {
+                const customerId = salesReturn.customer;
+                if (!groupedReturns[customerId]) {
+                    groupedReturns[customerId] = [];
+                }
+                groupedReturns[customerId].push(salesReturn);
+            });
+            
+            let index = 0;
+            
+            // Display each customer group
+            for (const [customer, customerReturns] of Object.entries(groupedReturns)) {
+                index++;
+                
+                // Calculate total returns for this customer
+                const totalReturns = customerReturns.length;
+                
+                // Get the first return for summary display
+                const firstReturn = customerReturns[0];
+                
+                // Add the collapsed row (customer summary)
+                const groupRow = `
+                    <tr class="customer-group" data-customer="${customer}">
+                        <td class="text-center">${index}</td>
+                        <td class="text-center">${firstReturn.txn_id || 'N/A'}</td>
+                        <td class="fw-bold">
+                            <i class="fas fa-plus-circle me-2 toggle-group" title="Expand/Collapse"></i>
+                            ${customer || 'N/A'} <span class="badge bg-secondary ms-2">${totalReturns}</span>
+                        </td>
+                        <td class="text-center">${firstReturn.doc_date || 'N/A'}</td>
+                        <td>${firstReturn.return_no || 'N/A'}</td>
+                        <td>${firstReturn.customer_ref || 'N/A'}</td>
+                        <td class="text-center">${firstReturn.branch || 'N/A'}</td>
+                        <td>${firstReturn.issued_by || 'N/A'}</td>
+                        <td>${firstReturn.remarks || 'N/A'}</td>
+                        <td class="text-center">${getReturnStatus(firstReturn.status) || 'Unknown'}</td>
+                    </tr>
+                `;
+                
+                tbody.append(groupRow);
+                
+                // Add detail rows (initially hidden)
+                customerReturns.forEach((salesReturn, returnIndex) => {
+                    if (returnIndex === 0) return; // Skip the first one as it's already shown in the group row
+                    
+                    const detailRow = `
+                        <tr class="customer-detail" data-customer="${customer}" style="display: none; background-color: #f9f9f9;">
+                            <td class="text-center"></td>
+                            <td class="text-center">${salesReturn.txn_id || 'N/A'}</td>
+                            <td class="ps-4">${salesReturn.customer || 'N/A'}</td>
+                            <td class="text-center">${salesReturn.doc_date || 'N/A'}</td>
+                            <td>${salesReturn.return_no || 'N/A'}</td>
+                            <td>${salesReturn.customer_ref || 'N/A'}</td>
+                            <td class="text-center">${salesReturn.branch || 'N/A'}</td>
+                            <td>${salesReturn.issued_by || 'N/A'}</td>
+                            <td>${salesReturn.remarks || 'N/A'}</td>
+                            <td class="text-center">${getReturnStatus(salesReturn.status) || 'Unknown'}</td>
+                        </tr>
+                    `;
+                    
+                    tbody.append(detailRow);
+                });
+            }
+            
+            // Add click event to group toggle
+            $('.toggle-group').on('click', function(e) {
+                e.stopPropagation();
+                const customer = $(this).closest('tr').data('customer');
+                const detailRows = $(`.customer-detail[data-customer="${customer}"]`);
+                
+                if (detailRows.is(':visible')) {
+                    detailRows.hide();
+                    $(this).removeClass('fa-minus-circle').addClass('fa-plus-circle');
+                } else {
+                    detailRows.show();
+                    $(this).removeClass('fa-plus-circle').addClass('fa-minus-circle');
+                }
+            });
+            
+            // Add click event to rows
+            $('.customer-group, .customer-detail').on('click', function(e) {
+                if (!$(e.target).closest('.toggle-group').length) {
+                    const id = $(this).find('td:eq(1)').text().trim();
+                    if (id && id !== 'N/A') {
+                        window.location.href = `/page/sales/sreturn_inquiry/view/${id}`;
+                    }
+                }
+            });
+        }
+        
+        // Get status badge based on return status
+        function getReturnStatus(status) {
+            if (!status) return '';
+            
+            let statusClass = 'bg-secondary';
+            let statusIcon = '<i class="fas fa-info-circle"></i>';
+            let statusText = 'Unknown';
+            
+            switch (status) {
+                case 'A':
+                case 'ACT':
+                    statusClass = 'bg-success';
+                    statusIcon = '<i class="fas fa-check-circle"></i>';
+                    statusText = 'Active';
+                    break;
+                case 'C':
+                case 'COM':
+                    statusClass = 'bg-info';
+                    statusIcon = '<i class="fas fa-flag-checkered"></i>';
+                    statusText = 'Completed';
+                    break;
+                case 'V':
+                case 'VOID':
+                    statusClass = 'bg-danger';
+                    statusIcon = '<i class="fas fa-ban"></i>';
+                    statusText = 'Void';
+                    break;
+                case 'D':
+                case 'DFT':
+                    statusClass = 'bg-warning';
+                    statusIcon = '<i class="fas fa-edit"></i>';
+                    statusText = 'Draft';
+                    break;
+                case 'P':
+                case 'PND':
+                    statusClass = 'bg-primary';
+                    statusIcon = '<i class="fas fa-clock"></i>';
+                    statusText = 'Pending';
+                    break;
+            }
+            
+            return `<span class="badge ${statusClass}">${statusIcon} ${statusText}</span>`;
+        }
+        
+        // Render pagination controls
+        function setupPagination(pagination) {
+            const paginationElement = $('#pagination');
+            paginationElement.empty();
+            
+            // Don't show pagination if there's only one page
+            if (pagination.pages <= 1) {
+                return;
+            }
+            
+            // Previous button
+            paginationElement.append(`
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
+                </li>
+            `);
+            
+            // Page numbers
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(pagination.pages, startPage + 4);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                paginationElement.append(`
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" data-page="${i}">${i}</a>
+                    </li>
+                `);
+            }
+            
+            // Next button
+            paginationElement.append(`
+                <li class="page-item ${currentPage === pagination.pages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
+                </li>
+            `);
+            
+            // Pagination click event
+            $('.page-link').on('click', function(e) {
+                e.preventDefault();
+                const page = $(this).data('page');
+                
+                if (page < 1 || page > pagination.pages || page === currentPage) {
+                    return;
+                }
+                
+                loadReturns(page);
+            });
+        }
+    });
+</script>
+
+</body>
+</html>

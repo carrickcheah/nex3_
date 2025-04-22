@@ -46,16 +46,17 @@ class InvoicesModel {
           si.TxnDate_dd as invoice_date,
           cu.CurrCode_c as currency,
           cu.CurrRate_d as currency_rate,
-          'Carrick' as sales_person,
+          CONCAT(u.UserAbbrev_v, ' ', u.UserName_v) as sales_person,
           si.DocRemark_v as notes,
           si.GrandTotal_d as total_amount,
           si.EinvuuId_v as e_invoice_uuid,
           si.EinvlongId_v as e_invoice_longid,
           si.EinvStatus_v as e_invoice_status,
           si.TxnId_i as id
-        FROM nex_valiant.tbl_sinvoice_txn si
+        FROM tbl_sinvoice_txn si
         LEFT JOIN tbl_customer c ON si.CustId_i = c.CustId_i
         LEFT JOIN tbl_currency cu ON si.CurrId_i = cu.CurrId_i
+        LEFT JOIN tbl_user u ON u.UserID_i = si.OwnerId_i
         ${whereClause}
         ORDER BY si.TxnDate_dd DESC
         LIMIT ?, ?
