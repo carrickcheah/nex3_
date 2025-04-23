@@ -1,10 +1,10 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: true
 ---
 
 # Your rule content
 
-- You can @ files here
-- You can use markdown but dont have to
+- Remember ! if the and existing files or folders , apply the code on existing files. 
+- If no files or folder, then u only allow create new files.

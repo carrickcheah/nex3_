@@ -76,13 +76,14 @@
         
         /* Column widths for better alignment */
         #replacementsTable th:nth-child(1), #replacementsTable td:nth-child(1) { width: 5%; text-align: center; }  /* NO */
-        #replacementsTable th:nth-child(2), #replacementsTable td:nth-child(2) { width: 10%; text-align: center; }  /* ID */
-        #replacementsTable th:nth-child(3), #replacementsTable td:nth-child(3) { width: 20%; text-align: left; }  /* CUSTOMER */
-        #replacementsTable th:nth-child(4), #replacementsTable td:nth-child(4) { width: 10%; text-align: center; }  /* DATE */
-        #replacementsTable th:nth-child(5), #replacementsTable td:nth-child(5) { width: 12%; text-align: left; }  /* REF NO */
-        #replacementsTable th:nth-child(6), #replacementsTable td:nth-child(6) { width: 15%; text-align: left; }  /* REMARKS */
-        #replacementsTable th:nth-child(7), #replacementsTable td:nth-child(7) { width: 8%; text-align: center; }  /* STATUS */
-        #replacementsTable th:nth-child(8), #replacementsTable td:nth-child(8) { width: 10%; text-align: center; }  /* ACTIONS */
+        #replacementsTable th:nth-child(2), #replacementsTable td:nth-child(2) { width: 8%; text-align: center; }  /* TXN ID */
+        #replacementsTable th:nth-child(3), #replacementsTable td:nth-child(3) { width: 18%; text-align: left; }  /* CUSTOMER */
+        #replacementsTable th:nth-child(4), #replacementsTable td:nth-child(4) { width: 10%; text-align: center; }  /* DOC DATE */
+        #replacementsTable th:nth-child(5), #replacementsTable td:nth-child(5) { width: 10%; text-align: left; }  /* S.CLAIM NO */
+        #replacementsTable th:nth-child(6), #replacementsTable td:nth-child(6) { width: 12%; text-align: left; }  /* CUST REF NO */
+        #replacementsTable th:nth-child(7), #replacementsTable td:nth-child(7) { width: 8%; text-align: center; }  /* BRANCH */
+        #replacementsTable th:nth-child(8), #replacementsTable td:nth-child(8) { width: 12%; text-align: center; }  /* ISSUED BY */
+        #replacementsTable th:nth-child(9), #replacementsTable td:nth-child(9) { width: 17%; text-align: left; }  /* REMARKS */
         
         .pagination {
             display: flex;
@@ -132,14 +133,6 @@
                     </a>
                 </div>
                 <div class="card-body">
-                    <!-- Debug info -->
-                    <div id="debugInfo" class="alert alert-info mb-3">
-                        <p><strong>Debug information:</strong></p>
-                        <p id="apiStatus">Checking API connection...</p>
-                        <p id="loadingStatus">Waiting for data...</p>
-                        <p id="dataStatus">No data received yet</p>
-                    </div>
-                    
                     <!-- Search and filter controls -->
                     <div class="row mb-3">
                         <div class="col-md-3">
@@ -219,13 +212,14 @@
                             <thead>
                                 <tr>
                                     <th class="text-center">NO</th>
-                                    <th class="text-center">ID</th>
+                                    <th class="text-center">TXN ID</th>
                                     <th class="text-start">CUSTOMER</th>
-                                    <th class="text-center">DATE</th>
-                                    <th class="text-start">REF NO</th>
+                                    <th class="text-center">DOC DATE</th>
+                                    <th class="text-start">S.CLAIM NO</th>
+                                    <th class="text-start">CUST REF NO</th>
+                                    <th class="text-center">BRANCH</th>
+                                    <th class="text-center">ISSUED BY</th>
                                     <th class="text-start">REMARKS</th>
-                                    <th class="text-center">STATUS</th>
-                                    <th class="text-center">ACTIONS</th>
                                 </tr>
                             </thead>
                             <tbody id="replacementList">
@@ -292,14 +286,11 @@
         
         // Test API connection first
         console.log('Testing API connection...');
-        $('#apiStatus').text('Testing API connection...');
         $.ajax({
             url: '/api/sales/replacements/test/connection',
             type: 'GET',
             success: function(response) {
                 console.log('API Test Response:', response);
-                $('#apiStatus').html('<span class="text-success">✅ API connection successful!</span>');
-                console.log('API connection successful, now loading replacements...');
                 // Load replacements after confirming API works
                 loadReplacements();
             },
@@ -308,7 +299,6 @@
                 console.error('Status:', status);
                 console.error('Error:', error);
                 console.error('Response:', xhr.responseText);
-                $('#apiStatus').html('<span class="text-danger">❌ API connection failed! Check browser console for details.</span>');
                 alert('Failed to connect to API. Check browser console for details.');
             }
         });
@@ -338,7 +328,6 @@
         
         // Function to load replacements with pagination and filters
         function loadReplacements() {
-            $('#loadingStatus').text('Loading replacements...');
             $('#loadingIndicator').removeClass('d-none');
             $('#noReplacementsMessage').addClass('d-none');
             
@@ -386,14 +375,9 @@
                     // Debug output to check if we're getting data
                     if (!response.data || response.data.length === 0) {
                         console.warn('API returned empty data array');
-                        console.log('Empty response details:', response);
-                        $('#loadingStatus').html('<span class="text-warning">⚠️ API returned empty data array</span>');
-                        $('#dataStatus').html('<span class="text-warning">No replacements found matching your criteria</span>');
+                        $('#noReplacementsMessage').removeClass('d-none');
                     } else {
                         console.log('Data received, length:', response.data.length);
-                        console.log('First record:', response.data[0]);
-                        $('#loadingStatus').html(`<span class="text-success">✅ Loaded ${response.data.length} replacements</span>`);
-                        $('#dataStatus').html(`<span class="text-success">Found ${response.pagination.total} total replacements, showing page ${response.pagination.page} of ${response.pagination.pages}</span>`);
                     }
                     
                     if (response.success) {
@@ -402,8 +386,6 @@
                         updateResultCount(response.pagination.total);
                     } else {
                         console.error('Error in API response:', response.message);
-                        $('#loadingStatus').html(`<span class="text-danger">❌ API error: ${response.message}</span>`);
-                        $('#dataStatus').html('<span class="text-danger">Failed to fetch replacements</span>');
                         alert('Error loading replacements: ' + response.message);
                     }
                 },
@@ -413,8 +395,6 @@
                     console.error('API Error Message:', error);
                     console.error('API Error Details:', xhr);
                     console.error('API Response Text:', xhr.responseText);
-                    $('#loadingStatus').html(`<span class="text-danger">❌ Failed to load replacements: ${error}</span>`);
-                    $('#dataStatus').html('<span class="text-danger">API request failed</span>');
                     alert('Error loading replacements: ' + (xhr.responseJSON?.message || 'Unknown error'));
                 }
             });
@@ -441,77 +421,20 @@
                 row.append(`<td class="text-start">${replacement.customer || ''}</td>`);
                 row.append(`<td class="text-center">${replacement.doc_date || ''}</td>`);
                 row.append(`<td class="text-start">${replacement.reference_no || ''}</td>`);
+                row.append(`<td class="text-start">${replacement.customer_ref_no || 'N/A'}</td>`);
+                row.append(`<td class="text-center">${replacement.branch_name || 'Main'}</td>`);
+                row.append(`<td class="text-center">${replacement.issued_by || 'System'}</td>`);
                 row.append(`<td class="text-start">${replacement.remarks || ''}</td>`);
                 
-                // Status column with icon
-                let statusIcon = '';
-                let statusText = '';
-                
-                switch(replacement.status) {
-                    case 'A': 
-                        statusIcon = '<i class="fas fa-check-circle"></i>';
-                        statusText = 'Active';
-                        break;
-                    case 'P': 
-                        statusIcon = '<i class="fas fa-clock"></i>'; 
-                        statusText = 'Pending';
-                        break;
-                    case 'C': 
-                        statusIcon = '<i class="fas fa-check"></i>'; 
-                        statusText = 'Completed';
-                        break;
-                    case 'V': 
-                        statusIcon = '<i class="fas fa-times-circle"></i>'; 
-                        statusText = 'Void';
-                        break;
-                    case 'D': 
-                        statusIcon = '<i class="fas fa-file"></i>'; 
-                        statusText = 'Draft';
-                        break;
-                    default: 
-                        statusIcon = '<i class="fas fa-question-circle"></i>';
-                        statusText = replacement.status;
-                        break;
-                }
-                
-                row.append(`<td class="text-center">
-                    <span class="status-text">
-                        ${statusIcon} ${statusText}
-                    </span>
-                </td>`);
-                
-                // Actions column
-                row.append(`<td class="text-center">
-                    <div class="btn-group action-buttons">
-                        <a href="/page/sales/sales_replacement/view/${replacement.id}" class="btn btn-sm btn-info" title="View">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                        <a href="/page/sales/sales_replacement/edit/${replacement.id}" class="btn btn-sm btn-primary" title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <button class="btn btn-sm btn-danger delete-btn" data-id="${replacement.id}" data-bs-toggle="modal" data-bs-target="#deleteModal" title="Delete">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>`);
-                
                 tbody.append(row);
-            });
-            
-            // Set up delete button handlers
-            $('.delete-btn').on('click', function() {
-                const id = $(this).data('id');
-                $('#confirm-delete').data('id', id);
             });
             
             // Make rows clickable
             $('#replacementsTable tbody tr').css('cursor', 'pointer');
             $('#replacementsTable tbody tr').on('click', function(e) {
-                // Only navigate if the click wasn't on a button
-                if (!$(e.target).closest('button, a').length) {
-                    const id = $(this).find('.delete-btn').data('id');
-                    window.location.href = `/page/sales/sales_replacement/view/${id}`;
-                }
+                const rowIndex = $(this).index();
+                const id = replacements[rowIndex].id;
+                window.location.href = `/page/sales/sales_replacement/view/${id}`;
             });
         }
         

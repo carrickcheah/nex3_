@@ -1,0 +1,99 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Sales Module
+
+## Overview
+The Sales Module manages all customer-facing transactions including invoices, quotations, sales returns, and replacement/claim processes. Located in the `services/m_sales/` directory, it follows MVC architecture with separate views, controllers, models, and routes for each submodule.
+
+## Project Structure
+- Main router: `services/m_sales/index.js`
+- Shared components: `services/shared/components/`
+
+### Invoices Submodule
+- Views:
+  - `services/m_sales/sales_invoices/invoices.ejs` - Invoice listing
+  - `services/m_sales/sales_invoices/add_invoices.ejs` - Create/edit invoice
+  - `services/m_sales/sales_invoices/view_invoices.ejs` - View invoice details
+- Controller: `services/m_sales/sales_invoices/controllers/invoicesController.js`
+- Model: `services/m_sales/sales_invoices/models/invoicesModel.js`
+- Routes: `services/m_sales/sales_invoices/routes/invoicesRoutes.js`
+
+### Quotations Submodule
+- Views:
+  - `services/m_sales/sales_quotation/quotation.ejs` - Quotation listing
+  - `services/m_sales/sales_quotation/add_quotation.ejs` - Create/edit quotation
+  - `services/m_sales/sales_quotation/view_quotation.ejs` - View quotation details
+- Controller: `services/m_sales/sales_quotation/controllers/quotationController.js`
+- Model: `services/m_sales/sales_quotation/models/quotationModel.js`
+- Routes: `services/m_sales/sales_quotation/routes/quotationRoutes.js`
+
+### Replacements/Claims Submodule
+- Views:
+  - `services/m_sales/sales_replacement/replacement.ejs` - Replacement listing
+  - `services/m_sales/sales_replacement/add_replacement.ejs` - Create/edit replacement
+  - `services/m_sales/sales_replacement/view_replacement.ejs` - View replacement details
+- Controller: `services/m_sales/sales_replacement/controllers/replacementController.js`
+- Model: `services/m_sales/sales_replacement/models/replacementModel.js`
+- Routes: `services/m_sales/sales_replacement/routes/replacementRoutes.js`
+
+### Returns Submodule
+- Views:
+  - `services/m_sales/sales_return/sreturn_inquiry.ejs` - Returns listing
+  - `services/m_sales/sales_return/add_return.ejs` - Create/edit return
+  - `services/m_sales/sales_return/view_return.ejs` - View return details
+- Controller: `services/m_sales/sales_return/controllers/returnController.js`
+- Model: `services/m_sales/sales_return/models/returnModel.js`
+- Routes: `services/m_sales/sales_return/routes/returnRoutes.js`
+
+## Routing
+- Web Routes Pattern: `/page/sales/{submodule}`
+  - Invoices: `/page/sales/invoices`
+  - Quotations: `/page/sales/quotations`
+  - Replacements: `/page/sales/sales_replacement`
+  - Returns: `/page/sales/sreturn_inquiry`
+- API Routes Pattern: `/api/sales/{submodule}`
+  - Invoices: `/api/sales/invoices`
+  - Quotations: `/api/sales/quotations`
+  - Replacements: `/api/sales/replacements`
+  - Returns: `/api/sales/returns`
+- Redirects:
+  - `/page/sales/returns` -> `/page/sales/sreturn_inquiry`
+  - `/page/sales/sclaim_inquiry` -> `/page/sales/sales_replacement`
+
+## Shared Components
+- Headers: Navigation bar with module links
+- Tables: DataTables with consistent column formatting
+- Forms: Bootstrap forms with standard field layout
+- Modals: Confirmation dialogs for delete operations
+
+## Data Formats
+- Dates: YYYY-MM-DD format, displayed using Moment.js
+- Currency: 2 decimal places with currency symbol
+- SQL Queries: Raw queries with prepared statements
+- Status Codes:
+  - 0: Draft/Pending
+  - 1: Approved/Completed
+  - 2: Cancelled/Rejected
+  - 3: In Progress
+  - 9: Deleted
+
+## UI Patterns
+- Framework: Bootstrap 4
+- Icons: Font Awesome
+- Tables: DataTables.js with export functionality
+- Color Scheme:
+  - Primary: #007bff (buttons, links)
+  - Success: #28a745 (confirm actions)
+  - Danger: #dc3545 (delete actions)
+  - Warning: #ffc107 (alerts)
+  - Info: #17a2b8 (notifications)
+- Table Column Widths:
+  - ID columns: 3-4%
+  - Status columns: 8-10%
+  - Date columns: 10-12%
+  - Customer/Supplier columns: 12-16%
+  - Description/Comments: 15-20%
+  - Action columns: 10-15%

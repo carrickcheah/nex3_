@@ -6,10 +6,13 @@ const deliveryOrderRoutes = require('./delivery_order/routes/delivery_orderRoute
 const invoicesRoutes = require('./sales_invoices/routes/invoicesRoutes');
 const salesReturnRoutes = require('./sales_return/routes/returnRoutes');
 const replacementRoutes = require('./sales_replacement/routes/replacementRoutes');
+const customerSetupRoutes = require('./Customer Setup/index').customerSetupRoutes;
+const customerRoutes = require('./Customer Setup/customer_general_setup/routes/customerRoutes');
 
 // Sales landing page route
 router.get('/page/sales', (req, res) => {
   res.render('m_sales/sales_landing', { 
+    pageTitle: 'Sales',
     title: 'Sales',
     user: req.session.user || {}
   });
@@ -47,6 +50,12 @@ router.use('/', salesReturnRoutes);
 
 // Register sales replacement routes
 router.use('/', replacementRoutes);
+
+// Register customer setup routes
+router.use('/', customerSetupRoutes);
+
+// Mount customer routes
+router.use('/', customerRoutes);
 
 module.exports = {
   salesRoutes: router

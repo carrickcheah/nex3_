@@ -1,0 +1,719 @@
+<%- include('../../../shared/components/header.ejs') %>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= pageTitle %> | NexERP</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            background-color: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background-color: #3c4b64;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: #fff;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
+            background-color: #fff;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-header h5 {
+            margin-bottom: 0;
+            font-weight: 600;
+            color: #3c4b64;
+        }
+        
+        .btn-primary {
+            background-color: #4638c2;
+            border-color: #4638c2;
+        }
+        
+        .btn-primary:hover {
+            background-color: #3c2eb0;
+            border-color: #3c2eb0;
+        }
+        
+        .btn-success {
+            background-color: #45a164;
+            border-color: #45a164;
+        }
+        
+        .btn-success:hover {
+            background-color: #3b8a55;
+            border-color: #3b8a55;
+        }
+        
+        .btn-danger {
+            background-color: #e55353;
+            border-color: #e55353;
+        }
+        
+        .btn-danger:hover {
+            background-color: #d03b3b;
+            border-color: #d03b3b;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            color: #3c4b64;
+        }
+        
+        .required-field::after {
+            content: '*';
+            color: #e55353;
+            margin-left: 3px;
+        }
+        
+        .form-control:focus {
+            border-color: #4638c2;
+            box-shadow: 0 0 0 0.2rem rgba(70, 56, 194, 0.25);
+        }
+        
+        .invalid-feedback {
+            font-size: 80%;
+            color: #e55353;
+        }
+        
+        .metadata-section {
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .metadata-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #3c4b64;
+            margin-bottom: 10px;
+        }
+        
+        .metadata-item {
+            display: flex;
+            margin-bottom: 5px;
+        }
+        
+        .metadata-label {
+            font-weight: 600;
+            min-width: 120px;
+        }
+        
+        .customer-info-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 20px;
+        }
+
+        .customer-info-table th {
+            background-color: #3c4b64;
+            color: white;
+            font-weight: 600;
+            padding: 12px 15px;
+            text-align: left;
+            border: none;
+        }
+
+        .customer-info-table th:first-child {
+            border-top-left-radius: 8px;
+        }
+
+        .customer-info-table th:last-child {
+            border-top-right-radius: 8px;
+        }
+
+        .customer-info-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+            background-color: white;
+        }
+
+        .customer-info-table tr:last-child td:first-child {
+            border-bottom-left-radius: 8px;
+        }
+
+        .customer-info-table tr:last-child td:last-child {
+            border-bottom-right-radius: 8px;
+        }
+        
+        .detail-section {
+            margin-bottom: 30px;
+        }
+        
+        .detail-section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #3c4b64;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .detail-item {
+            margin-bottom: 15px;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">NexERP</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/page/dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/page/sales">Sales</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/page/sales/customer/general">Customers <span class="sr-only">(current)</span></a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-user-circle mr-1"></i> <%= user?.user_name || 'User' %>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
+                            <a class="dropdown-item" href="/page/profile">Profile</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="/logout">Logout</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Customer Setup</h6>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <a href="/page/sales/customer/general" class="list-group-item list-group-item-action active">
+                            <i class="fas fa-users mr-2"></i> General Setup
+                        </a>
+                        <a href="/page/sales/customer/type" class="list-group-item list-group-item-action">
+                            <i class="fas fa-tags mr-2"></i> Customer Types
+                        </a>
+                        <a href="/page/sales/customer/group" class="list-group-item list-group-item-action">
+                            <i class="fas fa-layer-group mr-2"></i> Customer Groups
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><%= isViewOnly ? 'Customer Details' : (isEdit ? 'Edit Customer' : 'Add New Customer') %></h5>
+                        <div>
+                            <a href="/page/sales/customer/general" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left mr-1"></i> Back to List
+                            </a>
+                            <% if (isEdit && !isViewOnly) { %>
+                                <a href="/page/sales/customer/general/view/<%= customer.customer_id %>" class="btn btn-info ml-2">
+                                    <i class="fas fa-eye mr-1"></i> View Details
+                                </a>
+                            <% } else if (isViewOnly) { %>
+                                <a href="/page/sales/customer/general/edit/<%= customer.customer_id %>" class="btn btn-primary ml-2">
+                                    <i class="fas fa-edit mr-1"></i> Edit Customer
+                                </a>
+                            <% } %>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <% if (isViewOnly) { %>
+                            <!-- View Only Mode - Display customer info in a readable format -->
+                            <table class="customer-info-table">
+                                <thead>
+                                    <tr>
+                                        <th>NO</th>
+                                        <th>CUSTOMER NAME</th>
+                                        <th>SHORT NAME</th>
+                                        <th>TAG</th>
+                                        <th>ACCOUNT ID</th>
+                                        <th>TAX CODE</th>
+                                        <th>EXEMPTION CERTIFICATE NO.</th>
+                                        <th>PAYMENT TERM</th>
+                                        <th>STATUS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><%= customer.customer_id || 'N/A' %></td>
+                                        <td><%= customer.customer_name || 'N/A' %></td>
+                                        <td><%= customer.short_name || 'N/A' %></td>
+                                        <td><%= customer.tag || 'N/A' %></td>
+                                        <td><%= customer.account_id || 'N/A' %></td>
+                                        <td><%= customer.tax_code || 'N/A' %></td>
+                                        <td><%= customer.exemption_certificate || 'N/A' %></td>
+                                        <td><%= customer.payment_term || 'N/A' %></td>
+                                        <td>
+                                            <% if (customer.status == 1) { %>
+                                                <span class="badge badge-success">Active</span>
+                                            <% } else { %>
+                                                <span class="badge badge-secondary">Inactive</span>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="detail-section">
+                                        <h6 class="detail-section-title">Contact Information</h6>
+                                        
+                                        <div class="detail-item">
+                                            <div class="detail-label">Email Address</div>
+                                            <div class="detail-value">
+                                                <% if (customer.email) { %>
+                                                    <a href="mailto:<%= customer.email %>"><%= customer.email %></a>
+                                                <% } else { %>
+                                                    N/A
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="detail-item">
+                                            <div class="detail-label">Phone Number</div>
+                                            <div class="detail-value">
+                                                <% if (customer.phone) { %>
+                                                    <a href="tel:<%= customer.phone %>"><%= customer.phone %></a>
+                                                <% } else { %>
+                                                    N/A
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="detail-item">
+                                            <div class="detail-label">Address</div>
+                                            <div class="detail-value"><%= customer.address || 'N/A' %></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="detail-section">
+                                        <h6 class="detail-section-title">Additional Information</h6>
+                                        
+                                        <div class="detail-item">
+                                            <div class="detail-label">Customer Type</div>
+                                            <div class="detail-value">
+                                                <% if (customer.customer_type_id && customerTypes) { %>
+                                                    <% const type = customerTypes.find(t => t.customer_type_id == customer.customer_type_id); %>
+                                                    <%= type ? type.customer_type_name : 'N/A' %>
+                                                <% } else { %>
+                                                    N/A
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="metadata-section">
+                                <div class="metadata-title">Record Information</div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="metadata-item">
+                                            <span class="metadata-label">Created By:</span>
+                                            <span><%= customer.created_by_name || 'N/A' %></span>
+                                        </div>
+                                        <div class="metadata-item">
+                                            <span class="metadata-label">Created Date:</span>
+                                            <span><%= customer.created_date ? new Date(customer.created_date).toLocaleString() : 'N/A' %></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="metadata-item">
+                                            <span class="metadata-label">Last Modified By:</span>
+                                            <span><%= customer.modified_by_name || 'N/A' %></span>
+                                        </div>
+                                        <div class="metadata-item">
+                                            <span class="metadata-label">Last Modified Date:</span>
+                                            <span><%= customer.modified_date ? new Date(customer.modified_date).toLocaleString() : 'N/A' %></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <% } else { %>
+                            <!-- Add/Edit Form -->
+                            <form id="customerForm">
+                                <% if (isEdit) { %>
+                                    <input type="hidden" id="customerId" value="<%= customer.customer_id %>">
+                                <% } %>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="customerCode" class="required-field">Customer Code</label>
+                                            <input type="text" class="form-control" id="customerCode" name="customer_code" 
+                                                value="<%= customer.customer_code || '' %>" 
+                                                <%= isEdit ? 'readonly' : '' %> required>
+                                            <div class="invalid-feedback" id="customerCodeFeedback">
+                                                Customer code is required
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="customerName" class="required-field">Customer Name</label>
+                                            <input type="text" class="form-control" id="customerName" name="customer_name" 
+                                                value="<%= customer.customer_name || '' %>" required>
+                                            <div class="invalid-feedback">
+                                                Customer name is required
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="shortName">Short Name</label>
+                                            <input type="text" class="form-control" id="shortName" name="short_name"
+                                                value="<%= customer.short_name || '' %>">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="tag">Tag</label>
+                                            <input type="text" class="form-control" id="tag" name="tag"
+                                                value="<%= customer.tag || '' %>">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="accountId">Account ID</label>
+                                            <input type="text" class="form-control" id="accountId" name="account_id"
+                                                value="<%= customer.account_id || '' %>">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="taxCode">Tax Code</label>
+                                            <input type="text" class="form-control" id="taxCode" name="tax_code"
+                                                value="<%= customer.tax_code || '' %>">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="exemptionCertificate">Exemption Certificate No.</label>
+                                            <input type="text" class="form-control" id="exemptionCertificate" name="exemption_certificate"
+                                                value="<%= customer.exemption_certificate || '' %>">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="paymentTerm">Payment Term</label>
+                                            <input type="text" class="form-control" id="paymentTerm" name="payment_term"
+                                                value="<%= customer.payment_term || '' %>">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="customerType">Customer Type</label>
+                                            <select class="form-control" id="customerType" name="customer_type_id">
+                                                <option value="">-- Select Customer Type --</option>
+                                                <% if (customerTypes && customerTypes.length > 0) { %>
+                                                    <% customerTypes.forEach(function(type) { %>
+                                                        <option value="<%= type.customer_type_id %>" 
+                                                            <%= customer.customer_type_id == type.customer_type_id ? 'selected' : '' %>>
+                                                            <%= type.customer_type_name %>
+                                                        </option>
+                                                    <% }); %>
+                                                <% } %>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="status">Status</label>
+                                            <select class="form-control" id="status" name="status">
+                                                <option value="1" <%= customer.status == 1 || customer.status === undefined ? 'selected' : '' %>>Active</option>
+                                                <option value="0" <%= customer.status == 0 ? 'selected' : '' %>>Inactive</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="email">Email Address</label>
+                                            <input type="email" class="form-control" id="email" name="email" 
+                                                value="<%= customer.email || '' %>">
+                                            <div class="invalid-feedback">
+                                                Please enter a valid email address
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="phone">Phone Number</label>
+                                            <input type="text" class="form-control" id="phone" name="phone" 
+                                                value="<%= customer.phone || '' %>">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="address">Address</label>
+                                    <textarea class="form-control" id="address" name="address" rows="3"><%= customer.address || '' %></textarea>
+                                </div>
+                                
+                                <% if (isEdit) { %>
+                                    <div class="metadata-section">
+                                        <div class="metadata-title">Record Information</div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="metadata-item">
+                                                    <span class="metadata-label">Created By:</span>
+                                                    <span><%= customer.created_by_name || 'N/A' %></span>
+                                                </div>
+                                                <div class="metadata-item">
+                                                    <span class="metadata-label">Created Date:</span>
+                                                    <span><%= customer.created_date || 'N/A' %></span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="metadata-item">
+                                                    <span class="metadata-label">Last Modified By:</span>
+                                                    <span><%= customer.modified_by_name || 'N/A' %></span>
+                                                </div>
+                                                <div class="metadata-item">
+                                                    <span class="metadata-label">Last Modified Date:</span>
+                                                    <span><%= customer.modified_date || 'N/A' %></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% } %>
+                                
+                                <div class="form-group mt-4 text-right">
+                                    <button type="button" class="btn btn-secondary mr-2" onclick="window.location.href='/page/sales/customer/general'">
+                                        Cancel
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save mr-1"></i> Save Customer
+                                    </button>
+                                </div>
+                            </form>
+                        <% } %>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"></script>
+
+    <% if (!isViewOnly) { %>
+    <script>
+        $(document).ready(function() {
+            const isEditValue = '<%= isEdit %>' === 'true';
+            
+            // Validate customer code if not in edit mode
+            if (!isEditValue) {
+                $('#customerCode').on('blur', function() {
+                    const code = $(this).val().trim();
+                    if (code) {
+                        checkCustomerCode(code);
+                    }
+                });
+            }
+            
+            // Form submission
+            $('#customerForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                if (!validateForm()) {
+                    return;
+                }
+                
+                const formData = {
+                    customer_code: $('#customerCode').val().trim(),
+                    customer_name: $('#customerName').val().trim(),
+                    short_name: $('#shortName').val().trim() || null,
+                    tag: $('#tag').val().trim() || null,
+                    account_id: $('#accountId').val().trim() || null,
+                    tax_code: $('#taxCode').val().trim() || null,
+                    exemption_certificate: $('#exemptionCertificate').val().trim() || null,
+                    payment_term: $('#paymentTerm').val().trim() || null,
+                    customer_type_id: $('#customerType').val() || null,
+                    email: $('#email').val().trim() || null,
+                    phone: $('#phone').val().trim() || null,
+                    address: $('#address').val().trim() || null,
+                    status: $('#status').val(),
+                    user_id: '<%= typeof user !== "undefined" && user && user.user_id ? user.user_id : 1 %>'
+                };
+                
+                if (isEditValue) {
+                    updateCustomer(formData);
+                } else {
+                    createCustomer(formData);
+                }
+            });
+            
+            // Function to validate the form
+            function validateForm() {
+                let isValid = true;
+                
+                // Reset validation state
+                $('.is-invalid').removeClass('is-invalid');
+                
+                // Validate customer code
+                if ($('#customerCode').val().trim() === '') {
+                    $('#customerCode').addClass('is-invalid');
+                    isValid = false;
+                }
+                
+                // Validate customer name
+                if ($('#customerName').val().trim() === '') {
+                    $('#customerName').addClass('is-invalid');
+                    isValid = false;
+                }
+                
+                // Validate email format if provided
+                const email = $('#email').val().trim();
+                if (email && !isValidEmail(email)) {
+                    $('#email').addClass('is-invalid');
+                    isValid = false;
+                }
+                
+                return isValid;
+            }
+            
+            // Function to validate email format
+            function isValidEmail(email) {
+                const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return regex.test(email);
+            }
+            
+            // Function to check if customer code exists
+            function checkCustomerCode(code) {
+                $.ajax({
+                    url: `/api/sales/customer/general/check/${code}`,
+                    type: 'GET',
+                    success: function(response) {
+                        if (response.success && response.exists) {
+                            $('#customerCode').addClass('is-invalid');
+                            $('#customerCodeFeedback').text('This customer code is already in use');
+                        } else {
+                            $('#customerCode').removeClass('is-invalid');
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('Error checking customer code:', xhr);
+                    }
+                });
+            }
+            
+            // Function to create a new customer
+            function createCustomer(customerData) {
+                $.ajax({
+                    url: '/api/sales/customer/general',
+                    type: 'POST',
+                    data: customerData,
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Customer created successfully');
+                            window.location.href = '/page/sales/customer/general';
+                        } else {
+                            alert('Failed to create customer: ' + response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('Error creating customer:', xhr);
+                        alert('An error occurred while creating the customer. Please try again.');
+                    }
+                });
+            }
+            
+            // Function to update an existing customer
+            function updateCustomer(customerData) {
+                const customerId = $('#customerId').val();
+                
+                $.ajax({
+                    url: `/api/sales/customer/general/${customerId}`,
+                    type: 'PUT',
+                    data: customerData,
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Customer updated successfully');
+                            window.location.href = '/page/sales/customer/general';
+                        } else {
+                            alert('Failed to update customer: ' + response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('Error updating customer:', xhr);
+                        alert('An error occurred while updating the customer. Please try again.');
+                    }
+                });
+            }
+        });
+    </script>
+    <% } %>
+</body>
+</html>

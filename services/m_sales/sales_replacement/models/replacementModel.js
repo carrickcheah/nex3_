@@ -32,12 +32,6 @@ class ReplacementModel {
         queryParams.push(parseInt(filters.monthsBack));
       }
       
-      // Add status filter if provided
-      if (filters.status) {
-        whereConditions.push('sr._Status_c = ?');
-        queryParams.push(filters.status);
-      }
-      
       // Add search filters
       if (filters.replacementNumber) {
         whereConditions.push('sr.DocRef_v LIKE ?');
@@ -54,15 +48,17 @@ class ReplacementModel {
         SELECT
           sr.TxnId_i as id,
           c.CustName_v as customer,
-          DATE_FORMAT(sr.TxnDate_dd, '%Y-%m-%d') as doc_date,
+          DATE_FORMAT(sr.TxnDate_dd, '%d-%m-%Y') as doc_date,
           sr.DocRef_v as reference_no,
-          sr.DocRemark_v as remarks,
+          sr.CustRef_v as customer_ref_no,
+          cb.CbaCity_v as branch_name,
           CONCAT(IFNULL(u.UserAbbrev_v, ''), ' ', IFNULL(u.UserName_v, '')) as issued_by,
-          sr._Status_c as status
-        FROM tbl_sales_txn sr
+          sr.DocRemark_v as remarks
+        FROM tbl_sclaim_txn sr
         LEFT JOIN tbl_customer c ON c.CustId_i = sr.CustId_i
+        LEFT JOIN tbl_cust_billaddr cb ON cb.CustId_i = sr.CustId_i
         LEFT JOIN tbl_user u ON u.UserID_i = sr.OwnerId_i
-        WHERE sr.txntype_id = 51 /* Sales Claim/Replacement */
+        WHERE 1=1 /* Default true condition */
       `;
       
       // Add WHERE clause if we have conditions
@@ -81,10 +77,11 @@ class ReplacementModel {
       // Get total count for pagination
       let countSql = `
         SELECT COUNT(*) as total 
-        FROM tbl_sales_txn sr
+        FROM tbl_sclaim_txn sr
         LEFT JOIN tbl_customer c ON c.CustId_i = sr.CustId_i
+        LEFT JOIN tbl_cust_billaddr cb ON cb.CustId_i = sr.CustId_i
         LEFT JOIN tbl_user u ON u.UserID_i = sr.OwnerId_i
-        WHERE sr.txntype_id = 51 /* Sales Claim/Replacement */
+        WHERE 1=1 /* Default true condition */
       `;
       
       // Add WHERE clause to count query if we have conditions
@@ -124,12 +121,14 @@ class ReplacementModel {
       const [rows] = await connection.execute(
         `SELECT 
           sr.TxnId_i as id,
-          sr.TxnDate_dd as replacement_date,
+          DATE_FORMAT(sr.TxnDate_dd, '%d-%m-%Y') as replacement_date,
           sr.DocRef_v as reference_no,
           sr.SiteId_i as site_id,
           sr.LocId_i as location_id,
           sr.CustId_i as customer_id,
           c.CustName_v as customer_name,
+          sr.CustRef_v as customer_ref_no,
+          cb.CbaCity_v as branch_name,
           sr.CbaId_i as billing_address_id,
           sr.CctId_i as contact_id,
           sr.DocCba_v as doc_cba,
@@ -145,12 +144,14 @@ class ReplacementModel {
           sr.Outstanding_d as outstanding,
           sr.DocRemark_v as remarks,
           sr.OwnerId_i as owner_id,
-          sr.UpdateKey_i as update_key,
-          sr._Status_c as status
-        FROM tbl_sales_txn sr
+          CONCAT(IFNULL(u.UserAbbrev_v, ''), ' ', IFNULL(u.UserName_v, '')) as issued_by,
+          sr.UpdateKey_i as update_key
+        FROM tbl_sclaim_txn sr
         LEFT JOIN tbl_customer c ON c.CustId_i = sr.CustId_i
+        LEFT JOIN tbl_cust_billaddr cb ON cb.CustId_i = sr.CustId_i
+        LEFT JOIN tbl_user u ON u.UserID_i = sr.OwnerId_i
         LEFT JOIN tbl_currency curr ON curr.CurrId_i = sr.CurrId_i
-        WHERE sr.TxnId_i = ? AND sr.txntype_id = 51`,
+        WHERE sr.TxnId_i = ?`,
         [id]
       );
       
@@ -199,12 +200,14 @@ class ReplacementModel {
       // Format the response
       const salesReplacement = {
         id: headerData.id,
-        replacementDate: headerData.replacement_date ? moment(headerData.replacement_date).format('YYYY-MM-DD') : '',
+        replacementDate: headerData.replacement_date,
         referenceNo: headerData.reference_no,
         siteId: headerData.site_id,
         locationId: headerData.location_id,
         customerId: headerData.customer_id,
         customerName: headerData.customer_name,
+        customerRefNo: headerData.customer_ref_no,
+        branchName: headerData.branch_name,
         billingAddressId: headerData.billing_address_id,
         contactId: headerData.contact_id,
         docCba: headerData.doc_cba,
@@ -220,9 +223,8 @@ class ReplacementModel {
         outstanding: parseFloat(headerData.outstanding || 0).toFixed(2),
         remarks: headerData.remarks,
         ownerId: headerData.owner_id,
+        issuedBy: headerData.issued_by,
         updateKey: headerData.update_key,
-        status: headerData.status,
-        statusText: this.getStatusText(headerData.status),
         items: itemRows.map(item => ({
           id: item.id,
           txnId: item.txn_id,
@@ -711,28 +713,6 @@ class ReplacementModel {
       throw error;
     } finally {
       connection.release();
-    }
-  }
-  
-  /**
-   * Get status text for status code
-   * @param {string} statusCode - Status code
-   * @returns {string} Status text
-   */
-  static getStatusText(statusCode) {
-    switch (statusCode) {
-      case 'A':
-        return 'Active';
-      case 'C':
-        return 'Completed';
-      case 'V':
-        return 'Void';
-      case 'D':
-        return 'Draft';
-      case 'P':
-        return 'Pending';
-      default:
-        return 'Unknown';
     }
   }
   

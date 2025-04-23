@@ -140,12 +140,8 @@
                                     </div>
                                     <div class="row mb-3">
                                         <div class="col-md-6">
-                                            <div class="detail-label">Status</div>
-                                            <div class="detail-value">
-                                                <span class="status-badge status-<%= replacement.statusText.toLowerCase() %>">
-                                                    <%= replacement.statusText %>
-                                                </span>
-                                            </div>
+                                            <div class="detail-label">Branch</div>
+                                            <div class="detail-value"><%= replacement.branchName || 'Main' %></div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="detail-label">Currency</div>
@@ -188,15 +184,15 @@
                                 <table class="table table-hover">
                                     <thead>
                                         <tr>
-                                            <th>#</th>
-                                            <th>Product Code</th>
-                                            <th>Description</th>
-                                            <th>Batch</th>
-                                            <th class="text-end">Quantity</th>
-                                            <th class="text-end">Unit Price</th>
-                                            <th class="text-end">Discount %</th>
-                                            <th class="text-end">Tax %</th>
-                                            <th class="text-end">Line Total</th>
+                                            <th>NO</th>
+                                            <th>TXN ID</th>
+                                            <th>CUSTOMER</th>
+                                            <th>DOC DATE</th>
+                                            <th>S.CLAIM NO</th>
+                                            <th>CUST REF NO</th>
+                                            <th>BRANCH</th>
+                                            <th>ISSUED BY</th>
+                                            <th>REMARKS</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -204,14 +200,14 @@
                                             <% replacement.items.forEach((item, index) => { %>
                                                 <tr>
                                                     <td><%= index + 1 %></td>
-                                                    <td><%= item.stkCode %></td>
-                                                    <td><%= item.productName %></td>
-                                                    <td><%= item.batch || 'N/A' %></td>
-                                                    <td class="text-end"><%= item.qty %> <%= item.uomCode %></td>
-                                                    <td class="text-end"><%= parseFloat(item.price).toFixed(2) %></td>
-                                                    <td class="text-end"><%= parseFloat(item.discount).toFixed(2) %></td>
-                                                    <td class="text-end"><%= parseFloat(item.taxRate).toFixed(2) %></td>
-                                                    <td class="text-end"><%= parseFloat(item.lineTotal).toFixed(2) %></td>
+                                                    <td><%= replacement.id || 'N/A' %></td>
+                                                    <td><%= replacement.customerName || 'N/A' %></td>
+                                                    <td><%= replacement.replacementDate || 'N/A' %></td>
+                                                    <td><%= replacement.referenceNo || 'N/A' %></td>
+                                                    <td><%= item.parentRef || 'N/A' %></td>
+                                                    <td><%= replacement.branchName || 'Main' %></td>
+                                                    <td><%= replacement.issuedBy || 'System' %></td>
+                                                    <td><%= item.docItm || 'N/A' %></td>
                                                 </tr>
                                             <% }); %>
                                         <% } else { %>

@@ -1,0 +1,332 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Node.js Patterns
+
+## Application Structure
+- Express.js as the web framework
+- MVC architecture (Models, Views, Controllers)
+- Modular organization by business domain
+- Separate route definitions for web pages and API endpoints
+
+```javascript
+// Main app structure - app.js
+const express = require('express');
+const app = express();
+const path = require('path');
+const moduleRouters = require('./services');
+
+// Middleware setup
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'services'));
+
+// Module routing
+app.use('/', moduleRouters);
+
+// Error handling
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
+});
+
+app.listen(3000, () => {
+  console.log('Server running on port 3000');
+});
+```
+
+## Views
+- EJS template engine
+- Partials for reusable components (header, navbar, footer)
+- Client-side JavaScript for dynamic UI
+
+```html
+<!-- EJS Template Pattern -->
+<!DOCTYPE html>
+<html>
+<head>
+  <%- include('../../shared/components/header.ejs') %>
+  <title><%= pageTitle %></title>
+</head>
+<body>
+  <%- include('../../shared/components/navbar.ejs') %>
+  <div class="container-fluid">
+    <div class="row">
+      <%- include('../../shared/components/sidebar.ejs') %>
+      <main class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+        <!-- Page content -->
+      </main>
+    </div>
+  </div>
+  <%- include('../../shared/components/footer.ejs') %>
+  <script>
+    // Page-specific JavaScript
+  </script>
+</body>
+</html>
+```
+
+## Routes
+- Modular routing with Express Router
+- Separate routes for web pages and API endpoints
+- Consistent URL patterns
+
+```javascript
+// Router pattern - services/m_sales/index.js
+const express = require('express');
+const router = express.Router();
+
+// Import submodule routers
+const invoicesRoutes = require('./sales_invoices/routes/invoicesRoutes');
+const quotationRoutes = require('./sales_quotation/routes/quotationRoutes');
+const returnRoutes = require('./sales_return/routes/returnRoutes');
+const replacementRoutes = require('./sales_replacement/routes/replacementRoutes');
+
+// Mount submodule routers
+router.use(invoicesRoutes);
+router.use(quotationRoutes);
+router.use(returnRoutes);
+router.use(replacementRoutes);
+
+// Module landing page
+router.get('/page/sales', (req, res) => {
+  res.render('m_sales/landing.ejs', { pageTitle: 'Sales Dashboard' });
+});
+
+// Redirects for legacy paths
+router.get('/page/sales/returns', (req, res) => {
+  res.redirect('/page/sales/sreturn_inquiry');
+});
+
+module.exports = router;
+```
+
+## Controllers
+- Separation of concerns (route handlers vs. business logic)
+- Async/await for database operations
+- Consistent error handling
+
+```javascript
+// Controller pattern
+const InvoiceModel = require('../models/invoiceModel');
+
+// Web controllers (render views)
+exports.renderInvoicesPage = async (req, res) => {
+  try {
+    res.render('m_sales/sales_invoices/invoices.ejs', {
+      pageTitle: 'Sales Invoices',
+      user: req.session.user
+    });
+  } catch (error) {
+    console.error('Error rendering invoices page:', error);
+    res.status(500).render('error.ejs', { error: 'Failed to load invoices page' });
+  }
+};
+
+// API controllers (return JSON)
+exports.getInvoices = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search = '' } = req.query;
+    const result = await InvoiceModel.getInvoices(page, limit, search);
+    
+    res.json({
+      success: true,
+      data: result.invoices,
+      pagination: {
+        total: result.total,
+        currentPage: page,
+        limit: limit
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching invoices:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch invoices',
+      error: error.message
+    });
+  }
+};
+```
+
+## Models
+- Raw SQL queries with prepared statements
+- Separation of database access from business logic
+- Consistent return formats for easier controller handling
+
+```javascript
+// Model pattern
+const db = require('../../../config/database');
+
+exports.getInvoices = async (page, limit, search) => {
+  try {
+    const offset = (page - 1) * limit;
+    
+    // Get total count
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM tbl_invoice_txn i
+      LEFT JOIN tbl_m_customer c ON i.customer_id = c.customer_id
+      WHERE i.status != 9
+      ${search ? 'AND (i.invoice_no LIKE ? OR c.customer_name LIKE ?)' : ''}
+    `;
+    
+    const countParams = search ? [`%${search}%`, `%${search}%`] : [];
+    const [countResult] = await db.query(countQuery, countParams);
+    
+    // Get paginated data
+    const query = `
+      SELECT i.invoice_id, i.invoice_no, i.invoice_date, 
+             c.customer_name, i.total_amount, i.status,
+             CONCAT(u.user_abbr, ' - ', u.user_name) as created_by
+      FROM tbl_invoice_txn i
+      LEFT JOIN tbl_m_customer c ON i.customer_id = c.customer_id
+      LEFT JOIN tbl_m_user u ON i.created_by = u.user_id
+      WHERE i.status != 9
+      ${search ? 'AND (i.invoice_no LIKE ? OR c.customer_name LIKE ?)' : ''}
+      ORDER BY i.invoice_date DESC
+      LIMIT ? OFFSET ?
+    `;
+    
+    const params = search 
+      ? [`%${search}%`, `%${search}%`, parseInt(limit), offset] 
+      : [parseInt(limit), offset];
+    
+    const [invoices] = await db.query(query, params);
+    
+    return {
+      invoices,
+      total: countResult[0].total
+    };
+  } catch (error) {
+    console.error('Error in getInvoices model:', error);
+    throw error;
+  }
+};
+```
+
+## API Responses
+- Consistent JSON structure for all API responses
+- Standard fields for success, data, message, and errors
+- HTTP status codes match response content
+
+```javascript
+// Success response pattern
+{
+  "success": true,
+  "data": [/* result data */],
+  "pagination": {
+    "total": 100,
+    "currentPage": 1,
+    "limit": 10
+  }
+}
+
+// Error response pattern
+{
+  "success": false,
+  "message": "Error description for the user",
+  "error": "Detailed error information (in development only)"
+}
+```
+
+## Client-Side JavaScript
+- AJAX requests for data fetching
+- Form handling with validation
+- DataTables for grid presentation
+- Success and error notifications
+
+```javascript
+// AJAX pattern for loading data
+function loadInvoices(page = 1, limit = 10, search = '') {
+  $.ajax({
+    url: '/api/sales/invoices',
+    type: 'GET',
+    data: { page, limit, search },
+    dataType: 'json',
+    success: function(response) {
+      if (response.success) {
+        displayInvoices(response.data);
+        setupPagination(response.pagination);
+      } else {
+        showErrorMessage(response.message || 'Failed to load invoices');
+      }
+    },
+    error: function(xhr, status, error) {
+      console.error('Error loading invoices:', error);
+      showErrorMessage('Failed to load invoices. Please try again later.');
+    }
+  });
+}
+
+// Form submission pattern
+$('#invoiceForm').on('submit', function(e) {
+  e.preventDefault();
+  
+  const formData = $(this).serialize();
+  
+  $.ajax({
+    url: '/api/sales/invoices',
+    type: 'POST',
+    data: formData,
+    dataType: 'json',
+    success: function(response) {
+      if (response.success) {
+        showSuccessMessage('Invoice saved successfully');
+        window.location.href = '/page/sales/invoices';
+      } else {
+        showErrorMessage(response.message || 'Failed to save invoice');
+      }
+    },
+    error: function(xhr, status, error) {
+      console.error('Error saving invoice:', error);
+      showErrorMessage('Failed to save invoice. Please try again later.');
+    }
+  });
+});
+```
+
+## Error Handling
+- Server-side logging with stack traces
+- Client-friendly error messages
+- Graceful fallbacks for API failures
+
+```javascript
+// Server-side error handling
+try {
+  // Operation that might fail
+} catch (error) {
+  // Log detailed error for debugging
+  console.error('Operation failed:', error);
+  
+  // Return user-friendly message
+  return res.status(500).json({
+    success: false,
+    message: 'The operation could not be completed at this time'
+  });
+}
+
+// Client-side error handling
+function handleApiError(xhr, status, error) {
+  console.error('API Error:', error);
+  
+  // Try to parse response for error message
+  let errorMessage = 'An unexpected error occurred';
+  
+  try {
+    const response = JSON.parse(xhr.responseText);
+    if (response && response.message) {
+      errorMessage = response.message;
+    }
+  } catch (e) {
+    // Parsing failed, use default message
+  }
+  
+  // Display to user
+  showErrorMessage(errorMessage);
+  
+  // Optional: Retry logic or fallback behavior
+}
