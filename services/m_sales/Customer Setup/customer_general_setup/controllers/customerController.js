@@ -4,8 +4,8 @@ const customerModel = require('../models/customerModel');
 exports.renderCustomersPage = async (req, res) => {
   try {
     res.render('m_sales/Customer Setup/customer_general_setup/general_setup.ejs', {
-      pageTitle: 'Customer Management',
-      title: 'Customer Management',
+      pageTitle: 'Customer General Setup',
+      title: 'Customer General Setup',
       user: req.session?.user || {}
     });
   } catch (error) {

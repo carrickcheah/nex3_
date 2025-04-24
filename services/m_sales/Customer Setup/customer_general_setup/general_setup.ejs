@@ -1,5 +1,3 @@
-<%- include('../../../shared/components/header.ejs') %>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,38 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= pageTitle %> | NexERP</title>
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
     <style>
         body {
-            background-color: #f5f5f5;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
         }
         
-        .navbar {
-            background-color: #3c4b64;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        /* Table font size settings */
+        #customersTable {
+            font-size: 14px;
         }
         
-        .navbar-brand {
-            font-weight: 700;
-            color: #fff;
+        #customersTable thead th {
+            font-size: 15px;
+            font-weight: 600;
         }
         
         .card {
-            border: none;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
+            border: none;
         }
         
         .card-header {
-            background-color: #fff;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.125);
-            padding: 0.75rem 1.25rem;
+            background: linear-gradient(135deg, #0669f4, #5441e9);
+            color: white;
+            border-radius: 8px 8px 0 0 !important;
+            font-weight: 600;
+            padding: 15px 20px;
+            font-size: 14px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -47,17 +48,17 @@
         .card-header h5 {
             margin-bottom: 0;
             font-weight: 600;
-            color: #3c4b64;
+            color: white;
         }
         
         .btn-primary {
-            background-color: #4638c2;
-            border-color: #4638c2;
+            background-color: #0669f4;
+            border-color: #0669f4;
         }
         
         .btn-primary:hover {
-            background-color: #3c2eb0;
-            border-color: #3c2eb0;
+            background-color: #0558d6;
+            border-color: #0558d6;
         }
         
         .btn-success {
@@ -80,15 +81,28 @@
             border-color: #d03b3b;
         }
         
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+        
         .table th {
+            background-color: #f8f9fa;
             font-weight: 600;
+            white-space: nowrap;
             color: #3c4b64;
             border-top: none;
-            background-color: #f8f9fa;
+            text-align: center;
         }
         
         .table td {
             vertical-align: middle;
+            text-align: center;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: rgba(6, 105, 244, 0.05);
         }
         
         .badge {
@@ -104,18 +118,35 @@
             background-color: #e55353;
         }
         
-        .search-box {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
+        /* Column widths for better alignment */
+        #customersTable th:nth-child(1), #customersTable td:nth-child(1) { width: 5%; }  /* Seq. No */
+        #customersTable th:nth-child(2), #customersTable td:nth-child(2) { width: 15%; } /* Customer Name */
+        #customersTable th:nth-child(3), #customersTable td:nth-child(3) { width: 10%; } /* Short Name */
+        #customersTable th:nth-child(4), #customersTable td:nth-child(4) { width: 10%; } /* Tag */
+        #customersTable th:nth-child(5), #customersTable td:nth-child(5) { width: 10%; } /* Account ID */
+        #customersTable th:nth-child(6), #customersTable td:nth-child(6) { width: 10%; } /* Tax Code */
+        #customersTable th:nth-child(7), #customersTable td:nth-child(7) { width: 15%; } /* Exemption Certificate No. */
+        #customersTable th:nth-child(8), #customersTable td:nth-child(8) { width: 10%; } /* Payment Term */
+        #customersTable th:nth-child(9), #customersTable td:nth-child(9) { width: 5%; }  /* Status */
+        #customersTable th:nth-child(10), #customersTable td:nth-child(10) { width: 10%; } /* Actions */
+        
+        /* Search and filter controls */
+        .input-group .input-group-text {
+            background-color: #f5f8fa;
+            border-right: none;
         }
         
-        .search-box .form-control {
-            border-radius: 4px 0 0 4px;
+        .input-group .form-control {
+            border-left: none;
         }
         
-        .search-box .btn {
-            border-radius: 0 4px 4px 0;
+        .input-group .form-control:focus {
+            box-shadow: none;
+            border-color: #ced4da;
+        }
+        
+        .input-group .form-control:focus + .input-group-text {
+            border-color: #ced4da;
         }
         
         .pagination .page-link {
@@ -139,157 +170,106 @@
     </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/">NexERP</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav mr-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/page/dashboard">Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/page/sales">Sales</a>
-                    </li>
-                    <li class="nav-item active">
-                        <a class="nav-link" href="/page/sales/customer/general">Customers <span class="sr-only">(current)</span></a>
-                    </li>
-                </ul>
-                <ul class="navbar-nav">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-user-circle mr-1"></i> <%= user?.user_name || 'User' %>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
-                            <a class="dropdown-item" href="/page/profile">Profile</a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="/logout">Logout</a>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
 
-    <!-- Main Content -->
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="mb-0">Customer Setup</h6>
+<%- include('../../../shared/components/header') %>
+
+<div class="container-fluid mt-4 px-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="/page/sales/customer_setup" class="btn btn-outline-light btn-sm me-2">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                        </a>
+                        <span><i class="fas fa-users me-2"></i>Customer General Setup</span>
                     </div>
-                    <div class="list-group list-group-flush">
-                        <a href="/page/sales/customer/general" class="list-group-item list-group-item-action active">
-                            <i class="fas fa-users mr-2"></i> General Setup
-                        </a>
-                        <a href="/page/sales/customer/type" class="list-group-item list-group-item-action">
-                            <i class="fas fa-tags mr-2"></i> Customer Types
-                        </a>
-                        <a href="/page/sales/customer/group" class="list-group-item list-group-item-action">
-                            <i class="fas fa-layer-group mr-2"></i> Customer Groups
-                        </a>
+                    <a href="/page/sales/customer/general/add" class="btn btn-light btn-sm">
+                        <i class="fas fa-plus me-1"></i>Add Customer
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- Search and filter controls -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" id="searchInput" class="form-control" placeholder="Search for customer...">
+                                <button id="searchBtn" class="btn btn-primary">
+                                    <i class="fas fa-filter me-1"></i> Search
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <select id="limitSelect" class="form-select d-inline-block w-auto me-2">
+                                <option value="50" selected>50 per page</option>
+                                <option value="100">100 per page</option>
+                                <option value="250">250 per page</option>
+                                <option value="500">500 per page</option>
+                            </select>
+                            <button id="applyFilters" class="btn btn-primary">
+                                <i class="fas fa-filter me-1"></i> Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Customers Table -->
+                    <div class="table-responsive">
+                        <table id="customersTable" class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th class="text-center">Seq. No</th>
+                                    <th class="text-center">Customer Name</th>
+                                    <th class="text-center">Short Name</th>
+                                    <th class="text-center">Tag</th>
+                                    <th class="text-center">Account ID</th>
+                                    <th class="text-center">Tax Code</th>
+                                    <th class="text-center">Exemption Certificate No.</th>
+                                    <th class="text-center">Payment Term</th>
+                                    <th class="text-center">Status</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customersTableBody">
+                                <!-- Table content will be loaded via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div id="tableInfo" class="text-muted">
+                                Showing 0 to 0 of 0 entries
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <nav aria-label="Customer pagination" class="mt-2">
+                                <ul id="pagination" class="pagination justify-content-end">
+                                    <!-- Pagination will be populated by JavaScript -->
+                                </ul>
+                            </nav>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Main Content -->
-            <main class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>Customer Management</h5>
-                        <a href="/page/sales/customer/general/add" class="btn btn-primary">
-                            <i class="fas fa-plus mr-1"></i> Add Customer
-                        </a>
-                    </div>
-                    <div class="card-body">
-                        <!-- Search Box -->
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <div class="search-box">
-                                    <input type="text" id="searchInput" class="form-control" placeholder="Search customers...">
-                                    <button id="searchBtn" class="btn btn-primary">
-                                        <i class="fas fa-search"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="col-md-6 text-right">
-                                <div class="form-inline justify-content-end">
-                                    <label for="limitSelect" class="mr-2">Show</label>
-                                    <select id="limitSelect" class="form-control form-control-sm mr-2">
-                                        <option value="10">10</option>
-                                        <option value="25">25</option>
-                                        <option value="50">50</option>
-                                        <option value="100">100</option>
-                                    </select>
-                                    <label>entries</label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Customers Table -->
-                        <div class="table-responsive">
-                            <table class="table table-hover" id="customersTable">
-                                <thead>
-                                    <tr>
-                                        <th width="5%">NO</th>
-                                        <th width="15%">CUSTOMER NAME</th>
-                                        <th width="10%">SHORT NAME</th>
-                                        <th width="10%">TAG</th>
-                                        <th width="10%">ACCOUNT ID</th>
-                                        <th width="10%">TAX CODE</th>
-                                        <th width="15%">EXEMPTION CERTIFICATE NO.</th>
-                                        <th width="10%">PAYMENT TERM</th>
-                                        <th width="5%">STATUS</th>
-                                        <th width="10%">ACTIONS</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="customersTableBody">
-                                    <!-- Table content will be loaded via AJAX -->
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- Pagination -->
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div id="tableInfo" class="text-muted">
-                                    Showing 0 to 0 of 0 entries
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <nav aria-label="Page navigation">
-                                    <ul class="pagination justify-content-end" id="pagination">
-                                        <!-- Pagination will be generated via JavaScript -->
-                                    </ul>
-                                </nav>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </main>
         </div>
     </div>
+</div>
 
     <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteModalLabel"><i class="fas fa-exclamation-triangle me-2"></i>Confirm Delete</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    Are you sure you want to delete this customer? This action cannot be undone.
+                    <p>Are you sure you want to delete this customer? This action cannot be undone.</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
                 </div>
             </div>
@@ -298,15 +278,14 @@
 
     <!-- JavaScript Libraries -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 
     <script>
         $(document).ready(function() {
             let currentPage = 1;
-            let limit = 10;
+            let limit = 50;
             let search = '';
             let totalPages = 0;
             let deleteCustomerId = null;
@@ -340,7 +319,8 @@
             // Handle delete button click
             $(document).on('click', '.btn-delete', function() {
                 deleteCustomerId = $(this).data('id');
-                $('#deleteModal').modal('show');
+                const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+                deleteModal.show();
             });
 
             // Confirm delete button click
@@ -348,6 +328,13 @@
                 if (deleteCustomerId) {
                     deleteCustomer(deleteCustomerId);
                 }
+            });
+            
+            // Apply filters button click
+            $('#applyFilters').on('click', function() {
+                search = $('#searchInput').val();
+                currentPage = 1;
+                loadCustomers(currentPage, limit, search);
             });
 
             // Function to load customers
@@ -389,30 +376,32 @@
                 customers.forEach((customer, index) => {
                     const rowNum = (currentPage - 1) * limit + index + 1;
                     const statusBadge = customer.status === 1 
-                        ? '<span class="badge badge-success">Active</span>' 
-                        : '<span class="badge badge-danger">Inactive</span>';
+                        ? '<span class="badge bg-success">Active</span>' 
+                        : '<span class="badge bg-danger">Inactive</span>';
 
                     tableBody.append(`
                         <tr>
-                            <td>${rowNum}</td>
-                            <td>${customer.customer_name || ''}</td>
-                            <td>${customer.short_name || ''}</td>
-                            <td>${customer.tag || ''}</td>
-                            <td>${customer.account_id || ''}</td>
-                            <td>${customer.tax_code || ''}</td>
-                            <td>${customer.exemption_certificate || ''}</td>
-                            <td>${customer.payment_term || ''}</td>
-                            <td>${statusBadge}</td>
-                            <td class="action-buttons">
-                                <a href="/page/sales/customer/general/view/${customer.customer_id}" class="btn btn-sm btn-info">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="/page/sales/customer/general/edit/${customer.customer_id}" class="btn btn-sm btn-primary">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <button class="btn btn-sm btn-danger btn-delete" data-id="${customer.customer_id}">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                            <td class="text-center">${rowNum}</td>
+                            <td class="text-center">${customer.customer_name || ''}</td>
+                            <td class="text-center">${customer.short_name || ''}</td>
+                            <td class="text-center">${customer.tag || ''}</td>
+                            <td class="text-center">${customer.account_id || ''}</td>
+                            <td class="text-center">${customer.tax_code || ''}</td>
+                            <td class="text-center">${customer.exemption_certificate || ''}</td>
+                            <td class="text-center">${customer.payment_term || ''}</td>
+                            <td class="text-center">${statusBadge}</td>
+                            <td class="text-center">
+                                <div class="d-flex justify-content-center">
+                                    <a href="/page/sales/customer/general/view/${customer.customer_id}" class="btn btn-sm btn-outline-primary me-1" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="/page/sales/customer/general/edit/${customer.customer_id}" class="btn btn-sm btn-outline-secondary me-1" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-danger btn-delete" data-id="${customer.customer_id}" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     `);

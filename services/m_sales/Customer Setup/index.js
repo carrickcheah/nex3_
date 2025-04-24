@@ -3,7 +3,7 @@ const router = express.Router();
 
 // Import submodule routers (we'll implement these later as needed)
 // const generalSetupRoutes = require('./customer_general_setup/routes/generalSetupRoutes');
-// const billingAddressRoutes = require('./customer_billing_address/routes/billingAddressRoutes');
+const billingAddressRoutes = require('./customer_billing_address/routes/billingRoutes');
 // const contactSetupRoutes = require('./customer_contact_setup/routes/contactRoutes');
 // const currencySetupRoutes = require('./customer_currency_setup/routes/currencyRoutes');
 // const deliveryAddressRoutes = require('./customer_delivery_address/routes/deliveryAddressRoutes');
@@ -29,7 +29,7 @@ router.get('/page/sales/customer_general_setup', (req, res) => {
 
 // Customer Billing Address Setup route
 router.get('/page/sales/customer_billing_address', (req, res) => {
-  res.render('m_sales/Customer Setup/customer_billing_address/billing_address', { 
+  res.render('m_sales/Customer Setup/customer_billing_address/table_view_billing_address', { 
     pageTitle: 'Customer Billing Address Setup',
     title: 'Customer Billing Address Setup',
     user: req.session.user || {}
@@ -74,7 +74,7 @@ router.get('/page/sales/customer_price_list', (req, res) => {
 
 // Register submodule routes when they're implemented
 // router.use('/', generalSetupRoutes);
-// router.use('/', billingAddressRoutes);
+router.use('/', billingAddressRoutes);
 // router.use('/', contactSetupRoutes);
 // router.use('/', currencySetupRoutes);
 // router.use('/', deliveryAddressRoutes);

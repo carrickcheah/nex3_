@@ -10,10 +10,9 @@ exports.getCustomers = async (page, limit, search) => {
     // Get total count
     const countQuery = `
       SELECT COUNT(*) as total
-      FROM tbl_m_customer c
-      LEFT JOIN tbl_m_customer_type ct ON c.customer_type_id = ct.customer_type_id
-      WHERE c.status != 9
-      ${search ? 'AND (c.customer_code LIKE ? OR c.customer_name LIKE ?)' : ''}
+      FROM tbl_customer c
+      WHERE 1=1
+      ${search ? 'AND (c.CustName_v LIKE ? OR c.CustAbbrev_v LIKE ?)' : ''}
     `;
     
     const countParams = search ? [`%${search}%`, `%${search}%`] : [];
@@ -21,17 +20,22 @@ exports.getCustomers = async (page, limit, search) => {
     
     // Get paginated data
     const query = `
-      SELECT c.customer_id, c.customer_code, c.customer_name, c.short_name, c.tag,
-             c.account_id, c.tax_code, c.exemption_certificate, c.payment_term,
-             c.email, c.phone, c.address, c.status,
-             ct.customer_type_name,
-             IFNULL(CONCAT(u.user_abbr, ' - ', u.user_name), 'System') as created_by
-      FROM tbl_m_customer c
-      LEFT JOIN tbl_m_customer_type ct ON c.customer_type_id = ct.customer_type_id
-      LEFT JOIN tbl_m_user u ON c.created_by = u.user_id
-      WHERE c.status != 9
-      ${search ? 'AND (c.customer_code LIKE ? OR c.customer_name LIKE ?)' : ''}
-      ORDER BY c.customer_name
+      SELECT 
+          c.CustId_i as customer_id,
+          c.CustName_v as 'customer_name',
+          c.CustAbbrev_v as 'short_name',
+          c.CustTag_v as 'tag',
+          c.AcctId_v as 'account_id',
+          tc.TaxCode_v as 'tax_code',
+          c.ExemptNo_v as 'exemption_certificate',
+          p.PtermName_v as 'payment_term',
+          c.Status_i as 'status'
+      FROM tbl_customer c
+      LEFT JOIN tbl_taxcode tc ON tc.TaxcodeId_i = c.TaxcodeId_i
+      LEFT JOIN tbl_payterm p ON p.PtermId_i = c.PtermId_i
+      WHERE 1=1
+      ${search ? 'AND (c.CustName_v LIKE ? OR c.CustAbbrev_v LIKE ?)' : ''}
+      ORDER BY c.CustName_v
       LIMIT ? OFFSET ?
     `;
     
