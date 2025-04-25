@@ -6,8 +6,9 @@ const deliveryOrderRoutes = require('./delivery_order/routes/delivery_orderRoute
 const invoicesRoutes = require('./sales_invoices/routes/invoicesRoutes');
 const salesReturnRoutes = require('./sales_return/routes/returnRoutes');
 const replacementRoutes = require('./sales_replacement/routes/replacementRoutes');
-const customerSetupRoutes = require('./Customer Setup/index').customerSetupRoutes;
-const customerRoutes = require('./Customer Setup/customer_general_setup/routes/customerRoutes');
+const customerSetupRoutes = require('./customer_setup');
+const customerRoutes = require('./customer_setup/customer_general_setup/routes/customerRoutes');
+const contactRoutes = require('./customer_setup/customer_contact_setup/routes/contactRoutes');
 
 // Sales landing page route
 router.get('/page/sales', (req, res) => {
@@ -52,10 +53,11 @@ router.use('/', salesReturnRoutes);
 router.use('/', replacementRoutes);
 
 // Register customer setup routes
-router.use('/', customerSetupRoutes);
+router.use('/page/sales/customer_setup', customerSetupRoutes);
 
 // Mount customer routes
 router.use('/', customerRoutes);
+router.use('/page/sales/customer_contact_setup', contactRoutes);
 
 module.exports = {
   salesRoutes: router

@@ -3,7 +3,7 @@ const customerModel = require('../models/customerModel');
 // Web Controllers - Render Views
 exports.renderCustomersPage = async (req, res) => {
   try {
-    res.render('m_sales/Customer Setup/customer_general_setup/general_setup.ejs', {
+    res.render('m_sales/customer_setup/customer_general_setup/general_setup.ejs', {
       pageTitle: 'Customer General Setup',
       title: 'Customer General Setup',
       user: req.session?.user || {}
@@ -19,7 +19,7 @@ exports.renderAddCustomerPage = async (req, res) => {
     // Get customer types for the dropdown
     const customerTypes = await customerModel.getCustomerTypes();
     
-    res.render('m_sales/Customer Setup/customer_general_setup/add_general_setup.ejs', {
+    res.render('m_sales/customer_setup/customer_general_setup/add_general_setup.ejs', {
       pageTitle: 'Add Customer',
       title: 'Add Customer',
       user: req.session?.user || {},
@@ -46,7 +46,7 @@ exports.renderEditCustomerPage = async (req, res) => {
     // Get customer types for the dropdown
     const customerTypes = await customerModel.getCustomerTypes();
     
-    res.render('m_sales/Customer Setup/customer_general_setup/add_general_setup.ejs', {
+    res.render('m_sales/customer_setup/customer_general_setup/add_general_setup.ejs', {
       pageTitle: 'Edit Customer',
       title: 'Edit Customer',
       user: req.session?.user || {},
@@ -74,7 +74,7 @@ exports.renderViewCustomerPage = async (req, res) => {
     const customerTypes = await customerModel.getCustomerTypes();
     
     // Redirect to edit page with a view-only flag
-    res.render('m_sales/Customer Setup/customer_general_setup/add_general_setup.ejs', {
+    res.render('m_sales/customer_setup/customer_general_setup/add_general_setup.ejs', {
       pageTitle: 'View Customer',
       title: 'View Customer',
       user: req.session?.user || {},
@@ -269,4 +269,4 @@ exports.checkCustomerCode = async (req, res) => {
       error: error.message
     });
   }
-}; 
+};

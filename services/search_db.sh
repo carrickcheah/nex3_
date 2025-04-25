@@ -4,7 +4,7 @@ DB_HOST=localhost
 DB_USER=myuser
 DB_PASSWORD=mypassword
 DB_NAME=nex_valiant
-SEARCH_TERM='30 days'
+SEARCH_TERM='FINANCE CONTROLLER'
 
 # Get all tables
 tables=$(mysql -u$DB_USER -p$DB_PASSWORD -h$DB_HOST -e "SHOW TABLES;" $DB_NAME | grep -v "Tables_in")

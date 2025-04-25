@@ -5,7 +5,7 @@ const billingModel = require('../models/billingModel');
  */
 exports.renderTableView = async (req, res) => {
     try {
-        res.render('m_sales/Customer Setup/customer_billing_address/table_view_billing_address', {
+        res.render('m_sales/customer_setup/customer_billing_address/table_view_billing_address', {
             pageTitle: 'Customer Billing Address'
         });
     } catch (error) {
@@ -22,7 +22,7 @@ exports.renderAddForm = async (req, res) => {
         // Get countries for dropdown
         const countries = await billingModel.getCountries();
         
-        res.render('m_sales/Customer Setup/customer_billing_address/add_billing_address', {
+        res.render('m_sales/customer_setup/customer_billing_address/add_billing_address', {
             pageTitle: 'Add Billing Address',
             countries: countries
         });
@@ -49,7 +49,7 @@ exports.renderEditForm = async (req, res) => {
         // Get countries for dropdown
         const countries = await billingModel.getCountries();
         
-        res.render('m_sales/Customer Setup/customer_billing_address/edit_billing_address', {
+        res.render('m_sales/customer_setup/customer_billing_address/edit_billing_address', {
             pageTitle: 'Edit Billing Address',
             address: address,
             countries: countries
@@ -74,7 +74,7 @@ exports.renderViewPage = async (req, res) => {
             return res.status(404).send('Billing address not found');
         }
         
-        res.render('m_sales/Customer Setup/customer_billing_address/view_billing_address', {
+        res.render('m_sales/customer_setup/customer_billing_address/view_billing_address', {
             pageTitle: 'Billing Address Details',
             address: address
         });
