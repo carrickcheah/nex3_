@@ -238,7 +238,7 @@ $(document).ready(function() {
     // Function to load customers
     function loadCustomers() {
         $.ajax({
-            url: '/api/sales/customers',
+            url: '/page/sales/customer_contact_setup/customers',
             type: 'GET',
             success: function(response) {
                 if (response.success) {
@@ -302,7 +302,7 @@ $(document).ready(function() {
         
         // Send API request to save contact
         $.ajax({
-            url: '/api/sales/contact',
+            url: '/page/sales/customer_contact_setup/contact',
             type: 'POST',
             contentType: 'application/json',
             data: JSON.stringify(formData),

@@ -9,6 +9,7 @@ const replacementRoutes = require('./sales_replacement/routes/replacementRoutes'
 const customerSetupRoutes = require('./customer_setup');
 const customerRoutes = require('./customer_setup/customer_general_setup/routes/customerRoutes');
 const contactRoutes = require('./customer_setup/customer_contact_setup/routes/contactRoutes');
+const billingRoutes = require('./customer_setup/customer_billing_address/routes/billingRoutes');
 
 // Sales landing page route
 router.get('/page/sales', (req, res) => {
@@ -55,9 +56,21 @@ router.use('/', replacementRoutes);
 // Register customer setup routes
 router.use('/page/sales/customer_setup', customerSetupRoutes);
 
+// Mount billing address API routes
+router.use('/', billingRoutes);
+
 // Mount customer routes
 router.use('/', customerRoutes);
 router.use('/page/sales/customer_contact_setup', contactRoutes);
+
+// Add routes for customer general setup and billing address
+router.get('/page/sales/customer_general_setup', (req, res) => {
+  res.redirect('/page/sales/customer/general');
+});
+
+router.get('/page/sales/customer_billing_address', (req, res) => {
+  res.redirect('/page/sales/billing-address');
+});
 
 module.exports = {
   salesRoutes: router

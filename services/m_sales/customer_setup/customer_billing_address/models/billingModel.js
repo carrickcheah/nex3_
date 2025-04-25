@@ -8,12 +8,12 @@ exports.getBillingAddresses = async (page, limit, search, sortField, sortOrder) 
     const offset = (page - 1) * limit;
     
     // Default sort field and order if not provided
-    sortField = sortField || 'customer';
+    sortField = sortField || 'seq_no';
     sortOrder = sortOrder || 'asc';
     
     // Map front-end sort fields to database columns
     const sortFieldMap = {
-      'seq_no': 'cb.CbaId_i',
+      'seq_no': 'c.CustId_i',
       'customer': 'c.CustName_v',
       'internal_id': 'c.IntId_v',
       'location_name': 'cb.CbaLocname_v',
@@ -25,8 +25,8 @@ exports.getBillingAddresses = async (page, limit, search, sortField, sortOrder) 
       'status': 'cb.Status_i'
     };
     
-    // Use mapped sort field or default to customer name
-    const dbSortField = sortFieldMap[sortField] || 'c.CustName_v';
+    // Use mapped sort field or default to customer ID
+    const dbSortField = sortFieldMap[sortField] || 'c.CustId_i';
     
     // Get total count
     const countQuery = `
@@ -42,11 +42,12 @@ exports.getBillingAddresses = async (page, limit, search, sortField, sortOrder) 
     const countParams = search ? [`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`] : [];
     const [countResult] = await db.query(countQuery, countParams);
     
-    // Get paginated data with sorting using the exact query format provided
+    // Get paginated data with sorting
     const query = `
       SELECT 
           cb.CbaId_i as billing_id,
           c.CustId_i as customer_id,
+          c.CustId_i as customer_seq_no,
           c.CustName_v as customer_name,
           c.IntId_v as internal_id,
           cb.CbaLocname_v as location_name,
@@ -89,27 +90,31 @@ exports.getBillingAddressById = async (billingId) => {
   try {
     const query = `
       SELECT 
-          b.billing_id,
-          b.customer_id,
-          c.customer_name,
-          b.internal_id,
-          b.location_name,
-          b.address_line1,
-          b.address_line2,
-          b.area_city,
-          b.state,
-          b.postcode,
-          b.country_id,
-          country.country_name,
-          b.phone,
-          b.email,
-          b.contact_person,
-          b.is_default,
-          b.status
-      FROM tbl_customer_billing_address b
-      LEFT JOIN tbl_customer c ON b.customer_id = c.customer_id
-      LEFT JOIN tbl_country country ON b.country_id = country.country_id
-      WHERE b.billing_id = ? AND b.status != 9
+          cb.CbaId_i as billing_id,
+          c.CustId_i as customer_id,
+          c.CustName_v as customer_name,
+          c.IntId_v as internal_id,
+          cb.CbaLocname_v as location_name,
+          cb.CbaAddr1_v as address_line1,
+          cb.CbaAddr2_v as address_line2,
+          cb.CbaCity_v as area_city,
+          st.StateName_v as state,
+          cb.CbaPostcode_v as postcode,
+          cb.CountryId_i as country_id,
+          tc.CountryName_v as country_name,
+          cb.CbaPhone_v as phone,
+          cb.CbaEmail_v as email,
+          cb.CbaContact_v as contact_person,
+          cb.Def_i as is_default,
+          cb.Status_i as status,
+          cb.Created_by as created_by,
+          cb.Created_dt as created_at,
+          cb.Modified_dt as updated_at
+      FROM tbl_cust_billaddr cb
+      LEFT JOIN tbl_customer c ON cb.CustId_i = c.CustId_i
+      LEFT JOIN tbl_country tc ON cb.CountryId_i = tc.CountryId_i
+      LEFT JOIN tbl_state st ON cb.CbastateId_i = st.StateId_i
+      WHERE cb.CbaId_i = ? AND cb.Status_i != 9
     `;
     
     const [results] = await db.query(query, [billingId]);
@@ -136,9 +141,9 @@ exports.createBillingAddress = async (addressData) => {
     // If this is set as default, unset any existing default for this customer
     if (addressData.is_default === 1) {
       const unsetQuery = `
-        UPDATE tbl_customer_billing_address
-        SET is_default = 0
-        WHERE customer_id = ? AND is_default = 1
+        UPDATE tbl_cust_billaddr
+        SET Def_i = 0
+        WHERE CustId_i = ? AND Def_i = 1
       `;
       
       await db.query(unsetQuery, [addressData.customer_id]);
@@ -146,10 +151,10 @@ exports.createBillingAddress = async (addressData) => {
     
     // Insert new billing address
     const query = `
-      INSERT INTO tbl_customer_billing_address (
-        customer_id, internal_id, location_name, address_line1, address_line2,
-        area_city, state, postcode, country_id, phone, email, contact_person,
-        is_default, status, created_by, created_at
+      INSERT INTO tbl_cust_billaddr (
+        CustId_i, IntId_v, CbaLocname_v, CbaAddr1_v, CbaAddr2_v,
+        CbaCity_v, CbastateId_i, CbaPostcode_v, CountryId_i, CbaPhone_v, CbaEmail_v, CbaContact_v,
+        Def_i, Status_i, Created_by, Created_dt
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
     `;
     
@@ -207,9 +212,9 @@ exports.updateBillingAddress = async (billingId, addressData) => {
     // If this is set as default, unset any existing default for this customer
     if (addressData.is_default === 1) {
       const unsetQuery = `
-        UPDATE tbl_customer_billing_address
-        SET is_default = 0
-        WHERE customer_id = ? AND is_default = 1 AND billing_id != ?
+        UPDATE tbl_cust_billaddr
+        SET Def_i = 0
+        WHERE CustId_i = ? AND Def_i = 1 AND CbaId_i != ?
       `;
       
       await db.query(unsetQuery, [addressData.customer_id, billingId]);
@@ -217,24 +222,24 @@ exports.updateBillingAddress = async (billingId, addressData) => {
     
     // Update the billing address
     const query = `
-      UPDATE tbl_customer_billing_address
-      SET customer_id = ?,
-          internal_id = ?,
-          location_name = ?,
-          address_line1 = ?,
-          address_line2 = ?,
-          area_city = ?,
-          state = ?,
-          postcode = ?,
-          country_id = ?,
-          phone = ?,
-          email = ?,
-          contact_person = ?,
-          is_default = ?,
-          status = ?,
-          updated_by = ?,
-          updated_at = NOW()
-      WHERE billing_id = ?
+      UPDATE tbl_cust_billaddr
+      SET CustId_i = ?,
+          IntId_v = ?,
+          CbaLocname_v = ?,
+          CbaAddr1_v = ?,
+          CbaAddr2_v = ?,
+          CbaCity_v = ?,
+          CbastateId_i = ?,
+          CbaPostcode_v = ?,
+          CountryId_i = ?,
+          CbaPhone_v = ?,
+          CbaEmail_v = ?,
+          CbaContact_v = ?,
+          Def_i = ?,
+          Status_i = ?,
+          Modified_by = ?,
+          Modified_dt = NOW()
+      WHERE CbaId_i = ?
     `;
     
     const params = [
@@ -280,10 +285,10 @@ exports.deleteBillingAddress = async (billingId) => {
   try {
     // Soft delete by setting status to 9
     const query = `
-      UPDATE tbl_customer_billing_address SET
-        status = 9,
-        updated_at = NOW()
-      WHERE billing_id = ?
+      UPDATE tbl_cust_billaddr SET
+        Status_i = 9,
+        Modified_dt = NOW()
+      WHERE CbaId_i = ?
     `;
     
     const [result] = await db.query(query, [billingId]);
@@ -301,10 +306,10 @@ exports.deleteBillingAddress = async (billingId) => {
 exports.getCountries = async () => {
   try {
     const query = `
-      SELECT country_id, country_name
+      SELECT CountryId_i as country_id, CountryName_v as country_name
       FROM tbl_country
-      WHERE status = 1
-      ORDER BY country_name ASC
+      WHERE Status_i = 1
+      ORDER BY CountryName_v ASC
     `;
     
     const [countries] = await db.query(query);
@@ -312,6 +317,27 @@ exports.getCountries = async () => {
     return countries;
   } catch (error) {
     console.error('Error in getCountries model:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get customers for dropdown
+ */
+exports.getCustomers = async () => {
+  try {
+    const query = `
+      SELECT CustId_i as customer_id, CustName_v as customer_name
+      FROM tbl_customer
+      WHERE Status_i = 1
+      ORDER BY CustName_v ASC
+    `;
+    
+    const [customers] = await db.query(query);
+    
+    return customers;
+  } catch (error) {
+    console.error('Error in getCustomers model:', error);
     throw error;
   }
 };

@@ -20,20 +20,21 @@ class ContactModel {
       const searchTerms = [];
       const queryParams = [];
       
-      // Base query - using the provided SQL structure with corrected JOIN and aliases
+      // Base query - using the exact provided SQL structure
       let sql = `
-          SELECT
-              c.CustName_v as "customer",
-              c.IntId_v as "internal id",
-              cc.CctContact_v as "contact person",
-              cc.CctDesignation_v as "designation",
-              cc.CctTel1_v as "tel no 1",
-              cc.CctTel2_v as "tel no 2",
-              cc.CctEmail_v "email address",
-              cc.__Def_i "default",
-              cc.Status_i as "status"
+        SELECT
+            c.CustName_v as "customer",
+            c.IntId_v as "internal id",
+            cc.CctContact_v as "contact person",
+            cc.CctDesignation_v as "designation",
+            cc.CctTel1_v as "tel no 1",
+            cc.CctTel2_v as "tel no 2",
+            cc.CctEmail_v as "email address",
+            cc.__Def_i as "default",
+            cc.Status_i as "status"
         FROM tbl_customer c
-        LEFT JOIN tbl_cust_contact cc ON c.CustId_i = cc.CustId_i 
+        LEFT JOIN tbl_cct_cust cct ON c.CustId_i = cct.CustId_i
+        LEFT JOIN tbl_cust_contact cc ON cct.CctId_i = cc.CctId_i
       `;
       
       // Add search filters
@@ -65,20 +66,43 @@ class ContactModel {
         sql += ' WHERE ' + searchTerms.join(' AND ');
       }
       
-      // Add ORDER BY - Adjust column names if needed based on the new query structure
-      // Assuming sorting by customer name and contact person name is still desired
-      sql += ' ORDER BY c.CustName_v, cc.CctContact_v'; 
+      // Add ORDER BY based on sort parameters
+      const sortField = filters.sort || 'customer';
+      const sortOrder = filters.order || 'asc';
+      
+      // Map frontend sort fields to database columns
+      const sortMapping = {
+        'seq_no': 'c.CustId_i',
+        'customer': 'c.CustName_v',
+        'internal_id': 'c.IntId_v',
+        'contact_person': 'cc.CctContact_v',
+        'designation': 'cc.CctDesignation_v',
+        'tel_no_1': 'cc.CctTel1_v',
+        'tel_no_2': 'cc.CctTel2_v',
+        'email_address': 'cc.CctEmail_v',
+        'default': 'cc.Status_i',
+        'status': 'c.Status_i'
+      };
+      
+      // Use the mapped column or fallback to customer name if mapping not found
+      const orderByColumn = sortMapping[sortField] || 'c.CustName_v';
+      sql += ` ORDER BY ${orderByColumn} ${sortOrder.toUpperCase()}`; 
+      
+      // Add secondary sort by customer name if not already sorting by it
+      if (orderByColumn !== 'c.CustName_v') {
+        sql += ', c.CustName_v ASC';
+      }
       
       // Add pagination limit
       sql += ` LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`;
 
       const [rows] = await connection.execute(sql, queryParams);
       
-      // Get total count for pagination - update JOIN condition here too
+      // Get total count for pagination
       let countSql = `
         SELECT COUNT(*) as total 
         FROM tbl_customer c
-        LEFT JOIN tbl_cust_contact cc ON c.CustId_i = cc.CustId_i -- Corrected JOIN condition
+        LEFT JOIN tbl_cust_contact cc ON c.CustId_i = cc.CctId_i
       `;
       
       if (searchTerms.length > 0) {

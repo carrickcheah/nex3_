@@ -1,1 +1,358 @@
-<%- include('../../../shared/components/header.ejs') %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Billing Address | NexERP</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+        }
+        
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border: none;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #0669f4, #5441e9);
+            color: white;
+            border-radius: 8px 8px 0 0 !important;
+            font-weight: 600;
+            padding: 15px 20px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-header h5 {
+            margin-bottom: 0;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .btn-primary {
+            background-color: #0669f4;
+            border-color: #0669f4;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0558d6;
+            border-color: #0558d6;
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        .form-label.required::after {
+            content: '*';
+            color: #e55353;
+            margin-left: 4px;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #0669f4;
+            box-shadow: 0 0 0 0.2rem rgba(6, 105, 244, 0.25);
+        }
+    </style>
+</head>
+<body>
+
+<%- include('../../../shared/components/header') %>
+
+<div class="container-fluid mt-4 px-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="/page/sales/billing-address" class="btn btn-outline-light btn-sm me-2">
+                            <i class="fas fa-arrow-left me-1"></i>Back To Billing Addresses
+                        </a>
+                        <span class="ms-2 fs-5">Add New Billing Address</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="alertContainer"></div>
+                    
+                    <form id="billingAddressForm">
+                        <div class="row g-3">
+                            <!-- Customer Information -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="customer" class="form-label required">Customer</label>
+                                    <select id="customer" name="customer_id" class="form-select" required>
+                                        <option value="">Select Customer</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="internalId" class="form-label">Internal ID</label>
+                                    <input type="text" class="form-control" id="internalId" name="internal_id" placeholder="Internal ID (optional)">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="locationName" class="form-label required">Location Name</label>
+                                    <input type="text" class="form-control" id="locationName" name="location_name" placeholder="Enter Location Name" required>
+                                </div>
+                            </div>
+                            
+                            <!-- Address Information -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="addressLine1" class="form-label required">Address Line 1</label>
+                                    <input type="text" class="form-control" id="addressLine1" name="address_line1" placeholder="Enter Address Line 1" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="addressLine2" class="form-label">Address Line 2</label>
+                                    <input type="text" class="form-control" id="addressLine2" name="address_line2" placeholder="Enter Address Line 2 (optional)">
+                                </div>
+                            </div>
+                            
+                            <!-- City, State, Postcode -->
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="areaCity" class="form-label required">City</label>
+                                    <input type="text" class="form-control" id="areaCity" name="area_city" placeholder="Enter City" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="state" class="form-label">State/Province</label>
+                                    <input type="text" class="form-control" id="state" name="state" placeholder="Enter State/Province">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="postcode" class="form-label">Postcode</label>
+                                    <input type="text" class="form-control" id="postcode" name="postcode" placeholder="Enter Postcode">
+                                </div>
+                            </div>
+                            
+                            <!-- Country, Contact Info -->
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="country" class="form-label required">Country</label>
+                                    <select id="country" name="country_id" class="form-select" required>
+                                        <option value="">Select Country</option>
+                                        <% if (typeof countries !== 'undefined') { %>
+                                            <% countries.forEach(country => { %>
+                                                <option value="<%= country.country_id %>"><%= country.country_name %></option>
+                                            <% }); %>
+                                        <% } %>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="phone" class="form-label">Phone</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone" placeholder="Enter Phone Number">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email" placeholder="Enter Email Address">
+                                </div>
+                            </div>
+                            
+                            <!-- Contact Person, Default, Status -->
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="contactPerson" class="form-label">Contact Person</label>
+                                    <input type="text" class="form-control" id="contactPerson" name="contact_person" placeholder="Enter Contact Person">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label d-block">Default Address</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="isDefault" name="is_default" value="1">
+                                        <label class="form-check-label" for="isDefault">Set as default billing address</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Status</label>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="status" id="statusActive" value="1" checked>
+                                        <label class="form-check-label" for="statusActive">Active</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="status" id="statusInactive" value="0">
+                                        <label class="form-check-label" for="statusInactive">Inactive</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="button" class="btn btn-secondary me-2" onclick="window.location.href='/page/sales/billing-address'">
+                                Cancel
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Save Billing Address
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Initialize Select2 for dropdowns
+    $('#customer, #country').select2({
+        theme: 'bootstrap-5',
+        width: '100%'
+    });
+    
+    // Load customers for dropdown
+    $.ajax({
+        url: '/api/sales/customers',
+        type: 'GET',
+        success: function(response) {
+            if (response.success) {
+                const customerSelect = $('#customer');
+                
+                response.data.forEach(function(customer) {
+                    customerSelect.append(new Option(customer.customer_name, customer.customer_id));
+                });
+                
+                customerSelect.trigger('change');
+            } else {
+                showAlert('danger', 'Failed to load customers: ' + response.message);
+            }
+        },
+        error: function(xhr) {
+            console.error('Error loading customers:', xhr);
+            showAlert('danger', 'An error occurred while loading customers. Please try again.');
+        }
+    });
+    
+    // Form submission
+    $('#billingAddressForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Collect form data
+        const formData = {
+            customer_id: $('#customer').val(),
+            internal_id: $('#internalId').val(),
+            location_name: $('#locationName').val(),
+            address_line1: $('#addressLine1').val(),
+            address_line2: $('#addressLine2').val(),
+            area_city: $('#areaCity').val(),
+            state: $('#state').val(),
+            postcode: $('#postcode').val(),
+            country_id: $('#country').val(),
+            phone: $('#phone').val(),
+            email: $('#email').val(),
+            contact_person: $('#contactPerson').val(),
+            is_default: $('#isDefault').is(':checked') ? 1 : 0,
+            status: $('input[name="status"]:checked').val(),
+            user_id: '<%= typeof user !== "undefined" && user.id ? user.id : 1 %>'
+        };
+        
+        // Validate required fields
+        if (!formData.customer_id) {
+            showAlert('danger', 'Please select a customer.');
+            return;
+        }
+        
+        if (!formData.location_name) {
+            showAlert('danger', 'Please enter a location name.');
+            return;
+        }
+        
+        if (!formData.address_line1) {
+            showAlert('danger', 'Please enter address line 1.');
+            return;
+        }
+        
+        if (!formData.area_city) {
+            showAlert('danger', 'Please enter a city.');
+            return;
+        }
+        
+        if (!formData.country_id) {
+            showAlert('danger', 'Please select a country.');
+            return;
+        }
+        
+        // Submit form data
+        $.ajax({
+            url: '/api/sales/billing-address',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function(response) {
+                if (response.success) {
+                    showAlert('success', 'Billing address saved successfully!');
+                    
+                    // Redirect back to billing addresses list after a delay
+                    setTimeout(function() {
+                        window.location.href = '/page/sales/billing-address';
+                    }, 1500);
+                } else {
+                    showAlert('danger', 'Failed to save billing address: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                console.error('Error saving billing address:', xhr);
+                showAlert('danger', 'An error occurred while saving the billing address. Please try again.');
+            }
+        });
+    });
+    
+    // Helper function to show alerts
+    function showAlert(type, message) {
+        const alertContainer = $('#alertContainer');
+        
+        const alert = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+        
+        alertContainer.html(alert);
+        
+        // Scroll to alert
+        $('html, body').animate({
+            scrollTop: alertContainer.offset().top - 100
+        }, 200);
+    }
+});
+</script>
+
+</body>
+</html>

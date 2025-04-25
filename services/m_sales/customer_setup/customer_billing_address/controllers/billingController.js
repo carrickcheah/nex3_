@@ -6,7 +6,9 @@ const billingModel = require('../models/billingModel');
 exports.renderTableView = async (req, res) => {
     try {
         res.render('m_sales/customer_setup/customer_billing_address/table_view_billing_address', {
-            pageTitle: 'Customer Billing Address'
+            pageTitle: 'Customer Billing Address',
+            title: 'Customer Setup',
+            user: req.session.user || {}
         });
     } catch (error) {
         console.error('Error rendering billing address table view:', error);
@@ -24,7 +26,9 @@ exports.renderAddForm = async (req, res) => {
         
         res.render('m_sales/customer_setup/customer_billing_address/add_billing_address', {
             pageTitle: 'Add Billing Address',
-            countries: countries
+            title: 'Customer Setup',
+            countries: countries,
+            user: req.session.user || {}
         });
     } catch (error) {
         console.error('Error rendering add billing address form:', error);
@@ -51,8 +55,10 @@ exports.renderEditForm = async (req, res) => {
         
         res.render('m_sales/customer_setup/customer_billing_address/edit_billing_address', {
             pageTitle: 'Edit Billing Address',
+            title: 'Customer Setup',
             address: address,
-            countries: countries
+            countries: countries,
+            user: req.session.user || {}
         });
     } catch (error) {
         console.error('Error rendering edit billing address form:', error);
@@ -76,7 +82,9 @@ exports.renderViewPage = async (req, res) => {
         
         res.render('m_sales/customer_setup/customer_billing_address/view_billing_address', {
             pageTitle: 'Billing Address Details',
-            address: address
+            title: 'Customer Setup',
+            address: address,
+            user: req.session.user || {}
         });
     } catch (error) {
         console.error('Error rendering view billing address page:', error);
@@ -254,6 +262,26 @@ exports.deleteBillingAddress = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'An error occurred while deleting the billing address'
+        });
+    }
+};
+
+/**
+ * API endpoint to get customers for dropdown
+ */
+exports.getCustomers = async (req, res) => {
+    try {
+        const customers = await billingModel.getCustomers();
+        
+        res.json({
+            success: true,
+            data: customers
+        });
+    } catch (error) {
+        console.error('Error getting customers:', error);
+        res.status(500).json({
+            success: false,
+            message: 'An error occurred while fetching customers'
         });
     }
 };

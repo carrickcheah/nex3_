@@ -1,1 +1,165 @@
-<%- include('../../../shared/components/header.ejs') %>
+<!DOCTYPE html>
+<html>
+<head>
+  <%- include('../../../shared/components/header.ejs') %>
+  <title>View Billing Address</title>
+  <style>
+    .info-box {
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    .info-row {
+      margin-bottom: 10px;
+    }
+    .info-label {
+      font-weight: bold;
+      color: #495057;
+    }
+    .actions-bar {
+      margin-bottom: 20px;
+    }
+    .badge-active {
+      background-color: #28a745;
+    }
+    .badge-inactive {
+      background-color: #dc3545;
+    }
+    .badge-default {
+      background-color: #007bff;
+    }
+  </style>
+</head>
+<body>
+  <%- include('../../../shared/components/navbar.ejs') %>
+  <div class="container-fluid">
+    <div class="row">
+      <%- include('../../../shared/components/sidebar.ejs') %>
+      <main class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+          <h1 class="h2">View Billing Address</h1>
+        </div>
+
+        <div class="actions-bar">
+          <a href="/page/sales/billing-address" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Billing Addresses
+          </a>
+          <a href="/page/sales/billing-address/edit/<%= address.billing_id %>" class="btn btn-primary">
+            <i class="fas fa-edit"></i> Edit Address
+          </a>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-box">
+              <h4>Customer Information</h4>
+              <div class="info-row">
+                <span class="info-label">Customer:</span>
+                <span class="info-value"><%= address.customer_name %></span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Internal ID:</span>
+                <span class="info-value"><%= address.internal_id || 'N/A' %></span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Location Name:</span>
+                <span class="info-value"><%= address.location_name || 'N/A' %></span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Status:</span>
+                <span class="badge <%= address.status === 1 ? 'badge-active' : 'badge-inactive' %>">
+                  <%= address.status === 1 ? 'Active' : 'Inactive' %>
+                </span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Default Address:</span>
+                <% if(address.is_default === 1) { %>
+                  <span class="badge badge-default">Default</span>
+                <% } else { %>
+                  <span>No</span>
+                <% } %>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="info-box">
+              <h4>Address Details</h4>
+              <div class="info-row">
+                <span class="info-label">Address Line 1:</span>
+                <span class="info-value"><%= address.address_line1 %></span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Address Line 2:</span>
+                <span class="info-value"><%= address.address_line2 || 'N/A' %></span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">City:</span>
+                <span class="info-value"><%= address.area_city %></span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">State:</span>
+                <span class="info-value"><%= address.state || 'N/A' %></span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Postcode:</span>
+                <span class="info-value"><%= address.postcode || 'N/A' %></span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Country:</span>
+                <span class="info-value"><%= address.country_name || 'N/A' %></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-box">
+              <h4>Contact Information</h4>
+              <div class="info-row">
+                <span class="info-label">Phone:</span>
+                <span class="info-value"><%= address.phone || 'N/A' %></span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Email:</span>
+                <span class="info-value"><%= address.email || 'N/A' %></span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Contact Person:</span>
+                <span class="info-value"><%= address.contact_person || 'N/A' %></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="info-box">
+              <h4>System Information</h4>
+              <div class="info-row">
+                <span class="info-label">Created By:</span>
+                <span class="info-value"><%= address.created_by || 'System' %></span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Created Date:</span>
+                <span class="info-value"><%= address.created_at ? new Date(address.created_at).toLocaleString() : 'N/A' %></span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Last Updated:</span>
+                <span class="info-value"><%= address.updated_at ? new Date(address.updated_at).toLocaleString() : 'N/A' %></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <%- include('../../../shared/components/footer.ejs') %>
+  
+  <script>
+    $(document).ready(function() {
+      // Any additional JavaScript for the view page can be added here
+    });
+  </script>
+</body>
+</html>

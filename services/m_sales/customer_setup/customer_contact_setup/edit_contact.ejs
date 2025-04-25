@@ -250,7 +250,7 @@ $(document).ready(function() {
     function loadCustomers() {
         return new Promise((resolve) => {
             $.ajax({
-                url: '/api/sales/customers',
+                url: '/page/sales/customer_contact_setup/customers',
                 type: 'GET',
                 success: function(response) {
                     if (response.success) {
@@ -285,7 +285,7 @@ $(document).ready(function() {
     // Function to load contact data
     function loadContact(contactId) {
         $.ajax({
-            url: `/api/sales/contact/${contactId}`,
+            url: `/page/sales/customer_contact_setup/contact/${contactId}`,
             type: 'GET',
             success: function(response) {
                 if (response.success) {
@@ -361,7 +361,7 @@ $(document).ready(function() {
         
         // Send API request to update contact
         $.ajax({
-            url: `/api/sales/contact/${contactId}`,
+            url: `/page/sales/customer_contact_setup/contact/${contactId}`,
             type: 'PUT',
             contentType: 'application/json',
             data: JSON.stringify(formData),
