@@ -1,7 +1,7 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 # Sales Module
 
@@ -11,6 +11,25 @@ The Sales Module manages all customer-facing transactions including invoices, qu
 ## Project Structure
 - Main router: `services/m_sales/index.js`
 - Shared components: `services/shared/components/`
+
+### Edit or update code 
+
+- When processing, first check if files or folders exist. If they do, apply the code to existing files. If no files or folders exist, only allow creation of new files. Include all code and updates here, but exclude all authMiddleware.
+
+### Deisgn style
+
+- UI Design Rules
+Design the UI following these templates:
+
+Table view: /Users/carrickcheah/nex3/services/m_sales/customer_setup/customer_billing_address/table_view_billing_address.ejs
+Add form: /Users/carrickcheah/nex3/services/m_sales/customer_setup/customer_billing_address/add_billing_address.ejs
+Detail view: /Users/carrickcheah/nex3/services/m_sales/delivery_instruction/add_instruction.ejs
+
+Maintain consistent design style across all pages. Ensure all columns are aligned and centered. Include these pagination options:
+html<option value="50" selected>50 per page</option>
+<option value="100">100 per page</option>
+<option value="250">250 per page</option>
+<option value="500">500 per page</option>
 
 ### Invoices Submodule
 - Views:
