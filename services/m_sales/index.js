@@ -10,6 +10,7 @@ const customerSetupRoutes = require('./customer_setup');
 const customerRoutes = require('./customer_setup/customer_general_setup/routes/customerRoutes');
 const contactRoutes = require('./customer_setup/customer_contact_setup/routes/contactRoutes');
 const billingRoutes = require('./customer_setup/customer_billing_address/routes/billingRoutes');
+const currencyRoutes = require('./customer_setup/customer_currency_setup/routes/currencyRoutes');
 
 // Sales landing page route
 router.get('/page/sales', (req, res) => {
@@ -62,6 +63,9 @@ router.use('/', billingRoutes);
 // Mount customer routes
 router.use('/', customerRoutes);
 router.use('/page/sales/customer_contact_setup', contactRoutes);
+
+// Mount currency routes
+router.use('/', currencyRoutes);
 
 // Add routes for customer general setup and billing address
 router.get('/page/sales/customer_general_setup', (req, res) => {

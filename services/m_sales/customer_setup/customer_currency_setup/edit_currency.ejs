@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <%- include('../../../shared/components/header.ejs') %>
+    <title><%= pageTitle %></title>
+    <style>
+        .form-group label {
+            font-weight: 600;
+        }
+        .card {
+            border-radius: 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: 600;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        .required-field::after {
+            content: "*";
+            color: red;
+            margin-left: 4px;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../../../shared/components/navbar.ejs') %>
+    <div class="container-fluid">
+        <div class="row">
+            <%- include('../../../shared/components/sidebar.ejs') %>
+            <main class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Edit Customer Currency</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group mr-2">
+                            <a href="/page/sales/currency-setup" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to List
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <i class="fas fa-edit"></i> Edit Customer Currency
+                            </div>
+                            <div class="card-body">
+                                <form id="editCurrencyForm">
+                                    <input type="hidden" id="relationId" name="relationId" value="<%= currency.relation_id || '' %>">
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="customer" class="required-field">Customer</label>
+                                                <select class="form-control" id="customer" name="customer_id" required>
+                                                    <option value="">Select Customer</option>
+                                                    <% customers.forEach(function(customer) { %>
+                                                        <option value="<%= customer.customer_id %>" <%= currency.customer_id == customer.customer_id ? 'selected' : '' %>>
+                                                            <%= customer.customer_name %> (<%= customer.internal_id %>)
+                                                        </option>
+                                                    <% }); %>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="currency" class="required-field">Currency</label>
+                                                <select class="form-control" id="currency" name="currency_id" required>
+                                                    <option value="">Select Currency</option>
+                                                    <% currencies.forEach(function(curr) { %>
+                                                        <option value="<%= curr.currency_id %>" <%= currency.currency_id == curr.currency_id ? 'selected' : '' %>>
+                                                            <%= curr.currency_code %> - <%= curr.currency_name %>
+                                                        </option>
+                                                    <% }); %>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="is_default" name="is_default" value="1" <%= currency.is_default == 1 ? 'checked' : '' %>>
+                                                    <label class="form-check-label" for="is_default">
+                                                        Set as Default Currency
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="status">Status</label>
+                                                <select class="form-control" id="status" name="status">
+                                                    <option value="1" <%= currency.status == 1 ? 'selected' : '' %>>Active</option>
+                                                    <option value="0" <%= currency.status == 0 ? 'selected' : '' %>>Inactive</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mt-4">
+                                        <div class="col-12">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-save"></i> Save Changes
+                                            </button>
+                                            <a href="/page/sales/currency-setup" class="btn btn-secondary ml-2">
+                                                <i class="fas fa-times"></i> Cancel
+                                            </a>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <%- include('../../../shared/components/footer.ejs') %>
+    
+    <!-- Pass user data to script -->
+    <% 
+    let currentUserId = 1;
+    if (typeof user !== 'undefined' && user && user.user_id) {
+        currentUserId = user.user_id;
+    }
+    %>
+    
+    <script>
+        $(document).ready(function() {
+            // Get user ID 
+            const userId = <%= currentUserId %>;
+            
+            // Initialize select2 for better dropdown UI
+            $('#customer, #currency').select2({
+                placeholder: 'Select an option',
+                width: '100%'
+            });
+            
+            // Form submission
+            $('#editCurrencyForm').submit(function(e) {
+                e.preventDefault();
+                
+                const relationId = $('#relationId').val();
+                const formData = {
+                    customer_id: $('#customer').val(),
+                    currency_id: $('#currency').val(),
+                    is_default: $('#is_default').is(':checked') ? 1 : 0,
+                    status: $('#status').val(),
+                    user_id: userId
+                };
+                
+                // Show loading indicator
+                Swal.fire({
+                    title: 'Saving...',
+                    text: 'Please wait while we save your changes',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                // Send AJAX request to update
+                $.ajax({
+                    url: `/api/sales/currency-setup/${relationId}`,
+                    type: 'PUT',
+                    data: JSON.stringify(formData),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: 'Customer currency has been updated successfully',
+                                confirmButtonText: 'OK'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = '/page/sales/currency-setup';
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: response.message || 'Failed to update customer currency',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error updating customer currency:', error);
+                        
+                        let errorMessage = 'Failed to update customer currency';
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response && response.message) {
+                                errorMessage = response.message;
+                            }
+                        } catch (e) {
+                            // Parsing failed, use default message
+                        }
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: errorMessage,
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html> 
