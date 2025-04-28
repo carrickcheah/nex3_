@@ -19,22 +19,23 @@ exports.getDeliveryAddresses = async ({ page = 1, limit = 50, search = '' }) => 
     
     // Get paginated and filtered data
     const dataQuery = `
-      SELECT
-        c.CustId_i as 'customer id',
-        c.CustName_v as 'customer',
-        c.CustAbbrev_v as 'delivery to',
-        co.CountryName_v as 'country',
-        cb.CbastateId_i as 'state',
-        cb.CbaCity_v as 'area',
-        cb.CbaPostcode_v as 'postcode',
-        cb.Def_i as 'default',
-        cb.Status_i as 'status'
+      SELECT DISTINCT
+        c.CustId_i as "customer id",
+        c.CustName_v as "customer",
+        c.CustAbbrev_v as "delivery to",
+        co.CountryName_v as "country",
+        cb.CbastateId_i as "state",
+        cb.CbaCity_v as "area",
+        cb.CbaPostcode_v as "postcode",
+        cb.Def_i as "default",
+        cb.Status_i as "status"
       FROM tbl_customer c
       LEFT JOIN tbl_cust_billaddr cb ON c.CustId_i = cb.CustId_i
       LEFT JOIN tbl_country co ON cb.CountryId_i = co.CountryId_i
       LEFT JOIN tbl_state s ON cb.CountryId_i = s.CountryId_i
       WHERE cb.Status_i != 9
       ${search ? 'AND (c.CustName_v LIKE ? OR c.CustAbbrev_v LIKE ? OR co.CountryName_v LIKE ? OR cb.CbaCity_v LIKE ?)' : ''}
+      GROUP BY c.CustId_i, cb.CbaId_i
       ORDER BY c.CustId_i ASC
       LIMIT ? OFFSET ?
     `;
@@ -66,20 +67,21 @@ exports.getDeliveryAddressById = async (deliveryAddressId) => {
   try {
     const [rows] = await db.query(
       `SELECT
-        c.CustId_i as 'customer id',
-        c.CustName_v as 'customer',
-        c.CustAbbrev_v as 'delivery to',
-        co.CountryName_v as 'country',
-        cb.CbastateId_i as 'state',
-        cb.CbaCity_v as 'area',
-        cb.CbaPostcode_v as 'postcode',
-        cb.Def_i as 'default',
-        cb.Status_i as 'status'
+        c.CustId_i as "customer_id",
+        c.CustName_v as "customer_name",
+        c.CustAbbrev_v as "delivery_to",
+        co.CountryName_v as "country_name",
+        cb.CbastateId_i as "state_id",
+        cb.CbaCity_v as "area",
+        cb.CbaPostcode_v as "postcode",
+        cb.Def_i as "is_default",
+        cb.Status_i as "status"
       FROM tbl_customer c
       LEFT JOIN tbl_cust_billaddr cb ON c.CustId_i = cb.CustId_i
       LEFT JOIN tbl_country co ON cb.CountryId_i = co.CountryId_i
       LEFT JOIN tbl_state s ON cb.CountryId_i = s.CountryId_i
-      WHERE c.CustId_i = ? AND cb.Status_i != 9`,
+      WHERE c.CustId_i = ? AND cb.Status_i != 9
+      LIMIT 1`,
       [deliveryAddressId]
     );
     
@@ -221,7 +223,6 @@ exports.updateDeliveryAddress = async (deliveryAddressId, deliveryAddressData) =
     
     const [result] = await db.query(
       `UPDATE tbl_cust_billaddr SET
-        CustId_i = ?,
         CbaAddr1_v = ?,
         CbaAddr2_v = ?,
         CountryId_i = ?,
@@ -236,9 +237,8 @@ exports.updateDeliveryAddress = async (deliveryAddressId, deliveryAddressData) =
         Status_i = ?,
         ModifiedBy_i = ?,
         ModifiedDate_dt = NOW()
-      WHERE CustBillAddrId_i = ?`,
+      WHERE CustId_i = ?`,
       [
-        customer_id, 
         address_line1, 
         address_line2,
         country_id, 
@@ -273,7 +273,7 @@ exports.deleteDeliveryAddress = async (deliveryAddressId) => {
       `UPDATE tbl_cust_billaddr SET
         Status_i = 9,
         ModifiedDate_dt = NOW()
-      WHERE CustBillAddrId_i = ?`,
+      WHERE CustId_i = ?`,
       [deliveryAddressId]
     );
     

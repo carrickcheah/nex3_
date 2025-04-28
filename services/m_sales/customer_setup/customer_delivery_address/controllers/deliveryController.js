@@ -113,34 +113,25 @@ exports.renderViewDeliveryAddressPage = async (req, res) => {
  */
 exports.getDeliveryAddresses = async (req, res) => {
     try {
-        // Process DataTables parameters
+        // Get pagination and search parameters from request
         const { 
-            draw = 1, 
-            start = 0, 
-            length = 10, 
-            'search[value]': search = '',
-            'order[0][column]': orderColumn = 0,
-            'order[0][dir]': orderDir = 'asc'
+            page = 1, 
+            limit = 50,
+            search = ''
         } = req.query;
         
+        // Call model to get delivery addresses
         const result = await DeliveryModel.getDeliveryAddresses({
-            start: parseInt(start),
-            length: parseInt(length),
-            search,
-            orderColumn: parseInt(orderColumn),
-            orderDir
+            page: parseInt(page),
+            limit: parseInt(limit),
+            search
         });
         
-        // Format response for DataTables
+        // Return formatted response
         res.json({
             success: true,
-            draw: parseInt(draw),
-            recordsTotal: result.total,
-            recordsFiltered: result.filtered,
-            pagination: {
-                total: result.total
-            },
-            data: result.deliveryAddresses
+            data: result.data,
+            pagination: result.pagination
         });
     } catch (error) {
         console.error('Error fetching delivery addresses:', error);
