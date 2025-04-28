@@ -11,6 +11,7 @@ const customerRoutes = require('./customer_setup/customer_general_setup/routes/c
 const contactRoutes = require('./customer_setup/customer_contact_setup/routes/contactRoutes');
 const billingRoutes = require('./customer_setup/customer_billing_address/routes/billingRoutes');
 const currencyRoutes = require('./customer_setup/customer_currency_setup/routes/currencyRoutes');
+const deliveryAddressRoutes = require('./customer_setup/customer_delivery_address/routes/deliveryRoutes');
 
 // Sales landing page route
 router.get('/page/sales', (req, res) => {
@@ -67,6 +68,9 @@ router.use('/page/sales/customer_contact_setup', contactRoutes);
 // Mount currency routes
 router.use('/', currencyRoutes);
 
+// Mount delivery address routes
+router.use('/', deliveryAddressRoutes);
+
 // Add routes for customer general setup and billing address
 router.get('/page/sales/customer_general_setup', (req, res) => {
   res.redirect('/page/sales/customer/general');
@@ -74,6 +78,11 @@ router.get('/page/sales/customer_general_setup', (req, res) => {
 
 router.get('/page/sales/customer_billing_address', (req, res) => {
   res.redirect('/page/sales/billing-address');
+});
+
+// Add redirect for customer delivery address
+router.get('/page/sales/customer_delivery_address', (req, res) => {
+  res.redirect('/page/sales/delivery-address');
 });
 
 module.exports = {
