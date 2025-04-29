@@ -12,7 +12,7 @@ The Sales Module manages all customer-facing transactions including invoices, qu
 - Main router: `services/m_sales/index.js`
 - Shared components: `services/shared/components/`
 
-### Edit or update code 
+### Strictly not allow create new files or folder
 
 - When processing, first check if files or folders exist. If they do, apply the code to existing files. If no files or folders exist, only allow creation of new files. Include all code and updates here, but exclude all authMiddleware.
 

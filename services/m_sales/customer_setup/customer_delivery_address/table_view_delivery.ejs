@@ -149,9 +149,9 @@
                         </a>
                         <span class="ms-2 fs-5">Customer Delivery Addresses</span>
                     </div>
-                    <a href="/page/sales/delivery-address/add" class="btn btn-light btn-sm">
-                        <i class="fas fa-plus me-1"></i>Add New Delivery Address
-                    </a>
+                        <a href="/page/sales/delivery-address/add" class="btn btn-light btn-sm">
+                            <i class="fas fa-plus me-1"></i>Add New Delivery Address
+                        </a>
                 </div>
                 <div class="card-body">
                     <!-- Search and filter controls -->
@@ -170,11 +170,11 @@
                         </div>
                         <div class="col-md-4 text-end">
                             <select id="page-size" class="form-select d-inline-block w-auto me-2">
-                                <option value="50" selected>50 per page</option>
-                                <option value="100">100 per page</option>
-                                <option value="250">250 per page</option>
-                                <option value="500">500 per page</option>
-                            </select>
+                                    <option value="50" selected>50 per page</option>
+                                    <option value="100">100 per page</option>
+                                    <option value="250">250 per page</option>
+                                    <option value="500">500 per page</option>
+                                </select>
                             <button id="applyFilters" class="btn btn-primary">
                                 <i class="fas fa-filter me-1"></i> Apply Filters
                             </button>
@@ -244,7 +244,7 @@
 <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
 
 <script>
-    $(document).ready(function() {
+$(document).ready(function() {
         let currentPage = 1;
         let pageSize = 50;
         let totalPages = 0;
@@ -256,8 +256,8 @@
         $('#applyFilters').on('click', function() {
             currentPage = 1;
             loadDeliveryAddresses();
-        });
-        
+    });
+    
         // Handle Enter key in search fields
         $('#searchCustomer, #searchDeliverTo').on('keypress', function(e) {
             if (e.which === 13) {
@@ -271,8 +271,8 @@
             pageSize = $(this).val();
             currentPage = 1;
             loadDeliveryAddresses();
-        });
-        
+    });
+    
         // Function to load delivery addresses with pagination and filters
         function loadDeliveryAddresses() {
             const customerName = $('#searchCustomer').val();
@@ -286,20 +286,20 @@
             });
             
             $.ajax({
-                url: '/api/sales/delivery-address',
-                type: 'GET',
+            url: '/api/sales/delivery-address',
+            type: 'GET',
                 data: {
                     page: currentPage,
                     limit: pageSize,
                     search: customerName || deliverTo || ''
-                },
+            },
                 success: function(response) {
                     console.log('API Response:', response);
-                    
+                
                     if (response.success) {
                         renderDeliveryAddresses(response.data);
                         renderPagination(response.pagination);
-                    } else {
+                } else {
                         console.error('Error in API response:', response.message);
                         alert('Error loading delivery addresses: ' + response.message);
                     }
@@ -335,7 +335,7 @@
                 // Default column
                 row.append(`<td class="text-start">
                     ${address['default'] === 1 ? 
-                     '<span class="badge badge-status badge-default">Default</span>' : 
+                        '<span class="badge badge-status badge-default">Default</span>' : 
                      ''}
                 </td>`);
                 
@@ -352,28 +352,28 @@
                 
                 // Actions column
                 row.append(`<td class="text-start">
-                    <div class="action-buttons">
+                        <div class="action-buttons">
                         <a href="/page/sales/delivery-address/view/${address['customer id']}" class="btn btn-sm btn-outline-primary" title="View">
-                            <i class="fas fa-eye"></i>
-                        </a>
+                                <i class="fas fa-eye"></i>
+                            </a>
                         <a href="/page/sales/delivery-address/edit/${address['customer id']}" class="btn btn-sm btn-outline-secondary" title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </a>
+                                <i class="fas fa-edit"></i>
+                            </a>
                         <a href="javascript:void(0);" class="btn btn-sm btn-outline-danger delete-btn" data-id="${address['customer id']}" title="Delete">
-                            <i class="fas fa-trash"></i>
-                        </a>
-                    </div>
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
                 </td>`);
                 
                 tbody.append(row);
             });
-            
-            // Handle delete button click
+    
+    // Handle delete button click
             $('.delete-btn').on('click', function() {
-                const deliveryId = $(this).data('id');
-                $('#confirmDeleteBtn').data('id', deliveryId);
-                $('#deleteConfirmationModal').modal('show');
-            });
+        const deliveryId = $(this).data('id');
+        $('#confirmDeleteBtn').data('id', deliveryId);
+        $('#deleteConfirmationModal').modal('show');
+    });
         }
         
         // Function to render pagination
@@ -423,41 +423,41 @@
                 loadDeliveryAddresses();
             });
         }
+    
+    // Handle confirm delete button click
+    $('#confirmDeleteBtn').on('click', function() {
+        const deliveryId = $(this).data('id');
         
-        // Handle confirm delete button click
-        $('#confirmDeleteBtn').on('click', function() {
-            const deliveryId = $(this).data('id');
-            
-            $.ajax({
-                url: `/api/sales/delivery-address/${deliveryId}`,
-                type: 'DELETE',
-                success: function(response) {
-                    if (response.success) {
-                        $('#deleteConfirmationModal').modal('hide');
+        $.ajax({
+            url: `/api/sales/delivery-address/${deliveryId}`,
+            type: 'DELETE',
+            success: function(response) {
+                if (response.success) {
+                    $('#deleteConfirmationModal').modal('hide');
                         loadDeliveryAddresses();
-                        alert('Delivery address deleted successfully!');
-                    } else {
-                        alert('Failed to delete delivery address: ' + response.message);
-                    }
-                },
-                error: function(xhr) {
-                    console.error('Error deleting delivery address:', xhr);
-                    let errorMessage = 'An error occurred while deleting the delivery address.';
-                    
-                    try {
-                        const response = JSON.parse(xhr.responseText);
-                        if (response && response.message) {
-                            errorMessage = response.message;
-                        }
-                    } catch (e) {
-                        // Use default error message
-                    }
-                    
-                    alert(errorMessage);
+                    alert('Delivery address deleted successfully!');
+                } else {
+                    alert('Failed to delete delivery address: ' + response.message);
                 }
-            });
+            },
+            error: function(xhr) {
+                console.error('Error deleting delivery address:', xhr);
+                let errorMessage = 'An error occurred while deleting the delivery address.';
+                
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response && response.message) {
+                        errorMessage = response.message;
+                    }
+                } catch (e) {
+                    // Use default error message
+                }
+                
+                alert(errorMessage);
+            }
         });
     });
+});
 </script>
 </body>
 </html> 

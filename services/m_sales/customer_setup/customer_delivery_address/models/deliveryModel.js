@@ -49,7 +49,7 @@ exports.getDeliveryAddresses = async ({ page = 1, limit = 50, search = '' }) => 
     return {
       data: deliveryAddresses,
       pagination: {
-        total: countResult[0].total,
+      total: countResult[0].total,
         pages: Math.ceil(countResult[0].total / limit),
         page: page
       }
