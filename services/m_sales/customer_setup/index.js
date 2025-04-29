@@ -4,6 +4,7 @@ const router = express.Router();
 // Import submodule routers
 const billingAddressRoutes = require('./customer_billing_address/routes/billingRoutes');
 const deliveryAddressRoutes = require('./customer_delivery_address/routes/deliveryRoutes');
+const priceListRoutes = require('./customer_price_list/routes/price_list_Model');
 // Import currencyRoutes but we'll mount it directly in the main sales index.js
 // so we won't use it here to avoid path conflicts
 // const currencyRoutes = require('./customer_currency_setup/routes/currencyRoutes');
@@ -31,6 +32,9 @@ router.use('/', billingAddressRoutes);
 
 // Mount delivery address routes
 router.use('/', deliveryAddressRoutes);
+
+// Mount price list routes
+router.use('/', priceListRoutes);
 
 // We've removed mounting the currency routes here since they use
 // absolute paths and are now mounted directly in the main sales index.js

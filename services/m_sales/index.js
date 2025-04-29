@@ -12,6 +12,7 @@ const contactRoutes = require('./customer_setup/customer_contact_setup/routes/co
 const billingRoutes = require('./customer_setup/customer_billing_address/routes/billingRoutes');
 const currencyRoutes = require('./customer_setup/customer_currency_setup/routes/currencyRoutes');
 const deliveryAddressRoutes = require('./customer_setup/customer_delivery_address/routes/deliveryRoutes');
+const priceListRoutes = require('./customer_setup/customer_price_list/routes/price_list_Model');
 
 // Sales landing page route
 router.get('/page/sales', (req, res) => {
@@ -57,6 +58,9 @@ router.use('/', replacementRoutes);
 
 // Register customer setup routes
 router.use('/page/sales/customer_setup', customerSetupRoutes);
+
+// Mount price list routes
+router.use('/', priceListRoutes);
 
 // Mount billing address API routes
 router.use('/', billingRoutes);

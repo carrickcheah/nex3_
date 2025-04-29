@@ -4,7 +4,7 @@ DB_HOST=localhost
 DB_USER=myuser
 DB_PASSWORD=mypassword
 DB_NAME=nex_valiant
-SEARCH_TERM='CA21-004'  # Removed the tab character
+SEARCH_TERM='moq'  # Removed the tab character
 
 echo "Searching for '$SEARCH_TERM' in database $DB_NAME..."
 

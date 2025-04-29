@@ -128,16 +128,17 @@
         }
         
         /* Column widths for better alignment */
-        #priceListTable th:nth-child(1), #priceListTable td:nth-child(1) { width: 8%; }  /* Customer ID */
-        #priceListTable th:nth-child(2), #priceListTable td:nth-child(2) { width: 15%; } /* Customer */
+        #priceListTable th:nth-child(1), #priceListTable td:nth-child(1) { width: 5%; }  /* Customer ID */
+        #priceListTable th:nth-child(2), #priceListTable td:nth-child(2) { width: 31%; } /* Customer */
         #priceListTable th:nth-child(3), #priceListTable td:nth-child(3) { width: 10%; } /* Stock Code */
         #priceListTable th:nth-child(4), #priceListTable td:nth-child(4) { width: 10%; } /* Stock/Alias Code */
         #priceListTable th:nth-child(5), #priceListTable td:nth-child(5) { width: 15%; } /* Product Name */
-        #priceListTable th:nth-child(6), #priceListTable td:nth-child(6) { width: 8%; }  /* MOQ */
-        #priceListTable th:nth-child(7), #priceListTable td:nth-child(7) { width: 10%; } /* Unit Price */
-        #priceListTable th:nth-child(8), #priceListTable td:nth-child(8) { width: 10%; } /* Effective Date */
-        #priceListTable th:nth-child(9), #priceListTable td:nth-child(9) { width: 8%; }  /* Status */
-        #priceListTable th:nth-child(10), #priceListTable td:nth-child(10) { width: 6%; } /* Actions */
+        #priceListTable th:nth-child(6), #priceListTable td:nth-child(6) { width: 3%; }  /* MOQ */
+        #priceListTable th:nth-child(7), #priceListTable td:nth-child(7) { width: 4%; }  /* Currency */
+        #priceListTable th:nth-child(8), #priceListTable td:nth-child(8) { width: 4%; }  /* Unit Price */
+        #priceListTable th:nth-child(9), #priceListTable td:nth-child(9) { width: 6%; }  /* Effective Date */
+        #priceListTable th:nth-child(10), #priceListTable td:nth-child(10) { width: 4%; } /* Status */
+        #priceListTable th:nth-child(11), #priceListTable td:nth-child(11) { width: 8%; } /* Actions */
         
         /* Search and filter controls */
         .input-group .input-group-text {
@@ -168,6 +169,26 @@
         .pagination .page-item.active .page-link {
             background-color: #0669f4;
             border-color: #0669f4;
+        }
+        
+        /* Updated sort indicator styles */
+        .sortable {
+            cursor: pointer;
+        }
+        
+        .sortable i.fas.fa-sort {
+            margin-left: 5px;
+            color: #aaa;
+        }
+        
+        .sortable.sort-asc i.fas.fa-sort:before {
+            content: "\f0de"; /* fa-sort-up */
+            color: #0669f4;
+        }
+        
+        .sortable.sort-desc i.fas.fa-sort:before {
+            content: "\f0dd"; /* fa-sort-down */
+            color: #0669f4;
         }
     </style>
 </head>
@@ -223,12 +244,13 @@
                         <table id="priceListTable" class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th class="text-center sortable" data-sort="customer_id">CUSTOMER ID</th>
+                                    <th class="text-center sortable" data-sort="seq_no">CUSTOMER ID</th>
                                     <th class="text-center sortable" data-sort="customer">CUSTOMER</th>
                                     <th class="text-center sortable" data-sort="stock_code">STOCK CODE</th>
                                     <th class="text-center sortable" data-sort="alias_code">STOCK / ALIAS CODE</th>
                                     <th class="text-center sortable" data-sort="product_name">PRODUCT NAME</th>
                                     <th class="text-center sortable" data-sort="moq">MOQ</th>
+                                    <th class="text-center sortable" data-sort="currency">CURRENCY</th>
                                     <th class="text-center sortable" data-sort="unit_price">UNIT PRICE</th>
                                     <th class="text-center sortable" data-sort="effective_date">EFFECTIVE DATE</th>
                                     <th class="text-center sortable" data-sort="status">STATUS</th>
@@ -282,82 +304,131 @@
 <!-- JavaScript code -->
 <script>
 $(document).ready(function() {
+    // Initial state
     let currentPage = 1;
     let limit = 50;
     let search = '';
-    let sortField = 'customer_id';
-    let sortOrder = 'asc';
+    let sortField = 'seq_no'; // Default sort by Customer ID
+    let sortOrder = 'asc';    // Default ascending order
     let totalPages = 0;
     let deletePriceListId = null;
     
-    // Initial load
-    loadPriceList(currentPage, limit, search, sortField, sortOrder);
+    // Initialize page
+    initializePage();
     
-    // Set sort indicator on initial load
-    $(`.sortable[data-sort='${sortField}']`).addClass(`sort-${sortOrder}`);
+    function initializePage() {
+        // Bind all event handlers
+        bindEventHandlers();
+        
+        // Set initial sort indicator
+        updateSortIndicator(sortField, sortOrder);
+        
+        // Initial data load
+        loadPriceList(currentPage, limit, search, sortField, sortOrder);
+    }
     
-    // Event handlers for search
-    $('#searchInput').on('keyup', function(e) {
-        if (e.key === 'Enter') {
-            search = $(this).val().trim();
+    function bindEventHandlers() {
+        // Clear any existing handlers first to prevent duplicates
+        $('.sortable').off('click');
+        $('#searchInput').off('keyup');
+        $('#applyFilters').off('click');
+        $('#rowsPerPage').off('change');
+        $(document).off('click', '.btn-delete');
+        $('#confirmDelete').off('click');
+        
+        // Bind search input handler
+        $('#searchInput').on('keyup', function(e) {
+            if (e.key === 'Enter') {
+                search = $(this).val().trim();
+                currentPage = 1;
+                loadPriceList(currentPage, limit, search, sortField, sortOrder);
+            }
+        });
+        
+        // Bind filter button handler
+        $('#applyFilters').on('click', function() {
+            search = $('#searchInput').val().trim();
             currentPage = 1;
             loadPriceList(currentPage, limit, search, sortField, sortOrder);
-        }
-    });
-    
-    // Event handler for apply filters button
-    $('#applyFilters').on('click', function() {
-        search = $('#searchInput').val().trim();
-        currentPage = 1;
-        loadPriceList(currentPage, limit, search, sortField, sortOrder);
-    });
-    
-    // Event handler for rows per page selection
-    $('#rowsPerPage').on('change', function() {
-        limit = parseInt($(this).val());
-        currentPage = 1;
-        loadPriceList(currentPage, limit, search, sortField, sortOrder);
-    });
-    
-    // Event handler for sortable columns
-    $('.sortable').on('click', function() {
-        const newSortField = $(this).data('sort');
+        });
         
-        // If clicking the same column, toggle sort order
-        if (newSortField === sortField) {
+        // Bind rows per page handler
+        $('#rowsPerPage').on('change', function() {
+            limit = parseInt($(this).val());
+            currentPage = 1;
+            loadPriceList(currentPage, limit, search, sortField, sortOrder);
+        });
+        
+        // Bind sort column handlers
+        $('.sortable').on('click', function() {
+            // Get sort field from data attribute
+            sortField = $(this).attr('data-sort');
+            
+            // Toggle sort order
             sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-        } else {
-            sortField = newSortField;
-            sortOrder = 'asc';
-        }
+            
+            // Reset to first page when sorting
+            currentPage = 1;
+            
+            // Update UI
+            $('.sortable').removeClass('sort-asc sort-desc');
+            $(this).addClass('sort-' + sortOrder);
+            
+            // Reload data with new sort
+            console.log('Clicked to sort by:', sortField, sortOrder);
+            loadPriceList(currentPage, limit, search, sortField, sortOrder);
+        });
         
-        // Update sorting UI
+        // Bind delete button handler
+        $(document).on('click', '.btn-delete', function() {
+            deletePriceListId = $(this).data('id');
+            
+            // Show delete confirmation modal
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            deleteModal.show();
+        });
+        
+        // Bind confirm delete handler
+        $('#confirmDelete').on('click', function() {
+            if (deletePriceListId) {
+                deletePriceListItem(deletePriceListId);
+            }
+        });
+        
+        // Bind pagination click handlers
+        $(document).on('click', '.page-link', function(e) {
+            e.preventDefault();
+            const page = $(this).data('page');
+            
+            if (page < 1 || page > totalPages || page === currentPage) {
+                return;
+            }
+            
+            currentPage = page;
+            loadPriceList(currentPage, limit, search, sortField, sortOrder);
+        });
+    }
+    
+    function updateSortIndicator(field, order) {
+        // Remove all existing indicators
         $('.sortable').removeClass('sort-asc sort-desc');
-        $(this).addClass(`sort-${sortOrder}`);
+        $('.sortable i.fas').removeClass('fa-sort-up fa-sort-down').addClass('fa-sort');
         
-        // Reset to first page when sorting
-        currentPage = 1;
-        loadPriceList(currentPage, limit, search, sortField, sortOrder);
-    });
-    
-    // Handle delete button click
-    $(document).on('click', '.btn-delete', function() {
-        deletePriceListId = $(this).data('id');
+        // Add indicator to current sort column
+        const column = $(`.sortable[data-sort="${field}"]`);
+        column.addClass(`sort-${order}`);
         
-        // Show delete confirmation modal
-        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-        deleteModal.show();
-    });
-    
-    // Confirm delete button click
-    $('#confirmDelete').on('click', function() {
-        if (deletePriceListId) {
-            deletePriceListItem(deletePriceListId);
+        if (order === 'asc') {
+            column.find('i.fas').removeClass('fa-sort').addClass('fa-sort-up');
+        } else {
+            column.find('i.fas').removeClass('fa-sort').addClass('fa-sort-down');
         }
-    });
+    }
     
     // Function to load price list with pagination, search, and sorting
     function loadPriceList(page, limit, search, sortField, sortOrder) {
+        console.log('SORTING BY:', sortField, sortOrder);
+        
         $.ajax({
             url: '/api/sales/customer_price_list',
             type: 'GET',
@@ -392,16 +463,45 @@ $(document).ready(function() {
         if (priceList.length === 0) {
             tableBody.append(`
                 <tr>
-                    <td colspan="10" class="text-center">No price list items found</td>
+                    <td colspan="11" class="text-center">No price list items found</td>
                 </tr>
             `);
             return;
+        }
+        
+        // Helper function to format dates correctly
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            
+            let date;
+            try {
+                // Try to create a date object from the string
+                date = new Date(dateString);
+                
+                // Check if date is valid
+                if (isNaN(date.getTime())) {
+                    return dateString; // Return original if invalid
+                }
+                
+                // Format as DD-MM-YYYY
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                
+                return `${day}-${month}-${year}`;
+            } catch (e) {
+                console.error('Error formatting date:', e);
+                return dateString; // Return original on error
+            }
         }
         
         priceList.forEach((item) => {
             const statusBadge = item.status === 1 
                 ? '<span class="badge bg-success">Active</span>' 
                 : '<span class="badge bg-danger">Inactive</span>';
+            
+            // Format the effective date
+            const formattedDate = formatDate(item.effective_date);
             
             tableBody.append(`
                 <tr>
@@ -411,8 +511,9 @@ $(document).ready(function() {
                     <td class="text-center">${item.alias_code || ''}</td>
                     <td class="text-center">${item.product_name || ''}</td>
                     <td class="text-center">${item.moq || ''}</td>
+                    <td class="text-center">${item.currency || ''}</td>
                     <td class="text-center">${item.unit_price ? parseFloat(item.unit_price).toFixed(2) : ''}</td>
-                    <td class="text-center">${item.effective_date || ''}</td>
+                    <td class="text-center">${formattedDate}</td>
                     <td class="text-center">${statusBadge}</td>
                     <td class="text-center">
                         <div class="d-flex justify-content-center">
@@ -468,19 +569,6 @@ $(document).ready(function() {
                 </a>
             </li>
         `);
-
-        // Page click event
-        $('.page-link').on('click', function(e) {
-            e.preventDefault();
-            const page = $(this).data('page');
-            
-            if (page < 1 || page > totalPages || page === currentPage) {
-                return;
-            }
-            
-            currentPage = page;
-            loadPriceList(currentPage, limit, search, sortField, sortOrder);
-        });
     }
 
     // Function to update table info text
