@@ -13,6 +13,7 @@ const billingRoutes = require('./customer_setup/customer_billing_address/routes/
 const currencyRoutes = require('./customer_setup/customer_currency_setup/routes/currencyRoutes');
 const deliveryAddressRoutes = require('./customer_setup/customer_delivery_address/routes/deliveryRoutes');
 const priceListRoutes = require('./customer_setup/customer_price_list/routes/price_list_Model');
+const itemCodeSetupRoutes = require('./sales_item_code_setup');
 
 // Sales landing page route
 router.get('/page/sales', (req, res) => {
@@ -26,11 +27,6 @@ router.get('/page/sales', (req, res) => {
 // Add redirect for sales returns
 router.get('/page/sales/returns', (req, res) => {
   res.redirect('/page/sales/sreturn_inquiry');
-});
-
-// Add redirect for sales replacements/claims
-router.get('/page/sales/sclaim_inquiry', (req, res) => {
-  res.redirect('/page/sales/sales_replacement');
 });
 
 // Add redirect for sales replacements
@@ -62,7 +58,7 @@ router.use('/page/sales/customer_setup', customerSetupRoutes);
 // Mount price list routes
 router.use('/', priceListRoutes);
 
-// Mount billing address API routes
+// Mount billing address routes
 router.use('/', billingRoutes);
 
 // Mount customer routes
@@ -80,6 +76,7 @@ router.get('/page/sales/customer_general_setup', (req, res) => {
   res.redirect('/page/sales/customer/general');
 });
 
+// Add redirect for customer billing address
 router.get('/page/sales/customer_billing_address', (req, res) => {
   res.redirect('/page/sales/billing-address');
 });
@@ -88,6 +85,9 @@ router.get('/page/sales/customer_billing_address', (req, res) => {
 router.get('/page/sales/customer_delivery_address', (req, res) => {
   res.redirect('/page/sales/delivery-address');
 });
+
+// Register item code setup routes
+router.use('/page/sales/item-setup', itemCodeSetupRoutes);
 
 module.exports = {
   salesRoutes: router
