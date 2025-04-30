@@ -1,10 +1,9 @@
 const express = require('express');
 const router = express.Router();
 
-// Import submodule routers - these will be added as they're created
-// const itemCodeRoutes = require('./item_code/routes/itemCodeRoutes');
-// const itemCategoryRoutes = require('./item_category/routes/categoryRoutes');
-// const itemClassRoutes = require('./item_class/routes/classRoutes');
+// Import submodule routers
+// const stockCodeRoutes = require('./sales_stock/routes/sales_stockRoutes'); // Removed - Handled in parent router
+// const salesServiceRoutes = require('./sales_service/routes/sales_serviceRoutes'); // Removed - Handled in parent router
 
 // Dashboard route
 router.get('/', (req, res) => {
@@ -24,9 +23,7 @@ router.get('/code_dashboard', (req, res) => {
   });
 });
 
-// Mount submodule routes when they're created
-// router.use('/', itemCodeRoutes);
-// router.use('/', itemCategoryRoutes);
-// router.use('/', itemClassRoutes);
+// Mount submodule routes
+// router.use('/', stockCodeRoutes); // Removed - Handled in parent router
 
 module.exports = router;

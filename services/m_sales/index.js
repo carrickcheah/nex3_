@@ -14,6 +14,8 @@ const currencyRoutes = require('./customer_setup/customer_currency_setup/routes/
 const deliveryAddressRoutes = require('./customer_setup/customer_delivery_address/routes/deliveryRoutes');
 const priceListRoutes = require('./customer_setup/customer_price_list/routes/price_list_Model');
 const itemCodeSetupRoutes = require('./sales_item_code_setup');
+const stockCodeRoutes = require('./sales_item_code_setup/sales_stock/routes/sales_stockRoutes');
+// const salesServiceRoutes = require('./sales_item_code_setup/sales_service/routes/sales_serviceRoutes'); // Removed - Directory does not exist
 
 // Sales landing page route
 router.get('/page/sales', (req, res) => {
@@ -88,6 +90,8 @@ router.get('/page/sales/customer_delivery_address', (req, res) => {
 
 // Register item code setup routes
 router.use('/page/sales/item-setup', itemCodeSetupRoutes);
+router.use('/page/sales/stock_code_setup', stockCodeRoutes);
+// router.use('/page/sales/service_code_setup', salesServiceRoutes); // Removed - Directory does not exist
 
 module.exports = {
   salesRoutes: router

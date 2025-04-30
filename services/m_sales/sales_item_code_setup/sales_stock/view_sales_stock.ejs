@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Code Details | NexERP</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+        }
+        
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border: none;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, #0669f4, #5441e9);
+            color: white;
+            border-radius: 8px 8px 0 0 !important;
+            font-weight: 600;
+            padding: 15px 20px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .btn-primary {
+            background-color: #0669f4;
+            border-color: #0669f4;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0558d6;
+            border-color: #0558d6;
+        }
+        
+        .btn-success {
+            background-color: #45a164;
+            border-color: #45a164;
+        }
+        
+        .btn-success:hover {
+            background-color: #3b8a55;
+            border-color: #3b8a55;
+        }
+        
+        .btn-danger {
+            background-color: #e55353;
+            border-color: #e55353;
+        }
+        
+        .btn-danger:hover {
+            background-color: #d03b3b;
+            border-color: #d03b3b;
+        }
+        
+        /* Info section styles */
+        .info-section {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+        
+        .info-section h5 {
+            color: #3c4b64;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e4e7ed;
+        }
+        
+        .info-row {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        
+        .info-col {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .info-field {
+            margin-bottom: 15px;
+        }
+        
+        .info-field label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #718093;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-field .value {
+            font-size: 1.05rem;
+            padding: 8px 0;
+            border-bottom: 1px dotted #e4e7ed;
+            color: #2d3436;
+        }
+        
+        .badge {
+            font-weight: 500;
+            padding: 0.5em 0.75em;
+        }
+    </style>
+</head>
+<body>
+
+<%- include('../../../shared/components/header.ejs') %>
+
+<!-- View Sales Stock Code Details -->
+<div class="container-fluid mt-4 px-4">
+    <div class="row">
+        <div class="col-12">
+            <% if (stockCode) { %>
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="/page/sales/stock_code_setup" class="btn btn-outline-light btn-sm me-2">
+                            <i class="fas fa-arrow-left me-1"></i>Back To Stock Codes List
+                        </a>
+                        <span class="ms-2 fs-5">Stock Code Details: <%= stockCode.stock_code %></span>
+                    </div>
+                    <div>
+                        <a href="/page/sales/stock_code_setup/edit/<%= stockCode.id %>" class="btn btn-primary btn-sm me-2">
+                            <i class="fas fa-edit me-1"></i>Edit
+                        </a>
+                        <button class="btn btn-danger btn-sm delete-btn" data-id="<%= stockCode.id %>">
+                            <i class="fas fa-trash me-1"></i>Delete
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="alertContainer"></div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-section">
+                                <h5 class="mb-3">Basic Information</h5>
+                                <div class="info-row">
+                                    <div class="info-col">
+                                        <div class="info-field">
+                                            <label>Stock Code</label>
+                                            <div class="value"><%= stockCode.stock_code %></div>
+                                        </div>
+                                        <div class="info-field">
+                                            <label>Product Name</label>
+                                            <div class="value"><%= stockCode.product_name %></div>
+                                        </div>
+                                        <div class="info-field">
+                                            <label>Base UOM</label>
+                                            <div class="value"><%= stockCode.base_uom %></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="info-section">
+                                <h5 class="mb-3">Additional Information</h5>
+                                <div class="info-row">
+                                    <div class="info-col">
+                                        <div class="info-field">
+                                            <label>Status</label>
+                                            <div class="value">
+                                                <span class="badge <%= stockCode.status === 1 ? 'bg-success' : 'bg-danger' %>">
+                                                    <%= stockCode.status === 1 ? 'Active' : 'Inactive' %>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="info-field">
+                                            <label>Created At</label>
+                                            <div class="value"><%= new Date(stockCode.created_at).toLocaleString() %></div>
+                                        </div>
+                                         <% if (stockCode.updated_at) { %>
+                                        <div class="info-field">
+                                            <label>Last Updated At</label>
+                                            <div class="value"><%= new Date(stockCode.updated_at).toLocaleString() %></div>
+                                        </div>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+             <% } else { %>
+                <div class="alert alert-danger">Stock code not found or could not be loaded.</div>
+                <a href="/page/sales/stock_code_setup" class="btn btn-primary">Back to List</a>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Handle delete button click
+    $('.delete-btn').on('click', function() {
+        const id = $(this).data('id');
+        if (!id) return; // Exit if no ID found
+
+        if (confirm('Are you sure you want to delete this stock code? This action cannot be undone.')) {
+            $.ajax({
+                url: `/api/sales/stock-codes/${id}`,
+                type: 'DELETE',
+                success: function(response) {
+                    if (response.success) {
+                        // Redirect to the list view after successful deletion
+                        window.location.href = '/page/sales/stock_code_setup'; 
+                    } else {
+                        showAlert(response.message || 'Failed to delete stock code');
+                    }
+                },
+                error: function(xhr) {
+                    let errorMessage = 'Error deleting stock code.';
+                     if (xhr.responseJSON && xhr.responseJSON.message) {
+                         errorMessage = xhr.responseJSON.message;
+                     }
+                    showAlert(errorMessage);
+                }
+            });
+        }
+    });
+
+     // Function to display alerts
+    function showAlert(message) {
+        $('#alertContainer').html(`
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `);
+    }
+});
+</script>
+</body>
+</html>
